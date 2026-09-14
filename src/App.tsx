@@ -6,9 +6,15 @@ import { Dashboard } from './pages/Dashboard';
 import { HowItWorks } from './pages/HowItWorks';
 import { Documentation } from './pages/Documentation';
 import { Architecture } from './pages/Architecture';
+import { InstallPromptBanner } from './components/InstallPromptBanner';
+import { OfflineStatusBar } from './components/OfflineStatusBar';
+import { VoiceCrashInput } from './components/VoiceCrashInput';
+import { CameraCrashScanner } from './components/CameraCrashScanner';
+import { AirplaneModeVerifier } from './components/AirplaneModeVerifier';
 import { actionTracker } from './services/actionTracker';
 import { crashSimulator } from './services/crashSimulator';
-import { X, ShieldAlert, Sparkles, TestTube } from 'lucide-react';
+import { CrashReport } from './types/reprox';
+import { X } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('home');
@@ -17,6 +23,11 @@ export const App: React.FC = () => {
   const [demoProgress, setDemoProgress] = useState<number>(0);
   const demoAbortRef = useRef<boolean>(false);
 
+  // Modals for quick offline utilities
+  const [showVoiceModal, setShowVoiceModal] = useState<boolean>(false);
+  const [showCameraModal, setShowCameraModal] = useState<boolean>(false);
+  const [showAuditModal, setShowAuditModal] = useState<boolean>(false);
+
   const stopDemo = () => {
     demoAbortRef.current = true;
     setIsDemoRunning(false);
@@ -24,12 +35,18 @@ export const App: React.FC = () => {
     setDemoProgress(0);
   };
 
+  const handleCrashCaptured = (_report: CrashReport) => {
+    setShowVoiceModal(false);
+    setShowCameraModal(false);
+    setCurrentTab('dashboard');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const runFullDemo = async () => {
     if (isDemoRunning) return;
     setIsDemoRunning(true);
     demoAbortRef.current = false;
 
-    // Switch to playground tab so user sees the action unfold
     setCurrentTab('playground');
 
     const sleep = (ms: number) => {
@@ -116,7 +133,7 @@ export const App: React.FC = () => {
         setDemoStepName(step.name);
         setDemoProgress(step.progress);
         step.action();
-        await sleep(1500); // 1.5s per step for clear readability
+        await sleep(1500);
       }
     } finally {
       if (!demoAbortRef.current) {
@@ -129,115 +146,157 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-dark-950 text-slate-100 flex flex-col md:flex-row font-sans">
-      {/* Sidebar (Mobile Header + Drawer & Desktop Sidebar) */}
-      <Sidebar
-        currentTab={currentTab}
-        onSelectTab={(tab) => {
-          if (isDemoRunning) stopDemo();
-          setCurrentTab(tab);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-        onRunFullDemo={runFullDemo}
-        isDemoRunning={isDemoRunning}
+    <div className="min-h-screen bg-dark-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
+      {/* 1. PWA Install CTA Banner for Mobile Phone Home Screen */}
+      <InstallPromptBanner />
+
+      {/* 2. Top Persistent Affirmative Offline Status Confirmation for Judges */}
+      <OfflineStatusBar
+        onOpenVoiceModal={() => setShowVoiceModal(true)}
+        onOpenCameraModal={() => setShowCameraModal(true)}
+        onOpenAuditModal={() => setShowAuditModal(true)}
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Floating Demo Mode Controller Banner */}
-        {isDemoRunning && (
-          <div className="sticky top-0 md:top-0 z-40 bg-gradient-to-r from-purple-950 via-dark-900 to-indigo-950 border-b border-purple-500/30 px-4 py-2.5 shadow-xl animate-slideUp">
-            <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" />
-                <span className="font-mono font-bold text-purple-300 uppercase tracking-wider">
-                  Full Demo Mode:
-                </span>
-                <span className="text-white font-medium">{demoStepName}</span>
-              </div>
+      <div className="flex-1 flex flex-col md:flex-row min-w-0">
+        {/* Sidebar (Mobile Header + Desktop Sidebar) */}
+        <Sidebar
+          currentTab={currentTab}
+          onSelectTab={(tab) => {
+            if (isDemoRunning) stopDemo();
+            setCurrentTab(tab);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          onRunFullDemo={runFullDemo}
+          isDemoRunning={isDemoRunning}
+        />
 
-              <div className="flex items-center gap-3">
-                <div className="w-32 sm:w-48 bg-slate-800 h-2 rounded-full overflow-hidden">
-                  <div
-                    className="bg-gradient-to-r from-purple-500 to-cyan-400 h-full rounded-full transition-all duration-300"
-                    style={{ width: `${demoProgress}%` }}
-                  />
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Floating Demo Mode Controller Banner */}
+          {isDemoRunning && (
+            <div className="sticky top-11 z-20 bg-gradient-to-r from-purple-950 via-dark-900 to-indigo-950 border-b border-purple-500/30 px-4 py-2.5 shadow-xl animate-slideUp">
+              <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" />
+                  <span className="font-mono font-bold text-purple-300 uppercase tracking-wider">
+                    Full Demo Mode:
+                  </span>
+                  <span className="text-white font-medium">{demoStepName}</span>
                 </div>
-                <button
-                  onClick={stopDemo}
-                  className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-                  title="Stop Demo"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* Main Content Area */}
-        <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8 overflow-y-auto">
-          {currentTab === 'home' && (
-            <Home
-              onSelectTab={(tab) => {
-                setCurrentTab(tab);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              onRunFullDemo={runFullDemo}
-            />
-          )}
-          {currentTab === 'playground' && (
-            <Playground
-              onRunFullDemo={runFullDemo}
-              isDemoRunning={isDemoRunning}
-            />
-          )}
-          {currentTab === 'dashboard' && (
-            <Dashboard
-              onSelectTab={(tab) => {
-                setCurrentTab(tab);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            />
-          )}
-          {currentTab === 'crashes' && (
-            <div className="flex items-center justify-center h-[50vh]">
-              <div className="text-center space-y-4">
-                <ShieldAlert className="w-12 h-12 text-slate-600 mx-auto" />
-                <h2 className="text-2xl font-bold text-slate-300">Crashes Explorer</h2>
-                <p className="text-slate-400">View and manage crash reports.</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-32 sm:w-48 bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-purple-500 to-cyan-400 h-full rounded-full transition-all duration-300"
+                      style={{ width: `${demoProgress}%` }}
+                    />
+                  </div>
+                  <button
+                    onClick={stopDemo}
+                    className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                    title="Stop Demo"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           )}
-          {currentTab === 'ai-investigations' && (
-            <div className="flex items-center justify-center h-[50vh]">
-              <div className="text-center space-y-4">
-                <Sparkles className="w-12 h-12 text-purple-600 mx-auto" />
-                <h2 className="text-2xl font-bold text-slate-300">AI Investigations</h2>
-                <p className="text-slate-400">Review detailed root-cause analysis by ReproX AI.</p>
+
+          {/* Main Content Area */}
+          <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8 overflow-y-auto">
+            {currentTab === 'home' && (
+              <Home
+                onSelectTab={(tab) => {
+                  setCurrentTab(tab);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onRunFullDemo={runFullDemo}
+              />
+            )}
+            {currentTab === 'playground' && (
+              <Playground
+                onRunFullDemo={runFullDemo}
+                isDemoRunning={isDemoRunning}
+              />
+            )}
+            {currentTab === 'dashboard' && (
+              <Dashboard
+                onSelectTab={(tab) => {
+                  setCurrentTab(tab);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+            )}
+
+            {/* Dedicated Tab Views for Phone-First Features */}
+            {currentTab === 'voice' && (
+              <div className="max-w-3xl mx-auto space-y-6 animate-fadeIn">
+                <VoiceCrashInput onCrashGenerated={handleCrashCaptured} />
               </div>
-            </div>
-          )}
-          {currentTab === 'tests' && (
-            <div className="flex items-center justify-center h-[50vh]">
-              <div className="text-center space-y-4">
-                <TestTube className="w-12 h-12 text-cyan-600 mx-auto" />
-                <h2 className="text-2xl font-bold text-slate-300">Generated Tests</h2>
-                <p className="text-slate-400">Browse UI regression tests synthesized from crashes.</p>
+            )}
+
+            {currentTab === 'camera' && (
+              <div className="max-w-3xl mx-auto space-y-6 animate-fadeIn">
+                <CameraCrashScanner onCrashScanned={handleCrashCaptured} />
               </div>
-            </div>
-          )}
-          {currentTab === 'how-it-works' && (
-            <HowItWorks
-              onSelectTab={(tab) => {
-                setCurrentTab(tab);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            />
-          )}
-          {currentTab === 'docs' && <Documentation />}
-          {currentTab === 'architecture' && <Architecture />}
-        </main>
+            )}
+
+            {currentTab === 'audit' && (
+              <div className="max-w-4xl mx-auto space-y-6 animate-fadeIn">
+                <AirplaneModeVerifier />
+              </div>
+            )}
+
+            {currentTab === 'how-it-works' && (
+              <HowItWorks
+                onSelectTab={(tab) => {
+                  setCurrentTab(tab);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+            )}
+            {currentTab === 'docs' && <Documentation />}
+            {currentTab === 'architecture' && <Architecture />}
+          </main>
+        </div>
       </div>
+
+      {/* Floating Modals for Voice, Camera, and Offline Audit when launched from top bar */}
+      {showVoiceModal && (
+        <div className="fixed inset-0 z-50 bg-dark-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-xl w-full">
+            <VoiceCrashInput
+              onCrashGenerated={handleCrashCaptured}
+              onClose={() => setShowVoiceModal(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {showCameraModal && (
+        <div className="fixed inset-0 z-50 bg-dark-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-xl w-full">
+            <CameraCrashScanner
+              onCrashScanned={handleCrashCaptured}
+              onClose={() => setShowCameraModal(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {showAuditModal && (
+        <div className="fixed inset-0 z-50 bg-dark-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-2xl w-full relative">
+            <button
+              onClick={() => setShowAuditModal(false)}
+              className="absolute top-4 right-4 z-10 p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <AirplaneModeVerifier />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

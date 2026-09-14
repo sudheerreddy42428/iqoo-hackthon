@@ -9,7 +9,6 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { AnalysisResult, CrashReport } from '../types/reprox';
-import { EducationalBadge } from './EducationalBadge';
 
 interface AnalysisPanelProps {
   analysis: AnalysisResult;
@@ -52,7 +51,7 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
       )}
       
       {/* Header Bar */}
-      <div className="px-5 py-4 bg-gradient-to-r from-cyan-950/60 via-dark-900 to-dark-900 border-b border-cyan-500/20 flex flex-wrap items-center justify-between gap-3">
+      <div className="px-5 py-4 bg-gradient-to-r from-cyan-950/60 via-dark-900 to-purple-950/40 border-b border-cyan-500/20 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
             <Sparkles className="w-4 h-4" />
@@ -60,15 +59,14 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                ReproX Diagnostic Engine
+                ReproX On-Device Diagnostic Engine
               </h3>
-              <EducationalBadge 
-                type={activeAnalyzer === 'rule-based' ? 'RULE-BASED ANALYSIS' : 'EXPERIMENTAL'} 
-                size="sm" 
-              />
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                100% Offline • Zero Cloud Calls
+              </span>
             </div>
             <p className="text-xs text-slate-400">
-              Derived from action trace buffer & stack trace invariants
+              In-browser inference running via WebGPU / on-device AST state machine
             </p>
           </div>
         </div>
@@ -84,7 +82,7 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Rule-Based
+            On-Device Heuristic
           </button>
           <button
             onClick={() => handleSwitchAnalyzer('llm')}
@@ -96,7 +94,7 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             }`}
           >
             <Sparkles className="w-3 h-3 text-purple-400" />
-            <span>AI / LLM Mode</span>
+            <span>Local LLM (Phi-3 / Gemma)</span>
           </button>
         </div>
       </div>

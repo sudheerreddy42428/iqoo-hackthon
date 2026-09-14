@@ -10,7 +10,6 @@ import {
   Menu, 
   X,
   History,
-  TestTube,
   ShieldAlert,
   Settings
 } from 'lucide-react';
@@ -42,11 +41,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems = [
     { id: 'home', label: 'Overview', icon: Terminal },
     { id: 'playground', label: 'Playground', icon: Play },
-    { id: 'crashes', label: 'Crashes', icon: ShieldAlert },
-    { id: 'ai-investigations', label: 'AI Investigations', icon: Sparkles },
-    { id: 'tests', label: 'Tests', icon: TestTube },
-    { id: 'how-it-works', label: 'How It Works', icon: Layers },
-    { id: 'docs', label: 'SDK', icon: BookOpen },
+    { id: 'dashboard', label: 'Telemetry & AI', icon: ShieldAlert },
+    { id: 'voice', label: 'Voice Input (Speech)', icon: Sparkles },
+    { id: 'camera', label: 'Camera OCR Scan', icon: Cpu },
+    { id: 'audit', label: 'Airplane Mode Audit', icon: Layers },
+    { id: 'how-it-works', label: 'How It Works', icon: BookOpen },
     { id: 'architecture', label: 'Architecture', icon: Cpu },
   ];
 
