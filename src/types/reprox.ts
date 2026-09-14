@@ -16,6 +16,7 @@ export interface UserAction {
   target?: string; // "Pay Now", "Cart"
   description: string;
   metadata?: Record<string, any>;
+  stateSnippet?: string; // Relevant state when action occurred
 }
 
 export interface DeviceContext {
@@ -29,7 +30,10 @@ export interface DeviceContext {
   batteryLevelPercent: number;
   networkStatus: 'WIFI' | 'CELLULAR' | 'OFFLINE';
   screenOrientation: 'PORTRAIT' | 'LANDSCAPE';
+  isSimulated?: boolean;
 }
+
+export type CrashStatus = 'New' | 'Investigating' | 'Reproduced' | 'Fixed' | 'Verified';
 
 export interface CrashReport {
   id: string;
@@ -39,6 +43,11 @@ export interface CrashReport {
   message: string;
   stackTrace: string;
   screen: string;
+  method?: string;
+  severity?: 'Critical' | 'High' | 'Medium' | 'Low';
+  status?: CrashStatus;
+  occurrences?: number;
+  lastSeen?: string;
   recentActions: UserAction[];
   deviceContext: DeviceContext;
   tags?: Record<string, string>;
@@ -49,6 +58,8 @@ export interface ReproductionStep {
   action: string;
   screen: string;
   details?: string;
+  target?: string;
+  stateCheck?: string;
 }
 
 export interface SuggestedFix {
@@ -57,18 +68,27 @@ export interface SuggestedFix {
   filePath: string;
   language: 'kotlin' | 'java' | 'typescript' | 'diff';
   codeSnippet: string;
+  diffSnippet?: string;
+}
+
+export interface RootCauseChainNode {
+  label: string;
+  type: 'action' | 'state' | 'method' | 'exception';
+  detail?: string;
 }
 
 export interface AnalysisResult {
   reportId: string;
   analyzerName: string;
   likelyRootCause: string;
+  rootCauseChain?: RootCauseChainNode[];
   reproductionSteps: ReproductionStep[];
   suggestedFix: SuggestedFix;
   confidenceScore: number; // 0 to 100
   affectedComponent: string;
   severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   timestamp: string;
+  correlationExplanation?: string;
 }
 
 export interface RegressionTest {
@@ -76,6 +96,16 @@ export interface RegressionTest {
   language: 'kotlin';
   testName: string;
   code: string;
+}
+
+export interface AIProvider {
+  name: string;
+  description: string;
+  isLocal: boolean;
+  analyzeCrash: (report: CrashReport) => Promise<AnalysisResult>;
+  generateReproductionSteps?: (report: CrashReport) => Promise<ReproductionStep[]>;
+  generateRegressionTest?: (report: CrashReport, steps: ReproductionStep[]) => Promise<RegressionTest>;
+  suggestFix?: (report: CrashReport) => Promise<SuggestedFix>;
 }
 
 export interface AIAnalyzer {

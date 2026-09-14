@@ -13,7 +13,6 @@ import {
 import { SimulatedScreen, CartItem, SimulatedProduct } from '../types/reprox';
 import { COFFEE_PRODUCTS } from '../data/products';
 import { actionTracker } from '../services/actionTracker';
-import { EducationalBadge } from './EducationalBadge';
 
 interface SimulatedAppProps {
   onTriggerCrash: (templateKey?: string, screen?: string) => void;
@@ -156,17 +155,26 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
   return (
     <div className="flex flex-col h-full bg-dark-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
       {/* Device Chrome / Header */}
-      <div className="px-4 py-3 bg-dark-950 border-b border-slate-800 flex items-center justify-between">
+      <div className="px-4 py-2.5 bg-dark-950 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
-          <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
-          <span className="ml-2 font-mono text-[11px] text-slate-400">
-            Pixel 8 Pro • Android 15 • com.reprox.coffee
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
+            <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+          </div>
+          <span className="font-mono text-[11px] text-slate-300 font-semibold">
+            Device: iQOO 15 <span className="text-slate-500 font-normal">(Simulated device environment)</span>
+          </span>
+          <span className="hidden sm:inline text-slate-600 font-mono">|</span>
+          <span className="hidden sm:inline font-mono text-[10px] text-slate-400">
+            OriginOS / Android 15 • App v1.4.2 • Wi-Fi
           </span>
         </div>
 
         <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            State: Healthy
+          </span>
           <button
             onClick={resetSimulatedApp}
             title="Reset Simulated App State"
@@ -174,7 +182,6 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
-          <EducationalBadge type="SIMULATED CRASH" size="sm" />
         </div>
       </div>
 

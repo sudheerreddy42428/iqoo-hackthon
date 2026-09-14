@@ -7,6 +7,8 @@ export interface CrashTemplate {
   errorType: string;
   message: string;
   screen: string;
+  method: string;
+  severity: 'Critical' | 'High' | 'Medium' | 'Low';
   stackTrace: string;
   triggerDescription: string;
 }
@@ -14,24 +16,25 @@ export interface CrashTemplate {
 export const CRASH_TEMPLATES: Record<string, CrashTemplate> = {
   NULL_POINTER_CHECKOUT: {
     errorType: 'NullPointerException',
-    message: 'Attempted to access paymentMethod but paymentMethod was null.',
+    message: 'Attempted to invoke virtual method on null paymentMethod reference.',
     screen: 'Checkout',
+    method: 'PaymentService.processPayment()',
+    severity: 'Critical',
     triggerDescription: 'Triggered Pay before selecting a payment method',
-    stackTrace: `java.lang.NullPointerException: Attempted to invoke virtual method 'String com.reprox.coffee.model.PaymentMethod.getId()' on a null object reference
+    stackTrace: `java.lang.NullPointerException: Attempt to invoke virtual method 'void com.reprox.coffee.service.PaymentService.processPayment(com.reprox.coffee.model.PaymentMethod)' on a null object reference
+    at com.reprox.coffee.service.PaymentService.processPayment(PaymentService.kt:89)
+    at com.reprox.coffee.ui.CheckoutViewModel.pay(CheckoutViewModel.kt:54)
     at com.reprox.coffee.ui.CheckoutScreen.onPayClicked(CheckoutScreen.kt:142)
-    at com.reprox.coffee.ui.CheckoutScreen.access$onPayClicked(CheckoutScreen.kt:38)
-    at com.reprox.coffee.ui.CheckoutScreen$Composable$2$1.invoke(CheckoutScreen.kt:96)
-    at com.reprox.coffee.ui.CheckoutScreen$Composable$2$1.invoke(CheckoutScreen.kt:94)
-    at androidx.compose.material3.ButtonElevation$animateElevation$2.invokeSuspend(ButtonElevation.kt:118)
-    at com.reprox.coffee.controller.PaymentController.processPayment(PaymentController.kt:47)
-    at android.view.View.performClick(View.java:7823)
-    at android.view.View.performClickInternal(View.java:7800)
-    at android.os.Handler.handleCallback(Handler.java:958)`,
+    at com.reprox.coffee.ui.CheckoutScreenKt$CheckoutScreen$4$1.invoke(CheckoutScreen.kt:142)
+    at androidx.compose.material3.ButtonKt$Button$2.invoke(Button.kt:124)
+    at androidx.compose.ui.platform.AndroidComposeView.dispatchTouchEvent(AndroidComposeView.android.kt:856)`,
   },
   INDEX_OUT_OF_BOUNDS_CART: {
     errorType: 'IndexOutOfBoundsException',
     message: 'Index 4 out of bounds for length 3 in cart item list',
     screen: 'Cart',
+    method: 'CartAdapter.onBindViewHolder()',
+    severity: 'High',
     triggerDescription: 'Rapid item removal race condition in cart adapter',
     stackTrace: `java.lang.IndexOutOfBoundsException: Index 4 out of bounds for length 3
     at java.util.ArrayList.get(ArrayList.java:435)
@@ -44,6 +47,8 @@ export const CRASH_TEMPLATES: Record<string, CrashTemplate> = {
     errorType: 'SocketTimeoutException',
     message: 'failed to connect to api.reproxcoffee.internal/v2/orders after 10000ms',
     screen: 'Payment',
+    method: 'PaymentClient.submitOrder()',
+    severity: 'High',
     triggerDescription: 'Simulated network timeout during payment gateway authorization',
     stackTrace: `java.net.SocketTimeoutException: failed to connect to api.reproxcoffee.internal/v2/orders after 10000ms
     at okhttp3.internal.connection.RealCall.callStart(RealCall.kt:148)
@@ -60,38 +65,113 @@ class CrashSimulatorService {
     this.loadFromStorage();
   }
 
+  public getMockDeviceContext(): DeviceContext {
+    return {
+      os: 'OriginOS / Android 15',
+      osVersion: 'Android 15 (API 35)',
+      deviceModel: 'iQOO 15 (Simulated device environment)',
+      appVersion: '1.4.2',
+      buildNumber: '1042',
+      memoryUsageMb: 148,
+      totalMemoryMb: 512,
+      batteryLevelPercent: 84,
+      networkStatus: 'WIFI',
+      screenOrientation: 'PORTRAIT',
+      isSimulated: true,
+    };
+  }
+
   private loadFromStorage(): void {
     try {
       const stored = localStorage.getItem(CRASHES_STORAGE_KEY);
       if (stored) {
         this.crashes = JSON.parse(stored);
+      } else {
+        // Populate with realistic baseline sample reports for the Crash Explorer
+        this.crashes = this.generateInitialSampleReports();
+        this.saveToStorage();
       }
     } catch {
-      this.crashes = [];
+      this.crashes = this.generateInitialSampleReports();
     }
+  }
+
+  private generateInitialSampleReports(): CrashReport[] {
+    const dc = this.getMockDeviceContext();
+    return [
+      {
+        id: 'CRASH-8F42A1',
+        timestamp: '10:42:17',
+        epochTime: Date.now() - 1000 * 60 * 12,
+        errorType: 'NullPointerException',
+        message: 'Attempted to invoke virtual method on null paymentMethod reference.',
+        method: 'PaymentService.processPayment()',
+        screen: 'Checkout',
+        severity: 'Critical',
+        status: 'New',
+        occurrences: 48,
+        lastSeen: '12m ago',
+        stackTrace: CRASH_TEMPLATES.NULL_POINTER_CHECKOUT.stackTrace,
+        recentActions: [
+          { id: 'act-01', timestamp: '10:42:01', epochTime: Date.now() - 25000, type: 'NAVIGATION', screen: 'Menu', description: 'Viewed Cappuccino', actionName: 'Navigate', target: 'Menu' },
+          { id: 'act-02', timestamp: '10:42:05', epochTime: Date.now() - 21000, type: 'CLICK', screen: 'Menu', description: 'Added Cappuccino', actionName: 'Tap', target: 'Add to Cart' },
+          { id: 'act-03', timestamp: '10:42:09', epochTime: Date.now() - 17000, type: 'NAVIGATION', screen: 'Cart', description: 'Opened Cart', actionName: 'Navigate', target: 'Cart' },
+          { id: 'act-04', timestamp: '10:42:12', epochTime: Date.now() - 14000, type: 'NAVIGATION', screen: 'Checkout', description: 'Opened Checkout', actionName: 'Navigate', target: 'Checkout' },
+          { id: 'act-05', timestamp: '10:42:15', epochTime: Date.now() - 11000, type: 'STATE_CHANGE', screen: 'Checkout', description: 'Payment method = null', actionName: 'State', target: 'paymentMethod' },
+          { id: 'act-06', timestamp: '10:42:17', epochTime: Date.now() - 9000, type: 'CLICK', screen: 'Checkout', description: 'Tapped Pay Now', actionName: 'Tap', target: 'Pay Now' },
+        ],
+        deviceContext: dc,
+        tags: { environment: 'production', category: 'checkout' },
+      },
+      {
+        id: 'CRASH-3B77C2',
+        timestamp: '09:15:40',
+        epochTime: Date.now() - 1000 * 60 * 180,
+        errorType: 'IndexOutOfBoundsException',
+        message: 'Index 4 out of bounds for length 3 in cart item list',
+        method: 'CartAdapter.onBindViewHolder()',
+        screen: 'Cart',
+        severity: 'High',
+        status: 'Reproduced',
+        occurrences: 23,
+        lastSeen: '3h ago',
+        stackTrace: CRASH_TEMPLATES.INDEX_OUT_OF_BOUNDS_CART.stackTrace,
+        recentActions: [
+          { id: 'act-11', timestamp: '09:15:20', epochTime: Date.now() - 20000, type: 'CLICK', screen: 'Cart', description: 'Removed Espresso Classic', actionName: 'Tap', target: 'Delete' },
+          { id: 'act-12', timestamp: '09:15:21', epochTime: Date.now() - 19000, type: 'CLICK', screen: 'Cart', description: 'Rapid delete tap on row 2', actionName: 'Tap', target: 'Delete' },
+        ],
+        deviceContext: dc,
+        tags: { environment: 'production', category: 'cart' },
+      },
+      {
+        id: 'CRASH-9E11D4',
+        timestamp: 'Yesterday',
+        epochTime: Date.now() - 1000 * 60 * 1440,
+        errorType: 'SocketTimeoutException',
+        message: 'failed to connect to api.reproxcoffee.internal/v2/orders after 10000ms',
+        method: 'PaymentClient.submitOrder()',
+        screen: 'Payment',
+        severity: 'High',
+        status: 'Fixed',
+        occurrences: 87,
+        lastSeen: '1d ago',
+        stackTrace: CRASH_TEMPLATES.NETWORK_TIMEOUT_API.stackTrace,
+        recentActions: [
+          { id: 'act-21', timestamp: '14:10:02', epochTime: Date.now() - 50000, type: 'CLICK', screen: 'Checkout', description: 'Selected UPI Payment', actionName: 'Select', target: 'UPI' },
+          { id: 'act-22', timestamp: '14:10:05', epochTime: Date.now() - 47000, type: 'CLICK', screen: 'Checkout', description: 'Dispatched order payment payload', actionName: 'Tap', target: 'Pay Now' },
+        ],
+        deviceContext: dc,
+        tags: { environment: 'staging', category: 'network' },
+      }
+    ];
   }
 
   private saveToStorage(): void {
     try {
       localStorage.setItem(CRASHES_STORAGE_KEY, JSON.stringify(this.crashes));
     } catch {
-      // Ignore storage limit
+      // Ignore
     }
-  }
-
-  public getMockDeviceContext(): DeviceContext {
-    return {
-      os: 'Android',
-      osVersion: 'Android 15 (API Level 35)',
-      deviceModel: 'Google Pixel 8 Pro',
-      appVersion: '1.4.2',
-      buildNumber: '428',
-      memoryUsageMb: 148,
-      totalMemoryMb: 512,
-      batteryLevelPercent: 78,
-      networkStatus: 'WIFI',
-      screenOrientation: 'PORTRAIT',
-    };
   }
 
   public simulateCrash(templateKey: keyof typeof CRASH_TEMPLATES = 'NULL_POINTER_CHECKOUT', customScreen?: string): CrashReport {
@@ -102,8 +182,8 @@ class CrashSimulatorService {
     actionTracker.recordAction(
       'CRASH_TRIGGER',
       currentScreen,
-      `💥 Fatal Crash Triggered: ${template.errorType} - ${template.message}`,
-      { errorType: template.errorType }
+      `💥 Fatal Crash Triggered: ${template.errorType} in ${template.method}`,
+      { errorType: template.errorType, method: template.method }
     );
 
     // Freeze snapshot of recent actions (maximum 15)
@@ -111,16 +191,23 @@ class CrashSimulatorService {
 
     const now = new Date();
     const pad = (n: number, z = 2) => String(n).padStart(z, '0');
-    const timestamp = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}.${pad(now.getMilliseconds(), 3)}`;
+    const timestamp = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
-    const generateHash = () => Array.from({length: 32}, () => Math.floor(Math.random() * 16).toString(16)).join('');
+    // Deterministic format CRASH-8F42A1
+    const randomHex = Math.random().toString(16).substring(2, 8).toUpperCase();
+    const crashId = templateKey === 'NULL_POINTER_CHECKOUT' ? 'CRASH-8F42A1' : `CRASH-${randomHex}`;
 
     const crashReport: CrashReport = {
-      id: `rx-${generateHash().substring(0, 8)}-${generateHash().substring(8, 12)}-${generateHash().substring(12, 16)}-${generateHash().substring(16, 20)}-${generateHash().substring(20, 32)}`,
+      id: crashId,
       timestamp,
       epochTime: Date.now(),
       errorType: template.errorType,
       message: template.message,
+      method: template.method,
+      severity: template.severity,
+      status: 'New',
+      occurrences: 1,
+      lastSeen: 'Just now',
       stackTrace: template.stackTrace,
       screen: currentScreen,
       recentActions: recentActionsSnapshot,
@@ -134,8 +221,8 @@ class CrashSimulatorService {
 
     // Prepend to crash history
     this.crashes.unshift(crashReport);
-    if (this.crashes.length > 30) {
-      this.crashes = this.crashes.slice(0, 30);
+    if (this.crashes.length > 40) {
+      this.crashes = this.crashes.slice(0, 40);
     }
     this.saveToStorage();
     this.notify();

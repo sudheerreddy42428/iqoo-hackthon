@@ -1,6 +1,6 @@
 import React from 'react';
 
-type BadgeType = 'PROTOTYPE' | 'SIMULATED CRASH' | 'RULE-BASED ANALYSIS' | 'DEMO DATA' | 'EXPERIMENTAL' | 'LIVE BUFFER';
+type BadgeType = 'PROTOTYPE' | 'SIMULATED CRASH' | 'RULE-BASED ANALYSIS' | 'DEMO DATA' | 'EXPERIMENTAL' | 'LIVE BUFFER' | 'CRASH CONTEXT';
 
 interface EducationalBadgeProps {
   type: BadgeType;
@@ -44,6 +44,12 @@ export const EducationalBadge: React.FC<EducationalBadgeProps> = ({ type, size =
       text: 'text-emerald-400',
       border: 'border-emerald-500/30',
       dot: 'bg-emerald-400 animate-pulse',
+    },
+    'CRASH CONTEXT': {
+      bg: 'bg-amber-500/10',
+      text: 'text-amber-400',
+      border: 'border-amber-500/30',
+      dot: 'bg-amber-400',
     },
   };
 
