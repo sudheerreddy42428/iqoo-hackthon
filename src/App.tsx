@@ -11,6 +11,7 @@ import { OfflineStatusBar } from './components/OfflineStatusBar';
 import { VoiceCrashInput } from './components/VoiceCrashInput';
 import { CameraCrashScanner } from './components/CameraCrashScanner';
 import { AirplaneModeVerifier } from './components/AirplaneModeVerifier';
+import { AIBotAssistant } from './components/AIBotAssistant';
 import { actionTracker } from './services/actionTracker';
 import { crashSimulator } from './services/crashSimulator';
 import { CrashReport } from './types/reprox';
@@ -296,6 +297,9 @@ export const App: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Persistent AI Bot Assistant */}
+      <AIBotAssistant />
     </div>
   );
 };
