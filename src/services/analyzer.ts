@@ -55,6 +55,24 @@ export class RuleBasedProvider implements AIProvider, AIAnalyzer {
     let affectedComponent = 'PaymentService.processPayment()';
     let severity: AnalysisResult['severity'] = 'CRITICAL';
 
+    let whyItHappened = 'The application allowed the user to press Pay Now without selecting a payment method.';
+    let whatShouldHaveHappened = "The application should have blocked payment and displayed 'Select a payment method first.'";
+    let triggeringAction = 'Tap "Pay Now"';
+    let evidenceChain = [
+      'Stack trace points to payment processing',
+      'paymentMethod = null',
+      'Pay Now was the final user action',
+      'Checkout screen was active',
+      'Screenshot shows no payment method selected'
+    ];
+    let preventionRecommendation = [
+      'Validate nullable payment state before payment.',
+      'Disable Pay Now until a payment method exists.',
+      'Add a UI test for missing payment method.',
+      'Add null-safety checks.',
+      'Add crash regression coverage.'
+    ];
+
     // 3. Visual Root-Cause Chain
     let rootCauseChain: RootCauseChainNode[] = [
       { label: 'Tap "Pay Now"', type: 'action', detail: 'User triggered payment button' },
@@ -93,6 +111,18 @@ PaymentService.processPayment(paymentMethod)`,
         { label: 'CartAdapter.onBindViewHolder()', type: 'method', detail: 'Accessed unmapped index' },
         { label: 'IndexOutOfBoundsException', type: 'exception', detail: 'Index 2 out of bounds for length 2' },
       ];
+      whyItHappened = 'The adapter dataset was modified on a background thread while the UI thread was still accessing the previous size.';
+      whatShouldHaveHappened = 'Dataset changes should be synchronized or dispatched via DiffUtil to ensure consistency.';
+      triggeringAction = 'Tap "Remove Item" rapidly';
+      evidenceChain = [
+        'Multiple delete actions detected',
+        'IndexOutOfBoundsException thrown by adapter',
+        'Position 2 requested, size is 2'
+      ];
+      preventionRecommendation = [
+        'Use ListAdapter with DiffUtil.',
+        'Avoid manual index calculation.'
+      ];
       suggestedFix = {
         title: 'Use DiffUtil & ListAdapter Invariant Guard',
         explanation: 'Replace manual index tracking with DiffUtil or ListAdapter to prevent index synchronization drift.',
@@ -117,6 +147,19 @@ PaymentService.processPayment(paymentMethod)`,
         { label: 'PaymentClient.submitOrder()', type: 'method', detail: 'Unhandled I/O boundary' },
         { label: 'SocketTimeoutException', type: 'exception', detail: 'Read timed out' },
       ];
+      whyItHappened = 'The payment API took longer to respond than the configured socket timeout, and there was no exception handler.';
+      whatShouldHaveHappened = 'The app should catch the exception, inform the user, and allow a retry.';
+      triggeringAction = 'Submit Order';
+      evidenceChain = [
+        'SocketTimeoutException thrown',
+        'Payment action preceded crash',
+        'No retry logic found in trace'
+      ];
+      preventionRecommendation = [
+        'Implement exponential backoff.',
+        'Set reasonable read/write timeouts.',
+        'Add fallback UI state.'
+      ];
       suggestedFix = {
         title: 'Implement Exponential Backoff Retry & Offline Circuit Breaker',
         explanation: 'Wrap the remote call in a timeout handler and notify the user with a retry prompt instead of crashing.',
@@ -139,6 +182,11 @@ PaymentService.processPayment(paymentMethod)`,
       reportId: report.id,
       analyzerName: this.name,
       likelyRootCause,
+      whyItHappened,
+      whatShouldHaveHappened,
+      triggeringAction,
+      evidenceChain,
+      preventionRecommendation,
       rootCauseChain,
       reproductionSteps,
       suggestedFix,
@@ -206,6 +254,7 @@ export class LocalModelProvider implements AIProvider, AIAnalyzer {
         ...base,
         analyzerName: 'WebLLM / WebGPU (Phi-3-mini)',
         likelyRootCause: `[On-Device AI] ${reply.choices[0].message.content || base.likelyRootCause}`,
+        whyItHappened: `[AI Assisted] ${reply.choices[0].message.content || base.whyItHappened}`,
         confidenceScore: 97,
       };
     } catch (e) {
@@ -215,6 +264,7 @@ export class LocalModelProvider implements AIProvider, AIAnalyzer {
         analyzerName: 'On-Device Quantized Model (Local Fallback)',
         confidenceScore: Math.min(98, base.confidenceScore + 2),
         likelyRootCause: `[AI Investigation] ${base.likelyRootCause}`,
+        whyItHappened: `[Local Fallback] ${base.whyItHappened}`,
       };
     }
   }

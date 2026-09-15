@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import { CrashReport, ReproductionStep } from '../types/reprox';
 import { generateEspressoTest, generateComposeTest } from '../services/testGenerator';
-import { EducationalBadge } from './EducationalBadge';
 
 interface RegressionTestPanelProps {
   report: CrashReport;
@@ -54,7 +53,6 @@ export const RegressionTestPanel: React.FC<RegressionTestPanelProps> = ({
               <h3 className="text-sm font-bold text-white uppercase tracking-wider">
                 Automated Regression Test
               </h3>
-              <EducationalBadge type="PROTOTYPE" size="sm" />
             </div>
             <p className="text-xs text-slate-400">
               Synthesized UI test reproducing the exact user action sequence
@@ -99,12 +97,14 @@ export const RegressionTestPanel: React.FC<RegressionTestPanelProps> = ({
       </div>
 
       {/* Rationale Bar */}
-      <div className="px-5 py-3 bg-dark-850/60 border-b border-slate-800 text-xs text-slate-300 flex items-center justify-between">
+      <div className="px-5 py-3 bg-dark-850/60 border-b border-slate-800 text-xs text-slate-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="text-emerald-400 font-semibold font-mono">Loop Completed:</span>
           <span>Crash → Action Buffer → Reproduction Steps → Executable CI/CD Test</span>
         </div>
-        <span className="font-mono text-slate-500 text-[11px]">Kotlin • AndroidX</span>
+        <span className="font-mono text-amber-500/80 text-[10px] bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+          Generated test — execution not performed in browser demo.
+        </span>
       </div>
 
       {/* Code Viewer */}

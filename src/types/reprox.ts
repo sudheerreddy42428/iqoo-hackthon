@@ -100,9 +100,14 @@ export interface AnalysisResult {
   reportId: string;
   analyzerName: string;
   likelyRootCause: string;
+  whyItHappened: string;
+  whatShouldHaveHappened: string;
+  triggeringAction: string;
   rootCauseChain?: RootCauseChainNode[];
+  evidenceChain: string[];
   reproductionSteps: ReproductionStep[];
   suggestedFix: SuggestedFix;
+  preventionRecommendation: string[];
   confidenceScore: number; // 0 to 100
   affectedComponent: string;
   severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';

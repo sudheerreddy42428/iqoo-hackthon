@@ -15,6 +15,8 @@ import { CrashCard } from '../components/CrashCard';
 import { AnalysisPanel } from '../components/AnalysisPanel';
 import { RegressionTestPanel } from '../components/RegressionTestPanel';
 import { EducationalBadge } from '../components/EducationalBadge';
+import { DeveloperReportModal } from '../components/DeveloperReportModal';
+import { FileText } from 'lucide-react';
 
 interface DashboardProps {
   onSelectTab: (tab: string) => void;
@@ -25,6 +27,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
   const [selectedCrash, setSelectedCrash] = useState<CrashReport | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showDeveloperReport, setShowDeveloperReport] = useState(false);
 
   useEffect(() => {
     const unsubscribe = crashSimulator.subscribe((list) => {
@@ -227,6 +230,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
                 }}
                 isAnalyzing={isAnalyzing}
               />
+              
+              {analysis && (
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setShowDeveloperReport(true)}
+                    className="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-indigo-950/50 transition-all hover:scale-105"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>Generate Developer Report</span>
+                  </button>
+                </div>
+              )}
 
               {analysis && (
                 <>
@@ -262,6 +277,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
           )}
         </div>
       </div>
+
+      {/* Modals */}
+      {showDeveloperReport && selectedCrash && analysis && (
+        <DeveloperReportModal
+          report={selectedCrash}
+          analysis={analysis}
+          onClose={() => setShowDeveloperReport(false)}
+        />
+      )}
     </div>
   );
 };

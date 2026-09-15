@@ -9,7 +9,9 @@ import { SimulatedScreen } from '../types/reprox';
 import { crashSimulator } from '../services/crashSimulator';
 import { localAIAnalyzer, cloudAIAnalyzer } from '../services/analyzer';
 import { CrashScreenshotUploader } from '../components/CrashScreenshotUploader';
+import { DeveloperReportModal } from '../components/DeveloperReportModal';
 import { useInvestigation } from '../context/InvestigationContext';
+import { FileText } from 'lucide-react';
 
 interface PlaygroundProps {
   onOpenVoiceModal?: () => void;
@@ -29,6 +31,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
   const [selectedScenario, setSelectedScenario] = useState<string>('NULL_POINTER_CHECKOUT');
   const [isReproducing, setIsReproducing] = useState(false);
   const [reproductionStep, setReproductionStep] = useState(0);
+  const [showDeveloperReport, setShowDeveloperReport] = useState(false);
 
   // Note: We don't auto-load recent crashes anymore to keep the demo clean for judges
   // unless they trigger it.
@@ -216,6 +219,16 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
                 Captured at {activeCrash.timestamp} with {activeCrash.recentActions.length} actions in context buffer
               </p>
             </div>
+            
+            {analysis && (
+              <button
+                onClick={() => setShowDeveloperReport(true)}
+                className="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-indigo-950/50 transition-all hover:scale-105"
+              >
+                <FileText className="w-4 h-4" />
+                <span>Generate Developer Report</span>
+              </button>
+            )}
           </div>
 
           {/* Crash Card */}
@@ -271,6 +284,15 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
             4. The analyzer converts the action sequence into concrete reproduction steps and a Kotlin Espresso test.
           </p>
         </div>
+      )}
+
+      {/* Modals */}
+      {showDeveloperReport && activeCrash && analysis && (
+        <DeveloperReportModal
+          report={activeCrash}
+          analysis={analysis}
+          onClose={() => setShowDeveloperReport(false)}
+        />
       )}
     </div>
   );

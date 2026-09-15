@@ -105,7 +105,7 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                AI Investigation
+                AI CRASH INVESTIGATION
               </h3>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3" />
@@ -147,44 +147,68 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
       </div>
 
       {/* Main Grid: Root Cause & Confidence */}
-      <div className="p-5 border-b border-slate-800 bg-dark-900/60 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2 space-y-3">
+      <div className="p-5 border-b border-slate-800 bg-dark-900/60 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-5">
+          {/* Root Cause */}
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-rose-400">
               Root Cause
             </span>
-            <div className="text-base font-bold text-white font-sans mt-0.5">
+            <div className="text-lg font-bold text-white font-sans mt-0.5">
               {analysis.likelyRootCause}
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Why it happened */}
+            <div className="p-3 rounded-lg bg-dark-950/90 border border-cyan-500/25 space-y-1">
+              <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400 mb-1">
+                Why it happened
+              </div>
+              <p className="text-sm text-slate-300 font-sans leading-relaxed">
+                {analysis.whyItHappened}
+              </p>
+            </div>
+            
+            {/* What should have happened */}
+            <div className="p-3 rounded-lg bg-dark-950/90 border border-emerald-500/25 space-y-1">
+              <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 mb-1">
+                What should have happened
+              </div>
+              <p className="text-sm text-slate-300 font-sans leading-relaxed">
+                {analysis.whatShouldHaveHappened}
+              </p>
+            </div>
+          </div>
+
           <div className="flex flex-wrap items-center gap-4 text-xs font-mono pt-1">
+            <span className="text-slate-400">
+              Triggering Action:{' '}
+              <span className="text-amber-300 font-bold bg-dark-950 px-2 py-0.5 rounded border border-slate-800">
+                {analysis.triggeringAction}
+              </span>
+            </span>
             <span className="text-slate-400">
               Affected Component:{' '}
               <span className="text-cyan-300 font-bold bg-dark-950 px-2 py-0.5 rounded border border-slate-800">
                 {report.method || analysis.affectedComponent}
               </span>
             </span>
-            <span className="text-slate-400">
-              Screen: <span className="text-slate-200 font-semibold">{report.screen}</span>
-            </span>
           </div>
-
-          {/* Why ReproX Thinks This Happened Callout (Requirement 9) */}
-          <div className="p-3 rounded-lg bg-dark-950/90 border border-cyan-500/25 text-xs text-slate-300 space-y-1">
-            <div className="text-[11px] font-mono font-bold uppercase text-cyan-300 flex items-center gap-1.5">
-              <HelpCircle className="w-3.5 h-3.5" />
-              <span>Why ReproX thinks this happened:</span>
-            </div>
-            <p className="text-slate-300 leading-relaxed font-sans text-xs">
-              This conclusion was derived by correlating{' '}
-              {report.screenshots && report.screenshots.length > 0 && (
-                <><strong className="text-emerald-400">SCREENSHOT EVIDENCE</strong> + </>
-              )}
-              <strong className="text-white">STACK TRACE</strong> ({report.errorType} in {report.method || 'PaymentService.processPayment()'}) +{' '}
-              <strong className="text-white">USER ACTIONS</strong> ({report.recentActions.length} pre-crash actions terminating at "Pay Now") +{' '}
-              <strong className="text-white">APPLICATION STATE</strong> (unselected payment method state machine invariant).
-            </p>
+          
+          {/* Evidence Chain */}
+          <div className="pt-2">
+             <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+              <HelpCircle className="w-3.5 h-3.5" /> Evidence Chain
+             </div>
+             <ul className="space-y-1.5">
+               {analysis.evidenceChain.map((evidence, i) => (
+                 <li key={i} className="flex items-start gap-2 text-xs font-mono text-slate-300">
+                   <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                   <span>{evidence}</span>
+                 </li>
+               ))}
+             </ul>
           </div>
           
           {/* Attached Screenshots Gallery */}
@@ -207,31 +231,47 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           )}
         </div>
 
-        {/* Confidence Card */}
-        <div className="p-4 rounded-lg bg-dark-950 border border-slate-800/90 flex flex-col justify-between">
-          <div>
-            <div className="text-[11px] font-mono uppercase text-slate-400 font-semibold flex items-center justify-between mb-2">
-              <span>Confidence</span>
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+        {/* Right Column: Confidence & Prevention */}
+        <div className="flex flex-col gap-4">
+          <div className="p-4 rounded-lg bg-dark-950 border border-slate-800/90 flex flex-col justify-between">
+            <div>
+              <div className="text-[11px] font-mono uppercase text-slate-400 font-semibold flex items-center justify-between mb-2">
+                <span>AI Confidence</span>
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold font-mono text-emerald-400">
+                  {analysis.confidenceScore}%
+                </span>
+                <span className="text-xs text-slate-400 font-mono">Precision</span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold font-mono text-emerald-400">
-                {analysis.confidenceScore}%
-              </span>
-              <span className="text-xs text-slate-400 font-mono">High Precision</span>
+
+            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-3">
+              <div
+                className="bg-gradient-to-r from-cyan-400 to-emerald-400 h-full rounded-full transition-all duration-500"
+                style={{ width: `${analysis.confidenceScore}%` }}
+              />
             </div>
+
+            <p className="text-[10px] text-slate-500 mt-2 font-mono">
+              Evaluated on {report.recentActions.length} pre-crash actions & method invariants.
+            </p>
           </div>
 
-          <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-3">
-            <div
-              className="bg-gradient-to-r from-cyan-400 to-emerald-400 h-full rounded-full transition-all duration-500"
-              style={{ width: `${analysis.confidenceScore}%` }}
-            />
+          <div className="p-4 rounded-lg bg-emerald-950/20 border border-emerald-500/20 flex-grow">
+             <div className="text-[11px] font-mono uppercase text-emerald-400 font-semibold flex items-center gap-1.5 mb-3">
+               <ShieldCheck className="w-3.5 h-3.5" /> Prevention Recommendations
+             </div>
+             <ul className="space-y-2">
+               {analysis.preventionRecommendation.map((rec, i) => (
+                 <li key={i} className="flex items-start gap-2 text-[11px] font-mono text-emerald-200/80">
+                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/50 mt-1.5 shrink-0" />
+                   <span>{rec}</span>
+                 </li>
+               ))}
+             </ul>
           </div>
-
-          <p className="text-[10px] text-slate-500 mt-2 font-mono">
-            Evaluated on {report.recentActions.length} pre-crash actions & method invariants
-          </p>
         </div>
       </div>
 
