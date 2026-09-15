@@ -12,10 +12,11 @@ import { CrashScreenshotUploader } from '../components/CrashScreenshotUploader';
 
 interface PlaygroundProps {
   onRunFullDemo?: () => void;
+  onOpenVoiceModal?: () => void;
   isDemoRunning?: boolean;
 }
 
-export const Playground: React.FC<PlaygroundProps> = () => {
+export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
   const [activeCrash, setActiveCrash] = useState<CrashReport | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -132,6 +133,16 @@ export const Playground: React.FC<PlaygroundProps> = () => {
               <option value="NETWORK_TIMEOUT_API">SocketTimeout (Payment)</option>
             </select>
           </div>
+
+          {onOpenVoiceModal && (
+            <button
+              onClick={onOpenVoiceModal}
+              className="px-3.5 py-2 rounded-lg bg-cyan-600/20 hover:bg-cyan-500/30 text-cyan-400 font-semibold text-xs flex items-center gap-1.5 border border-cyan-500/40 transition-all hover:scale-105"
+            >
+              <span>🎙️</span>
+              <span>Speak Crash</span>
+            </button>
+          )}
 
           <button
             onClick={() => handleTriggerCrash(selectedScenario)}

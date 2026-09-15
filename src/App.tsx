@@ -214,9 +214,10 @@ export const App: React.FC = () => {
               />
             )}
             {currentTab === 'playground' && (
-              <Playground
+              <Playground 
                 onRunFullDemo={runFullDemo}
                 isDemoRunning={isDemoRunning}
+                onOpenVoiceModal={() => setShowVoiceModal(true)}
               />
             )}
             {currentTab === 'dashboard' && (
