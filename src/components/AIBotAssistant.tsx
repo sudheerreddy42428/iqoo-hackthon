@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bot, MessageSquare, FileText, Lightbulb, ChevronDown, CheckCircle2 } from 'lucide-react';
 import { useInvestigation } from '../context/InvestigationContext';
 import { DeveloperReportModal } from './DeveloperReportModal';
+import { onDeviceLLMAnalyzer } from '../services/analyzer';
 
 interface ChatMessage {
   id: string;
@@ -21,6 +22,8 @@ export const AIBotAssistant: React.FC = () => {
     timestamp: new Date()
   }]);
   const [showReport, setShowReport] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -59,6 +62,39 @@ export const AIBotAssistant: React.FC = () => {
       
       return [...prev, { ...msg, id: Math.random().toString(36).substring(7), timestamp: new Date() }];
     });
+  };
+
+  const handleSendMessage = async () => {
+    if (!chatInput.trim() || isTyping) return;
+
+    const userText = chatInput.trim();
+    setChatInput('');
+    addMessage({ sender: 'user', text: userText });
+    setIsTyping(true);
+
+    try {
+      // Prepare history
+      const history = messages.map(m => ({
+        role: m.sender === 'user' ? 'user' : 'assistant',
+        content: m.text
+      })) as { role: 'user'|'assistant'|'system', content: string }[];
+      
+      // Add current message
+      history.push({ role: 'user', content: userText });
+
+      const response = await onDeviceLLMAnalyzer.chat(history);
+      addMessage({ sender: 'ai', text: response });
+    } catch (err) {
+      addMessage({ sender: 'ai', text: "I'm sorry, I encountered an error while trying to generate a response." });
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSendMessage();
+    }
   };
 
   if (!isOpen && messages.length === 1 && !activeCrash) {
@@ -115,12 +151,24 @@ export const AIBotAssistant: React.FC = () => {
         {/* Chat Area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-dark-900/50 min-h-[300px]">
           {messages.map((msg) => (
-            <div key={msg.id} className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-purple-900/40 border border-purple-500/30 flex items-center justify-center shrink-0 mt-1">
-                <Bot className="w-4 h-4 text-purple-400" />
+            <div key={msg.id} className={`flex gap-3 ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1 ${
+                msg.sender === 'user' 
+                  ? 'bg-cyan-900/40 border border-cyan-500/30' 
+                  : 'bg-purple-900/40 border border-purple-500/30'
+              }`}>
+                {msg.sender === 'user' ? (
+                  <span className="text-cyan-400 text-xs font-bold">U</span>
+                ) : (
+                  <Bot className="w-4 h-4 text-purple-400" />
+                )}
               </div>
-              <div className="space-y-2 flex-1">
-                <div className="bg-dark-800 border border-slate-700/50 rounded-2xl rounded-tl-sm p-3 shadow-lg">
+              <div className="space-y-2 flex-1 max-w-[85%]">
+                <div className={`${
+                  msg.sender === 'user'
+                    ? 'bg-cyan-950/40 border border-cyan-800/50 rounded-2xl rounded-tr-sm'
+                    : 'bg-dark-800 border border-slate-700/50 rounded-2xl rounded-tl-sm'
+                } p-3 shadow-lg`}>
                   <p className="text-sm text-slate-300 leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: msg.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/`(.*?)`/g, '<code class="bg-dark-950 px-1 py-0.5 rounded text-purple-300 font-mono text-xs">$1</code>') }} />
                 </div>
 
@@ -161,19 +209,40 @@ export const AIBotAssistant: React.FC = () => {
               </div>
             </div>
           ))}
+          {isTyping && (
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-purple-900/40 border border-purple-500/30 flex items-center justify-center shrink-0 mt-1">
+                <Bot className="w-4 h-4 text-purple-400" />
+              </div>
+              <div className="bg-dark-800 border border-slate-700/50 rounded-2xl rounded-tl-sm p-3 shadow-lg flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area (Placeholder for now) */}
+        {/* Input Area */}
         <div className="p-3 bg-dark-950 border-t border-purple-500/20">
           <div className="relative">
             <input 
               type="text" 
-              disabled
-              placeholder="AI is monitoring..." 
-              className="w-full bg-dark-900 border border-slate-800 rounded-lg py-2.5 px-4 text-sm text-slate-400 cursor-not-allowed placeholder:text-slate-600 focus:outline-none"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isTyping}
+              placeholder={isTyping ? "AI is thinking..." : "Ask a question about this crash..."} 
+              className="w-full bg-dark-900 border border-slate-800 rounded-lg py-2.5 pl-4 pr-10 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-purple-500/50 transition-colors disabled:opacity-50"
             />
-            <MessageSquare className="w-4 h-4 text-slate-600 absolute right-3 top-3" />
+            <button 
+              onClick={handleSendMessage}
+              disabled={!chatInput.trim() || isTyping}
+              className="absolute right-2 top-2 p-1 rounded-md text-purple-400 hover:bg-purple-500/20 disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
+            >
+              <MessageSquare className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>

@@ -202,6 +202,11 @@ PaymentService.processPayment(paymentMethod)`,
   public async analyze(report: CrashReport): Promise<AnalysisResult> {
     return this.analyzeCrash(report);
   }
+
+  public async chat(_messages: { role: 'system' | 'user' | 'assistant'; content: string }[]): Promise<string> {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    return "I am the deterministic engine. WebLLM isn't available, but I can help you understand that the crash was caused by a null payment method during the checkout flow.";
+  }
 }
 
 import { CreateMLCEngine, MLCEngine } from "@mlc-ai/web-llm";
@@ -271,6 +276,27 @@ export class LocalModelProvider implements AIProvider, AIAnalyzer {
 
   public async analyze(report: CrashReport): Promise<AnalysisResult> {
     return this.analyzeCrash(report);
+  }
+
+  public async chat(messages: { role: 'system' | 'user' | 'assistant'; content: string }[]): Promise<string> {
+    try {
+      if (!(navigator as any).gpu) {
+        throw new Error("WebGPU is not supported in this browser.");
+      }
+      
+      const engine = await this.getEngine();
+      
+      // We only support up to phi-3-mini limits, but the API handles the format.
+      // @ts-ignore - MLCEngine interface matches closely
+      const reply = await engine.chat.completions.create({
+        messages
+      });
+      
+      return reply.choices[0].message.content || "I couldn't generate a response.";
+    } catch (e) {
+      console.warn('[LocalModelProvider] Fallback for chat:', e);
+      return "I'm currently running in deterministic fallback mode because WebGPU is unavailable. How can I help you resolve this crash?";
+    }
   }
 }
 

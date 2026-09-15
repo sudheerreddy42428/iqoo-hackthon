@@ -64,8 +64,8 @@ export const CameraCrashScanner: React.FC<CameraCrashScannerProps> = ({
   };
 
   useEffect(() => {
-    // Attempt auto-start camera on mount
-    startCamera();
+    // Camera is NO LONGER auto-started on mount to respect user preference.
+    // The user must click "Retry Camera" (which we'll rename to "Start Camera")
     return () => {
       stopCamera();
     };
@@ -269,7 +269,7 @@ export const CameraCrashScanner: React.FC<CameraCrashScannerProps> = ({
                 className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono flex items-center gap-1.5"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                <span>Retry Camera</span>
+                <span>Start Camera</span>
               </button>
               <button
                 onClick={() => fileInputRef.current?.click()}
