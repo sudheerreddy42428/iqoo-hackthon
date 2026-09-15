@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { UploadCloud, X, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { CrashScreenshot } from '../types/reprox';
-import { upload } from '@vercel/blob/client';
 import { useInvestigation } from '../context/InvestigationContext';
 
 interface CrashScreenshotUploaderProps {
@@ -52,32 +51,30 @@ export const CrashScreenshotUploader: React.FC<CrashScreenshotUploaderProps> = (
         continue;
       }
 
-      // Create a local object URL for immediate UI feedback and fallback
-      const objectUrl = URL.createObjectURL(file);
-      let finalUrl = objectUrl;
-
+      // Simulate tiny delay for UX
+      await new Promise(r => setTimeout(r, 400));
+      
       try {
-        const newBlob = await upload(file.name, file, {
-          access: 'public',
-          handleUploadUrl: '/api/upload',
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error('Failed to read local file'));
+          reader.readAsDataURL(file);
         });
-        finalUrl = newBlob.url;
-      } catch (uploadError: any) {
-        // If it fails (e.g. 401 missing token in local dev), warn but use local ObjectURL so the demo still works
-        console.warn('Vercel Blob upload failed, falling back to local ObjectURL:', uploadError);
-        // We simulate a tiny delay so it feels like a real upload in demo mode
-        await new Promise(r => setTimeout(r, 800));
+
+        const screenshot: CrashScreenshot = {
+          id: crypto.randomUUID(),
+          url: dataUrl,
+          filename: file.name,
+          size: file.size,
+          mimeType: file.type,
+        };
+
+        addScreenshot(screenshot);
+      } catch (err) {
+        console.error('Failed to read file offline', err);
+        setErrorMsg(`Failed to process ${file.name} locally.`);
       }
-
-      const screenshot: CrashScreenshot = {
-        id: crypto.randomUUID(),
-        url: finalUrl,
-        filename: file.name,
-        size: file.size,
-        mimeType: file.type,
-      };
-
-      addScreenshot(screenshot);
     }
 
     setIsUploading(false);
