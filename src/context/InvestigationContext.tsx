@@ -7,6 +7,7 @@ interface InvestigationState {
   screenshots: CrashScreenshot[];
   actionBuffer: UserAction[];
   isDemoRunning: boolean;
+  isAutoFixed: boolean;
 }
 
 interface InvestigationContextType extends InvestigationState {
@@ -16,6 +17,7 @@ interface InvestigationContextType extends InvestigationState {
   removeScreenshot: (screenshotId: string) => void;
   updateActionBuffer: (actions: UserAction[]) => void;
   setDemoRunning: (isRunning: boolean) => void;
+  setAutoFixed: (isFixed: boolean) => void;
   resetDemo: () => void;
 }
 
@@ -27,6 +29,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
   const [screenshots, setScreenshots] = useState<CrashScreenshot[]>([]);
   const [actionBuffer, setActionBuffer] = useState<UserAction[]>([]);
   const [isDemoRunning, setIsDemoRunning] = useState(false);
+  const [isAutoFixed, setIsAutoFixed] = useState(false);
 
   const startInvestigation = (crash: CrashReport, actions: UserAction[]) => {
     // Attach current screenshots to crash report
@@ -73,6 +76,10 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
     setIsDemoRunning(isRunning);
   };
 
+  const setAutoFixed = (isFixed: boolean) => {
+    setIsAutoFixed(isFixed);
+  };
+
   const resetDemo = () => {
     setActiveCrash(null);
     setAnalysis(null);
@@ -86,6 +93,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
     setScreenshots([]);
     setActionBuffer([]);
     setIsDemoRunning(false);
+    setIsAutoFixed(false);
   };
 
   return (
@@ -96,12 +104,14 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
         screenshots,
         actionBuffer,
         isDemoRunning,
+        isAutoFixed,
         startInvestigation,
         setAnalysisResult,
         addScreenshot,
         removeScreenshot,
         updateActionBuffer,
         setDemoRunning,
+        setAutoFixed,
         resetDemo
       }}
     >

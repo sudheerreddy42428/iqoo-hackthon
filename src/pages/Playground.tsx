@@ -10,6 +10,7 @@ import { crashSimulator } from '../services/crashSimulator';
 import { localAIAnalyzer, cloudAIAnalyzer } from '../services/analyzer';
 import { CrashScreenshotUploader } from '../components/CrashScreenshotUploader';
 import { DeveloperReportModal } from '../components/DeveloperReportModal';
+import { AutoFixPanel } from '../components/AutoFixPanel';
 import { useInvestigation } from '../context/InvestigationContext';
 import { FileText } from 'lucide-react';
 
@@ -18,11 +19,13 @@ interface PlaygroundProps {
 }
 
 export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
-  const { 
+  const {
     activeCrash, 
     analysis, 
     startInvestigation, 
-    setAnalysisResult, 
+    setAnalysisResult,
+    isAutoFixed,
+    setAutoFixed,
     resetDemo 
   } = useInvestigation();
   
@@ -157,6 +160,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
             onTriggerCrash={handleTriggerCrash}
             activeScreen={currentScreen}
             onScreenChange={setCurrentScreen}
+            isAutoFixed={isAutoFixed}
           />
           
           {/* Reproduction Playback Overlay */}
@@ -256,6 +260,14 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
                 onReAnalyze={handleReAnalyze}
                 isAnalyzing={isAnalyzing}
                 onReproduce={startReproduction}
+              />
+
+              {/* Safe Auto-Fix Engine */}
+              <AutoFixPanel
+                report={activeCrash}
+                analysis={analysis}
+                isFixApplied={isAutoFixed}
+                onApplyFix={() => setAutoFixed(true)}
               />
 
               {/* Regression Test Panel */}

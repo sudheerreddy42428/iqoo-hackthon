@@ -18,12 +18,14 @@ interface SimulatedAppProps {
   onTriggerCrash: (templateKey?: string, screen?: string) => void;
   activeScreen?: SimulatedScreen;
   onScreenChange?: (screen: SimulatedScreen) => void;
+  isAutoFixed?: boolean;
 }
 
 export const SimulatedApp: React.FC<SimulatedAppProps> = ({
   onTriggerCrash,
   activeScreen = 'Home',
   onScreenChange,
+  isAutoFixed = false,
 }) => {
   const [screen, setScreen] = useState<SimulatedScreen>(activeScreen);
   const [cart, setCart] = useState<CartItem[]>([
@@ -118,6 +120,19 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
 
     // If paymentMethod is null or empty, trigger the NullPointerException!
     if (!selectedPaymentMethod) {
+      if (isAutoFixed) {
+        actionTracker.recordAction(
+          'STATE_CHANGE',
+          screen,
+          'Auto-Fix prevented crash: Showed validation error',
+          { error: 'No payment method selected' },
+          'System',
+          'Validation Error'
+        );
+        // We simulate showing a validation error instead of crashing
+        alert('Please select a payment method before proceeding.');
+        return;
+      }
       onTriggerCrash('NULL_POINTER_CHECKOUT', screen);
       return;
     }
