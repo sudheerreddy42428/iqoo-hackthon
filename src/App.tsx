@@ -215,8 +215,6 @@ export const App: React.FC = () => {
             )}
             {currentTab === 'playground' && (
               <Playground 
-                onRunFullDemo={runFullDemo}
-                isDemoRunning={isDemoRunning}
                 onOpenVoiceModal={() => setShowVoiceModal(true)}
               />
             )}

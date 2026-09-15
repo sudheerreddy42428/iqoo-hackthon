@@ -6,26 +6,21 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from 'lucide-react';
-import { UserAction, ActionType, CrashReport } from '../types/reprox';
+import { UserAction, ActionType } from '../types/reprox';
 import { actionTracker } from '../services/actionTracker';
+import { useInvestigation } from '../context/InvestigationContext';
 import { EducationalBadge } from './EducationalBadge';
 
-interface ActionTimelineProps {
-  onSimulateCrash?: () => void;
-  isFrozen?: boolean;
-  frozenReport?: CrashReport | null;
-}
-
-export const ActionTimeline: React.FC<ActionTimelineProps> = ({
-  isFrozen = false,
-  frozenReport = null,
-}) => {
+export const ActionTimeline: React.FC = () => {
+  const { activeCrash } = useInvestigation();
   const [actions, setActions] = useState<UserAction[]>([]);
   const [lastDropped, setLastDropped] = useState<UserAction | null>(null);
 
+  const isFrozen = !!activeCrash;
+
   useEffect(() => {
-    if (isFrozen && frozenReport) {
-      setActions(frozenReport.recentActions);
+    if (isFrozen && activeCrash) {
+      setActions(activeCrash.recentActions);
       return;
     }
 
@@ -38,7 +33,7 @@ export const ActionTimeline: React.FC<ActionTimelineProps> = ({
       }
     });
     return () => unsubscribe();
-  }, [isFrozen, frozenReport]);
+  }, [isFrozen, activeCrash]);
 
   const getActionBadgeColor = (type: ActionType) => {
     switch (type) {

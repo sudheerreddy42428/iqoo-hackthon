@@ -1,22 +1,22 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, X, Image as ImageIcon, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-import { CrashScreenshot, UploadStatus } from '../types/reprox';
-// Depending on Vercel blob setup, we will use @vercel/blob/client.
+import { UploadCloud, X, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { CrashScreenshot } from '../types/reprox';
 import { upload } from '@vercel/blob/client';
+import { useInvestigation } from '../context/InvestigationContext';
 
 interface CrashScreenshotUploaderProps {
-  onUploadComplete: (screenshot: CrashScreenshot) => void;
   maxSizeMB?: number;
+  maxFiles?: number;
 }
 
 export const CrashScreenshotUploader: React.FC<CrashScreenshotUploaderProps> = ({
-  onUploadComplete,
   maxSizeMB = 5,
+  maxFiles = 5,
 }) => {
+  const { screenshots, addScreenshot, removeScreenshot } = useInvestigation();
   const [dragActive, setDragActive] = useState(false);
-  const [status, setStatus] = useState<UploadStatus>('idle');
+  const [isUploading, setIsUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -29,48 +29,46 @@ export const CrashScreenshotUploader: React.FC<CrashScreenshotUploaderProps> = (
     }
   };
 
-  const processFile = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      setErrorMsg('Please upload a valid image file (PNG, JPG, WEBP).');
-      setStatus('error');
-      return;
-    }
-    
-    if (file.size > maxSizeMB * 1024 * 1024) {
-      setErrorMsg(`File size exceeds ${maxSizeMB}MB limit.`);
-      setStatus('error');
-      return;
-    }
-
-    setStatus('selected');
+  const processFiles = async (files: FileList | File[]) => {
     setErrorMsg(null);
+    
+    if (screenshots.length + files.length > maxFiles) {
+      setErrorMsg(`You can only upload up to ${maxFiles} screenshots.`);
+      return;
+    }
 
-    // 1. Create immediate local preview
-    const objectUrl = URL.createObjectURL(file);
-    setPreviewUrl(objectUrl);
+    setIsUploading(true);
 
-    setStatus('uploading');
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
 
-    try {
-      // 2. Attempt Vercel Blob upload (if configured)
-      // We wrap it in a try-catch to fallback seamlessly for demo mode
-      let finalUrl = objectUrl; // Default to local for demo
+      if (!file.type.startsWith('image/')) {
+        setErrorMsg(`File ${file.name} is not a valid image (PNG, JPG, WEBP).`);
+        continue;
+      }
+      
+      if (file.size > maxSizeMB * 1024 * 1024) {
+        setErrorMsg(`File ${file.name} exceeds ${maxSizeMB}MB limit.`);
+        continue;
+      }
 
-      // We attempt to call the Vercel upload. If it throws (e.g. no token configured), we swallow the error and use the local blob URL.
+      // Create a local object URL for immediate UI feedback and fallback
+      const objectUrl = URL.createObjectURL(file);
+      let finalUrl = objectUrl;
+
       try {
         const newBlob = await upload(file.name, file, {
           access: 'public',
           handleUploadUrl: '/api/upload',
         });
         finalUrl = newBlob.url;
-      } catch (uploadError) {
-        console.warn('Vercel Blob upload failed, falling back to local ObjectURL for demo purposes:', uploadError);
-        // We simulate upload delay for the demo feel
-        await new Promise(r => setTimeout(r, 1200));
+      } catch (uploadError: any) {
+        // If it fails (e.g. 401 missing token in local dev), warn but use local ObjectURL so the demo still works
+        console.warn('Vercel Blob upload failed, falling back to local ObjectURL:', uploadError);
+        // We simulate a tiny delay so it feels like a real upload in demo mode
+        await new Promise(r => setTimeout(r, 800));
       }
 
-      setStatus('uploaded');
-      
       const screenshot: CrashScreenshot = {
         id: crypto.randomUUID(),
         url: finalUrl,
@@ -79,11 +77,12 @@ export const CrashScreenshotUploader: React.FC<CrashScreenshotUploaderProps> = (
         mimeType: file.type,
       };
 
-      onUploadComplete(screenshot);
-    } catch (e) {
-      console.error(e);
-      setStatus('error');
-      setErrorMsg('An unexpected error occurred during processing.');
+      addScreenshot(screenshot);
+    }
+
+    setIsUploading(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -91,38 +90,28 @@ export const CrashScreenshotUploader: React.FC<CrashScreenshotUploaderProps> = (
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      processFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processFiles(e.dataTransfer.files);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
-    if (e.target.files && e.target.files[0]) {
-      processFile(e.target.files[0]);
-    }
-  };
-
-  const resetUploader = () => {
-    setStatus('idle');
-    setPreviewUrl(null);
-    setErrorMsg(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    if (e.target.files && e.target.files.length > 0) {
+      processFiles(e.target.files);
     }
   };
 
   return (
-    <div className="w-full">
-      {status === 'idle' || status === 'error' ? (
+    <div className="w-full space-y-4">
+      {screenshots.length < maxFiles && (
         <div 
           className={`relative border-2 border-dashed rounded-xl p-8 transition-colors flex flex-col items-center justify-center text-center cursor-pointer
             ${dragActive 
               ? 'border-indigo-400 bg-indigo-900/20' 
               : 'border-slate-700 bg-dark-900/40 hover:bg-dark-900/80 hover:border-slate-600'
             }
-            ${status === 'error' ? 'border-rose-500/50 bg-rose-950/10' : ''}
+            ${errorMsg ? 'border-rose-500/50 bg-rose-950/10' : ''}
           `}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -133,85 +122,67 @@ export const CrashScreenshotUploader: React.FC<CrashScreenshotUploaderProps> = (
           <input 
             ref={fileInputRef}
             type="file" 
-            accept="image/*" 
+            accept="image/png, image/jpeg, image/webp"
+            multiple 
             className="hidden" 
             onChange={handleChange}
+            disabled={isUploading}
           />
           <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
-            <UploadCloud className="w-6 h-6 text-indigo-400" />
+            {isUploading ? (
+              <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
+            ) : (
+              <UploadCloud className="w-6 h-6 text-indigo-400" />
+            )}
           </div>
           <h4 className="text-sm font-semibold text-slate-200 mb-1">
-            Upload Crash Evidence
+            {isUploading ? 'Uploading Evidence...' : 'Upload Crash Evidence'}
           </h4>
           <p className="text-xs text-slate-400 max-w-xs mx-auto">
-            Drag and drop a screenshot of the crash, or click to browse. Max {maxSizeMB}MB.
+            {isUploading 
+              ? 'Please wait while we process your screenshots.' 
+              : `Drag & drop up to ${maxFiles - screenshots.length} screenshots (Max ${maxSizeMB}MB each).`
+            }
           </p>
           
-          {status === 'error' && (
+          {errorMsg && (
             <div className="mt-4 flex items-center gap-1.5 text-xs text-rose-400 font-medium bg-rose-950/40 px-3 py-1.5 rounded-lg border border-rose-900/50">
               <AlertCircle className="w-3.5 h-3.5" />
               <span>{errorMsg}</span>
             </div>
           )}
         </div>
-      ) : (
-        <div className="border border-slate-700 bg-dark-900/60 rounded-xl overflow-hidden relative">
-          {status === 'uploading' && (
-            <div className="absolute inset-0 z-10 bg-dark-950/80 backdrop-blur-sm flex flex-col items-center justify-center">
-              <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mb-3" />
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-indigo-300">
-                Processing Evidence...
-              </span>
-            </div>
-          )}
-          
-          <div className="flex flex-col sm:flex-row">
-            {previewUrl && (
-              <div className="w-full sm:w-1/3 aspect-video sm:aspect-square bg-black flex items-center justify-center overflow-hidden border-b sm:border-b-0 sm:border-r border-slate-700 relative group">
-                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
+      )}
+
+      {/* Screenshot Gallery */}
+      {screenshots.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {screenshots.map((shot) => (
+            <div key={shot.id} className="border border-slate-700 bg-dark-900/60 rounded-xl overflow-hidden flex relative group h-24">
+              <div className="w-1/3 bg-black flex items-center justify-center border-r border-slate-700">
+                <img src={shot.url} alt={shot.filename} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
               </div>
-            )}
-            
-            <div className="flex-1 p-5 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded bg-indigo-900/30 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
-                      <ImageIcon className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-semibold text-slate-200">Screenshot Attached</h4>
-                      <p className="text-[10px] text-slate-400 font-mono">Evidence captured successfully</p>
-                    </div>
+              <div className="w-2/3 p-3 flex flex-col justify-center">
+                <div className="flex items-start justify-between">
+                  <div className="overflow-hidden">
+                    <p className="text-xs font-semibold text-slate-200 truncate pr-2">{shot.filename}</p>
+                    <p className="text-[10px] text-slate-400">{(shot.size / 1024 / 1024).toFixed(2)} MB</p>
                   </div>
-                  {status === 'uploaded' && (
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        resetUploader();
-                      }}
-                      className="p-1.5 rounded-md hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-                      title="Remove screenshot"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
+                  <button 
+                    onClick={() => removeScreenshot(shot.id)}
+                    className="p-1 rounded bg-slate-800/50 hover:bg-rose-900/50 text-slate-400 hover:text-rose-400 transition-colors"
+                    title="Remove screenshot"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                
-                {status === 'uploaded' && (
-                  <div className="mt-4 bg-emerald-950/20 border border-emerald-900/30 rounded-lg p-3 flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                    <div>
-                      <span className="text-xs font-medium text-emerald-400 block mb-0.5">Ready for AI Analysis</span>
-                      <span className="text-[10px] text-slate-400 leading-tight block">
-                        This screenshot will be included in the AI context to better determine the root cause of the crash.
-                      </span>
-                    </div>
-                  </div>
-                )}
+                <div className="mt-2 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  <span className="text-[10px] text-emerald-400 font-medium">Ready for AI</span>
+                </div>
               </div>
             </div>
-          </div>
+          ))}
         </div>
       )}
     </div>

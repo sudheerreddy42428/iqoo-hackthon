@@ -1,47 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { SimulatedApp } from '../components/SimulatedApp';
 import { ActionTimeline } from '../components/ActionTimeline';
 import { CrashCard } from '../components/CrashCard';
 import { AnalysisPanel } from '../components/AnalysisPanel';
 import { RegressionTestPanel } from '../components/RegressionTestPanel';
 import { EducationalBadge } from '../components/EducationalBadge';
-import { CrashReport, AnalysisResult, SimulatedScreen, CrashScreenshot } from '../types/reprox';
+import { SimulatedScreen } from '../types/reprox';
 import { crashSimulator } from '../services/crashSimulator';
 import { localAIAnalyzer, cloudAIAnalyzer } from '../services/analyzer';
 import { CrashScreenshotUploader } from '../components/CrashScreenshotUploader';
+import { useInvestigation } from '../context/InvestigationContext';
 
 interface PlaygroundProps {
-  onRunFullDemo?: () => void;
   onOpenVoiceModal?: () => void;
-  isDemoRunning?: boolean;
 }
 
 export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
-  const [activeCrash, setActiveCrash] = useState<CrashReport | null>(null);
-  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const { 
+    activeCrash, 
+    analysis, 
+    startInvestigation, 
+    setAnalysisResult, 
+    resetDemo 
+  } = useInvestigation();
+  
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentScreen, setCurrentScreen] = useState<SimulatedScreen>('Home');
   const [selectedScenario, setSelectedScenario] = useState<string>('NULL_POINTER_CHECKOUT');
+  const [isReproducing, setIsReproducing] = useState(false);
+  const [reproductionStep, setReproductionStep] = useState(0);
 
-  // Check for any existing recent crash from storage on mount
-  useEffect(() => {
-    const latest = crashSimulator.getLatestCrash();
-    if (latest) {
-      setActiveCrash(latest);
-      // Run quick analysis for latest crash
-      localAIAnalyzer.analyze(latest).then(setAnalysis);
-    }
-  }, []);
+  // Note: We don't auto-load recent crashes anymore to keep the demo clean for judges
+  // unless they trigger it.
 
   const handleTriggerCrash = async (templateKey: string = selectedScenario, screen?: string) => {
     setIsAnalyzing(true);
     const report = crashSimulator.simulateCrash(templateKey as any, screen || currentScreen);
-    setActiveCrash(report);
+    
+    // Start investigation globally
+    startInvestigation(report, report.recentActions);
 
     // Run analyzer automatically
     try {
       const result = await localAIAnalyzer.analyze(report);
-      setAnalysis(result);
+      setAnalysisResult(result);
     } finally {
       setIsAnalyzing(false);
     }
@@ -53,29 +55,11 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
     try {
       const analyzer = analyzerType === 'llm' ? cloudAIAnalyzer : localAIAnalyzer;
       const result = await analyzer.analyze(activeCrash);
-      setAnalysis(result);
+      setAnalysisResult(result);
     } finally {
       setIsAnalyzing(false);
     }
   };
-
-  const handleDismissCrash = () => {
-    setActiveCrash(null);
-    setAnalysis(null);
-  };
-
-  const handleScreenshotUpload = (screenshot: CrashScreenshot) => {
-    setActiveCrash(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        screenshots: [...(prev.screenshots || []), screenshot]
-      };
-    });
-  };
-
-  const [isReproducing, setIsReproducing] = useState(false);
-  const [reproductionStep, setReproductionStep] = useState(0);
 
   const startReproduction = () => {
     if (!analysis) return;
@@ -103,7 +87,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
   };
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-8 animate-fadeIn pb-24">
       {/* Playground Header Bar */}
       <div className="glass-panel p-4 sm:p-5 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-4">
         <div className="space-y-1">
@@ -151,6 +135,14 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
             <span>💥</span>
             <span>Simulate Crash</span>
           </button>
+          
+          <button
+            onClick={resetDemo}
+            className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs flex items-center gap-1.5 border border-slate-700 transition-all"
+          >
+            <span>🔄</span>
+            <span>Reset Demo</span>
+          </button>
         </div>
       </div>
 
@@ -192,6 +184,11 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
                     ? "Initializing app state..." 
                     : analysis.reproductionSteps[reproductionStep - 1]?.action}
                 </p>
+                {reproductionStep >= analysis.reproductionSteps.length && (
+                  <p className="text-emerald-400 font-bold text-sm mt-4 animate-fadeIn">
+                    ✓ CRASH REPRODUCED
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -219,15 +216,6 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
                 Captured at {activeCrash.timestamp} with {activeCrash.recentActions.length} actions in context buffer
               </p>
             </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleDismissCrash}
-                className="px-3 py-1.5 text-xs font-mono rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-              >
-                Dismiss Report
-              </button>
-            </div>
           </div>
 
           {/* Crash Card */}
@@ -243,10 +231,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
               <span className="w-6 h-6 rounded bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/40">📸</span>
               <h3 className="text-sm font-semibold text-white">Visual Evidence</h3>
             </div>
-            <CrashScreenshotUploader 
-              onUploadComplete={handleScreenshotUpload} 
-              maxSizeMB={5}
-            />
+            <CrashScreenshotUploader maxSizeMB={5} maxFiles={5} />
           </div>
 
           {/* Analysis Panel */}
