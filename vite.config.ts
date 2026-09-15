@@ -65,6 +65,17 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'lucide-react'],
+          'vendor-llm': ['@mlc-ai/web-llm']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 10000
+  },
   server: {
     port: 5173,
     host: true,
