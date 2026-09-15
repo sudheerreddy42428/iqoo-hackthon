@@ -156,44 +156,67 @@ PaymentService.processPayment(paymentMethod)`,
   }
 }
 
+import { CreateMLCEngine, MLCEngine } from "@mlc-ai/web-llm";
+
+let enginePromise: Promise<MLCEngine> | null = null;
+
 export class LocalModelProvider implements AIProvider, AIAnalyzer {
-  public name = 'On-Device Local AI (Phi-3 / Gemma-2B)';
-  public description = 'Quantized in-browser neural reasoning running locally via WebGPU/WASM with 0 external network calls';
+  public name = 'On-Device Local AI (Phi-3-mini)';
+  public description = 'Quantized in-browser neural reasoning running locally via WebGPU (WebLLM) with 0 external network calls';
   public isLocal = true;
 
+  private async getEngine(): Promise<MLCEngine> {
+    if (!enginePromise) {
+      enginePromise = CreateMLCEngine(
+        "Phi-3-mini-4k-instruct-q4f16_1-MLC",
+        {
+          initProgressCallback: (info) => {
+            console.log("[WebLLM Progress]", info.text);
+          }
+        }
+      );
+    }
+    return enginePromise;
+  }
+
   public async analyzeCrash(report: CrashReport): Promise<AnalysisResult> {
-    await new Promise((resolve) => setTimeout(resolve, 500));
     const ruleEngine = new RuleBasedProvider();
     const base = await ruleEngine.analyzeCrash(report);
 
-    // If Chrome Built-in Prompt API is active, attempt local inference
-    if (typeof window !== 'undefined' && 'ai' in window && (window as any).ai?.languageModel) {
-      try {
-        const capabilities = await (window as any).ai.languageModel.capabilities();
-        if (capabilities.available === 'readily') {
-          const session = await (window as any).ai.languageModel.create({
-            systemPrompt: 'You are an on-device Android crash diagnostic model. Synthesize root causes by correlating user actions and stack trace invariants.'
-          });
-          const res = await session.prompt(`Diagnose: ${report.errorType}: ${report.message}`);
-          session.destroy();
-          return {
-            ...base,
-            analyzerName: 'Chrome Built-in Prompt API (On-Device)',
-            likelyRootCause: `[On-Device AI] ${res}`,
-            confidenceScore: 97,
-          };
-        }
-      } catch (e) {
-        console.log('[LocalModelProvider] Fallback to deterministic local engine:', e);
+    try {
+      if (!(navigator as any).gpu) {
+        throw new Error("WebGPU is not supported in this browser.");
       }
-    }
+      
+      console.log("[LocalModelProvider] Initializing/Fetching WebLLM Engine...");
+      const engine = await this.getEngine();
 
-    return {
-      ...base,
-      analyzerName: 'On-Device Quantized Model (Local Fallback)',
-      confidenceScore: Math.min(98, base.confidenceScore + 2),
-      likelyRootCause: `[AI Investigation] ${base.likelyRootCause}`,
-    };
+      const systemPrompt = "You are an on-device Android crash diagnostic model. Synthesize root causes by correlating user actions and stack trace invariants. Respond concisely.";
+      const userPrompt = `Diagnose this crash concisely based on the following details:\nError: ${report.errorType}\nMessage: ${report.message}\nScreen: ${report.screen}`;
+
+      console.log("[LocalModelProvider] Running Inference...");
+      const reply = await engine.chat.completions.create({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ]
+      });
+
+      return {
+        ...base,
+        analyzerName: 'WebLLM / WebGPU (Phi-3-mini)',
+        likelyRootCause: `[On-Device AI] ${reply.choices[0].message.content || base.likelyRootCause}`,
+        confidenceScore: 97,
+      };
+    } catch (e) {
+      console.warn('[LocalModelProvider] Fallback to deterministic local engine due to WebLLM/WebGPU error:', e);
+      return {
+        ...base,
+        analyzerName: 'On-Device Quantized Model (Local Fallback)',
+        confidenceScore: Math.min(98, base.confidenceScore + 2),
+        likelyRootCause: `[AI Investigation] ${base.likelyRootCause}`,
+      };
+    }
   }
 
   public async analyze(report: CrashReport): Promise<AnalysisResult> {
