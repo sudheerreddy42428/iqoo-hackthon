@@ -51,7 +51,7 @@ export class RuleBasedProvider implements AIProvider, AIAnalyzer {
 
     // 2. Default analysis baseline
     let likelyRootCause = 'Payment processing was triggered while paymentMethod was null.';
-    let confidenceScore = 94;
+    let confidenceScore = report.screenshots && report.screenshots.length > 0 ? 98 : 94;
     let affectedComponent = 'PaymentService.processPayment()';
     let severity: AnalysisResult['severity'] = 'CRITICAL';
 
@@ -84,7 +84,7 @@ PaymentService.processPayment(paymentMethod)`,
 
     if (report.errorType.includes('IndexOutOfBounds')) {
       likelyRootCause = 'A rapid asynchronous item removal triggered a race condition between the adapter dataset and the UI RecyclerView layout manager.';
-      confidenceScore = 91;
+      confidenceScore = report.screenshots && report.screenshots.length > 0 ? 96 : 91;
       affectedComponent = 'CartAdapter.onBindViewHolder()';
       severity = 'HIGH';
       rootCauseChain = [
@@ -108,7 +108,7 @@ PaymentService.processPayment(paymentMethod)`,
       };
     } else if (report.errorType.includes('Timeout') || report.errorType.includes('Socket')) {
       likelyRootCause = 'Network timeout occurred while contacting the order payment authorization gateway without fallback resilience.';
-      confidenceScore = 88;
+      confidenceScore = report.screenshots && report.screenshots.length > 0 ? 93 : 88;
       affectedComponent = 'PaymentClient.submitOrder()';
       severity = 'HIGH';
       rootCauseChain = [

@@ -5,9 +5,10 @@ import { CrashCard } from '../components/CrashCard';
 import { AnalysisPanel } from '../components/AnalysisPanel';
 import { RegressionTestPanel } from '../components/RegressionTestPanel';
 import { EducationalBadge } from '../components/EducationalBadge';
-import { CrashReport, AnalysisResult, SimulatedScreen } from '../types/reprox';
+import { CrashReport, AnalysisResult, SimulatedScreen, CrashScreenshot } from '../types/reprox';
 import { crashSimulator } from '../services/crashSimulator';
 import { localAIAnalyzer, cloudAIAnalyzer } from '../services/analyzer';
+import { CrashScreenshotUploader } from '../components/CrashScreenshotUploader';
 
 interface PlaygroundProps {
   onRunFullDemo?: () => void;
@@ -60,6 +61,16 @@ export const Playground: React.FC<PlaygroundProps> = () => {
   const handleDismissCrash = () => {
     setActiveCrash(null);
     setAnalysis(null);
+  };
+
+  const handleScreenshotUpload = (screenshot: CrashScreenshot) => {
+    setActiveCrash(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        screenshots: [...(prev.screenshots || []), screenshot]
+      };
+    });
   };
 
   const [isReproducing, setIsReproducing] = useState(false);
@@ -214,6 +225,18 @@ export const Playground: React.FC<PlaygroundProps> = () => {
             onAnalyze={() => handleReAnalyze('rule-based')}
             isAnalyzing={isAnalyzing}
           />
+
+          {/* Screenshot Evidence Uploader */}
+          <div className="glass-panel p-5 rounded-2xl border border-slate-800 animate-fadeIn">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="w-6 h-6 rounded bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/40">📸</span>
+              <h3 className="text-sm font-semibold text-white">Visual Evidence</h3>
+            </div>
+            <CrashScreenshotUploader 
+              onUploadComplete={handleScreenshotUpload} 
+              maxSizeMB={5}
+            />
+          </div>
 
           {/* Analysis Panel */}
           {analysis && (

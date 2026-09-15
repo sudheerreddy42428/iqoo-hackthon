@@ -6,6 +6,24 @@ export type ActionType =
   | 'API_CALL' 
   | 'CRASH_TRIGGER';
 
+export type UploadStatus =
+  | 'idle'
+  | 'selected'
+  | 'validating'
+  | 'uploading'
+  | 'uploaded'
+  | 'processing'
+  | 'analyzed'
+  | 'error';
+
+export interface CrashScreenshot {
+  id: string;
+  url: string;
+  filename: string;
+  size: number;
+  mimeType: string;
+}
+
 export interface UserAction {
   id: string;
   timestamp: string; // HH:mm:ss.SSS format
@@ -51,6 +69,7 @@ export interface CrashReport {
   recentActions: UserAction[];
   deviceContext: DeviceContext;
   tags?: Record<string, string>;
+  screenshots?: CrashScreenshot[];
 }
 
 export interface ReproductionStep {

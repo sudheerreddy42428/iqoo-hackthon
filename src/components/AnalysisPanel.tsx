@@ -178,11 +178,33 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             </div>
             <p className="text-slate-300 leading-relaxed font-sans text-xs">
               This conclusion was derived by correlating{' '}
+              {report.screenshots && report.screenshots.length > 0 && (
+                <><strong className="text-emerald-400">SCREENSHOT EVIDENCE</strong> + </>
+              )}
               <strong className="text-white">STACK TRACE</strong> ({report.errorType} in {report.method || 'PaymentService.processPayment()'}) +{' '}
               <strong className="text-white">USER ACTIONS</strong> ({report.recentActions.length} pre-crash actions terminating at "Pay Now") +{' '}
               <strong className="text-white">APPLICATION STATE</strong> (unselected payment method state machine invariant).
             </p>
           </div>
+          
+          {/* Attached Screenshots Gallery */}
+          {report.screenshots && report.screenshots.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-slate-800">
+              <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 mb-2">
+                Attached Visual Evidence
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {report.screenshots.map((shot, idx) => (
+                  <div key={shot.id || idx} className="relative group border border-slate-700 rounded-lg overflow-hidden w-24 h-24 bg-black">
+                    <img src={shot.url} alt={shot.filename} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-x-0 bottom-0 bg-dark-950/90 p-1 text-[8px] text-center font-mono truncate text-slate-300">
+                      {shot.filename}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Confidence Card */}
