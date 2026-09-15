@@ -20,6 +20,7 @@ interface SimulatedAppProps {
   activeScreen?: SimulatedScreen;
   onScreenChange?: (screen: SimulatedScreen) => void;
   isAutoFixed?: boolean;
+  selectedScenario?: string;
 }
 
 export const SimulatedApp: React.FC<SimulatedAppProps> = ({
@@ -27,8 +28,10 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
   activeScreen = 'Home',
   onScreenChange,
   isAutoFixed = false,
+  selectedScenario = 'NULL_POINTER_CHECKOUT',
 }) => {
   const [screen, setScreen] = useState<SimulatedScreen>(activeScreen);
+  const [isPlayingCrash, setIsPlayingCrash] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([
     { product: COFFEE_PRODUCTS[0], quantity: 1 } // Start with Cold Coffee
   ]);
@@ -163,6 +166,50 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
     actionTracker.recordAction('STATE_CHANGE', 'Home', 'Reset application state to initial', undefined, 'Tap', 'Reset App');
   };
 
+  const playCrashSequence = async () => {
+    if (isPlayingCrash) return;
+    setIsPlayingCrash(true);
+    resetSimulatedApp();
+    await new Promise(r => setTimeout(r, 600));
+
+    if (selectedScenario === 'NULL_POINTER_CHECKOUT') {
+      navigateTo('Products');
+      await new Promise(r => setTimeout(r, 800));
+      addToCart(COFFEE_PRODUCTS[1]);
+      await new Promise(r => setTimeout(r, 800));
+      navigateTo('Cart');
+      await new Promise(r => setTimeout(r, 800));
+      navigateTo('Checkout');
+      await new Promise(r => setTimeout(r, 1200));
+      onTriggerCrash(selectedScenario, 'Checkout');
+    } else if (selectedScenario === 'INDEX_OUT_OF_BOUNDS_CART') {
+      navigateTo('Products');
+      await new Promise(r => setTimeout(r, 800));
+      addToCart(COFFEE_PRODUCTS[0]);
+      await new Promise(r => setTimeout(r, 600));
+      addToCart(COFFEE_PRODUCTS[1]);
+      await new Promise(r => setTimeout(r, 800));
+      navigateTo('Cart');
+      await new Promise(r => setTimeout(r, 1200));
+      onTriggerCrash(selectedScenario, 'Cart');
+    } else if (selectedScenario === 'NETWORK_TIMEOUT_API') {
+      navigateTo('Products');
+      await new Promise(r => setTimeout(r, 800));
+      addToCart(COFFEE_PRODUCTS[2]);
+      await new Promise(r => setTimeout(r, 800));
+      navigateTo('Cart');
+      await new Promise(r => setTimeout(r, 800));
+      navigateTo('Checkout');
+      await new Promise(r => setTimeout(r, 800));
+      selectPayment('UPI');
+      await new Promise(r => setTimeout(r, 1200));
+      onTriggerCrash(selectedScenario, 'Checkout');
+    }
+
+    setIsPlayingCrash(false);
+  };
+
+
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
   const tax = subtotal * 0.08;
@@ -206,16 +253,30 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
         <div className="flex items-center gap-2 text-xs text-rose-300">
           <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
           <span className="font-medium hidden sm:inline">Deliberate Crash Trigger:</span>
-          <span className="text-[11px] text-rose-400/80">Simulates NullPointerException in Checkout</span>
+          <span className="text-[11px] text-rose-400/80">Plays out the steps for {selectedScenario}</span>
         </div>
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => onTriggerCrash('NULL_POINTER_CHECKOUT', screen)}
-            className="px-3 py-1 text-xs font-semibold rounded-md bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-900/40 flex items-center gap-1.5 transition-all hover:scale-105"
+            onClick={playCrashSequence}
+            disabled={isPlayingCrash}
+            className={`px-3 py-1 text-xs font-semibold rounded-md shadow-lg shadow-rose-900/40 flex items-center gap-1.5 transition-all ${
+              isPlayingCrash 
+                ? 'bg-rose-900 text-rose-300 opacity-50 cursor-not-allowed' 
+                : 'bg-rose-600 hover:bg-rose-500 text-white hover:scale-105'
+            }`}
           >
-            <span>💥</span>
-            <span>Simulate Crash</span>
+            {isPlayingCrash ? (
+              <>
+                <span className="animate-spin w-3 h-3 border-2 border-white/20 border-t-white rounded-full" />
+                <span>Simulating Action Flow...</span>
+              </>
+            ) : (
+              <>
+                <span>💥</span>
+                <span>Play Crash Sequence</span>
+              </>
+            )}
           </button>
         </div>
       </div>

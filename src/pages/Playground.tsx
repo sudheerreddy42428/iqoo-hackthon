@@ -168,6 +168,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
             activeScreen={currentScreen}
             onScreenChange={setCurrentScreen}
             isAutoFixed={isAutoFixed}
+            selectedScenario={selectedScenario}
           />
           
           {/* Reproduction Playback Overlay */}
