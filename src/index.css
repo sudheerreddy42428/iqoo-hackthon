@@ -7,10 +7,11 @@
     color-scheme: dark;
   }
 
-  body {
+  html, body {
     background-color: #080a0f;
     color: #f1f5f9;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overscroll-behavior-y: none;
   }
 }
 
