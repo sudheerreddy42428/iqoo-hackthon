@@ -40,6 +40,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
     setActiveCrash(crashWithScreenshots);
     setActionBuffer(actions);
     setAnalysis(null);
+    setIsAutoFixed(false);
   };
 
   const setAnalysisResult = (result: AnalysisResult | null) => {

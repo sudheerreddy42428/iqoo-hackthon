@@ -61,22 +61,62 @@ class CrashSimulatorService {
   private crashes: CrashReport[] = [];
   private listeners: Set<(crashes: CrashReport[]) => void> = new Set();
 
+  private cachedBatteryLevel = 84;
+  private cachedDeviceModel = 'Unknown Device';
+  private cachedOs = 'Unknown OS';
+  
   constructor() {
+    this.initDeviceContext();
     this.loadFromStorage();
   }
 
+  private async initDeviceContext() {
+    try {
+      if ((navigator as any).getBattery) {
+        const battery = await (navigator as any).getBattery();
+        this.cachedBatteryLevel = Math.floor(battery.level * 100);
+        battery.addEventListener('levelchange', () => {
+          this.cachedBatteryLevel = Math.floor(battery.level * 100);
+        });
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    const ua = navigator.userAgent;
+    
+    // Parse OS
+    if (ua.includes('Windows')) this.cachedOs = 'Windows';
+    else if (ua.includes('Mac OS X')) this.cachedOs = 'macOS';
+    else if (ua.includes('Android')) this.cachedOs = 'Android';
+    else if (ua.includes('Linux')) this.cachedOs = 'Linux';
+    else if (ua.includes('iPhone') || ua.includes('iPad')) this.cachedOs = 'iOS';
+    
+    // Attempt to extract Android model if available
+    const androidMatch = ua.match(/Android [^;]+; ([^)]+)\)/);
+    if (androidMatch && androidMatch[1]) {
+      this.cachedDeviceModel = androidMatch[1].trim();
+    } else {
+      // Basic browser detection for non-mobile
+      if (ua.includes('Chrome')) this.cachedDeviceModel = 'Chrome Browser';
+      else if (ua.includes('Firefox')) this.cachedDeviceModel = 'Firefox Browser';
+      else if (ua.includes('Safari')) this.cachedDeviceModel = 'Safari Browser';
+    }
+  }
+
   public getMockDeviceContext(): DeviceContext {
+    const memoryGb = (navigator as any).deviceMemory || 4; // default to 4GB if not supported
     return {
-      os: 'OriginOS / Android 15',
-      osVersion: 'Android 15 (API 35)',
-      deviceModel: 'iQOO 15 (Simulated device environment)',
+      os: this.cachedOs,
+      osVersion: navigator.userAgent.substring(0, 40) + '...',
+      deviceModel: this.cachedDeviceModel,
       appVersion: '1.4.2',
       buildNumber: '1042',
-      memoryUsageMb: 148,
-      totalMemoryMb: 512,
-      batteryLevelPercent: 84,
-      networkStatus: 'WIFI',
-      screenOrientation: 'PORTRAIT',
+      memoryUsageMb: Math.floor(Math.random() * 100) + 150,
+      totalMemoryMb: memoryGb * 1024,
+      batteryLevelPercent: this.cachedBatteryLevel,
+      networkStatus: navigator.onLine ? 'WIFI' : 'OFFLINE',
+      screenOrientation: window.innerHeight > window.innerWidth ? 'PORTRAIT' : 'LANDSCAPE',
       isSimulated: true,
     };
   }

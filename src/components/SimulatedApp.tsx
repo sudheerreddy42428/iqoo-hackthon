@@ -13,6 +13,7 @@ import {
 import { SimulatedScreen, CartItem, SimulatedProduct } from '../types/reprox';
 import { COFFEE_PRODUCTS } from '../data/products';
 import { actionTracker } from '../services/actionTracker';
+import { crashSimulator } from '../services/crashSimulator';
 
 interface SimulatedAppProps {
   onTriggerCrash: (templateKey?: string, screen?: string) => void;
@@ -178,11 +179,11 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
           </div>
           <span className="font-mono text-[11px] text-slate-300 font-semibold">
-            Device: iQOO 15 <span className="text-slate-500 font-normal">(Simulated device environment)</span>
+            Device: {crashSimulator.getMockDeviceContext().deviceModel} <span className="text-slate-500 font-normal">(Simulated device environment)</span>
           </span>
           <span className="hidden sm:inline text-slate-600 font-mono">|</span>
           <span className="hidden sm:inline font-mono text-[10px] text-slate-400">
-            OriginOS / Android 15 • App v1.4.2 • Wi-Fi
+            {crashSimulator.getMockDeviceContext().os} • App v1.4.2 • {navigator.onLine ? 'Wi-Fi' : 'Offline'}
           </span>
         </div>
 

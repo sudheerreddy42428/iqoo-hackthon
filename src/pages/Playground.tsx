@@ -6,7 +6,7 @@ import { AnalysisPanel } from '../components/AnalysisPanel';
 import { RegressionTestPanel } from '../components/RegressionTestPanel';
 import { EducationalBadge } from '../components/EducationalBadge';
 import { SimulatedScreen } from '../types/reprox';
-import { crashSimulator } from '../services/crashSimulator';
+import { crashSimulator, CRASH_TEMPLATES } from '../services/crashSimulator';
 import { localAIAnalyzer, cloudAIAnalyzer } from '../services/analyzer';
 import { CrashScreenshotUploader } from '../components/CrashScreenshotUploader';
 import { DeveloperReportModal } from '../components/DeveloperReportModal';
@@ -40,6 +40,13 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
   // unless they trigger it.
 
   const handleTriggerCrash = async (templateKey: string = selectedScenario, screen?: string) => {
+    // Check if we already applied a fix for the currently selected scenario
+    const template = CRASH_TEMPLATES[templateKey as keyof typeof CRASH_TEMPLATES] || { errorType: 'NullPointerException' };
+    if (isAutoFixed && activeCrash && activeCrash.errorType === template.errorType) {
+      alert("✅ Crash prevented! The Auto-Fix engine has safely patched this code.");
+      return;
+    }
+
     setIsAnalyzing(true);
     const report = crashSimulator.simulateCrash(templateKey as any, screen || currentScreen);
     
