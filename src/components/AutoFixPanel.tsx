@@ -34,7 +34,7 @@ export const AutoFixPanel: React.FC<AutoFixPanelProps> = ({
   }, [isFixApplied]);
 
   useEffect(() => {
-    const isEligible = analysis.severity !== 'CRITICAL' && analysis.confidenceScore > 85;
+    const isEligible = !!analysis?.suggestedFix && analysis.confidenceScore > 80;
     if (isEligible && fixState === 'IDLE' && !isFixApplied) {
       // Small crash: automatically trigger the fix!
       handleRunAutoFix();
@@ -67,7 +67,7 @@ export const AutoFixPanel: React.FC<AutoFixPanelProps> = ({
     });
   };
 
-  const isEligible = analysis.severity !== 'CRITICAL' && analysis.confidenceScore > 85;
+  const isEligible = !!analysis.suggestedFix && analysis.confidenceScore > 80;
 
   return (
     <div className="glass-panel rounded-xl overflow-hidden border border-purple-500/30 shadow-2xl animate-fadeIn">

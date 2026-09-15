@@ -34,7 +34,7 @@ export const AIBotAssistant: React.FC = () => {
   useEffect(() => {
     if (analysis && activeCrash) {
       setIsOpen(true);
-      const isEligible = analysis.severity !== 'CRITICAL' && analysis.confidenceScore > 85;
+      const isEligible = !!analysis.suggestedFix && analysis.confidenceScore > 80;
 
       if (isEligible && !isAutoFixed) {
         // Automatic fix triggered! The AutoFixPanel will handle the animation and set the state.
