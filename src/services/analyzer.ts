@@ -301,7 +301,7 @@ export class LocalModelProvider implements AIProvider, AIAnalyzer {
       console.warn('[LocalModelProvider] Fallback for chat:', e);
       
       // 3. Robust Simulated Fallback (when offline and no native AI is supported)
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       if (lastUserMessage.includes('fix') || lastUserMessage.includes('solve')) {
         return "You can apply the Safe Auto-Fix by clicking the 'Apply Safe Auto-Fix' button in the panel above. This will patch the AST, run a quick regression test, and verify the crash is resolved safely.";

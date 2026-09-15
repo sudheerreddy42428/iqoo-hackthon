@@ -183,7 +183,7 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
           </span>
           <span className="hidden sm:inline text-slate-600 font-mono">|</span>
           <span className="hidden sm:inline font-mono text-[10px] text-slate-400">
-            {crashSimulator.getMockDeviceContext().os} • App v1.4.2 • {navigator.onLine ? 'Wi-Fi' : 'Offline'}
+            {crashSimulator.getMockDeviceContext().os} • {Math.round(crashSimulator.getMockDeviceContext().totalMemoryMb / 1024)}GB RAM • {crashSimulator.getMockDeviceContext().batteryLevelPercent}% Battery
           </span>
         </div>
 
@@ -470,7 +470,7 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
         )}
 
         {/* SCREEN 4: CHECKOUT */}
-        {screen === 'Checkout' && (
+        {screen === 'Checkout' && !orderComplete && (
           <div className="space-y-4 animate-fadeIn">
             <h3 className="text-sm font-semibold text-white">Checkout & Payment</h3>
 
@@ -529,6 +529,31 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
                   );
                 })}
               </div>
+
+              {/* Dynamic Payment Details */}
+              {selectedPaymentMethod === 'UPI' && (
+                <div className="p-4 bg-dark-900 border border-slate-800 rounded-lg text-center flex flex-col items-center gap-3">
+                  <div className="w-32 h-32 bg-white rounded-xl border-4 border-white p-2">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=demo@upi&pn=Demo&cu=INR" alt="QR Code" className="w-full h-full" />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-300">Scan QR to pay with any UPI App</span>
+                </div>
+              )}
+              {selectedPaymentMethod === 'CREDIT_CARD' && (
+                <div className="p-3 bg-dark-900 border border-slate-800 rounded-lg space-y-3">
+                  <input type="text" placeholder="Card Number" className="w-full text-xs p-2.5 bg-dark-950 border border-slate-700 rounded-lg focus:border-cyan-500 focus:outline-none" />
+                  <div className="flex gap-3">
+                    <input type="text" placeholder="MM/YY" className="w-1/2 text-xs p-2.5 bg-dark-950 border border-slate-700 rounded-lg focus:border-cyan-500 focus:outline-none" />
+                    <input type="text" placeholder="CVV" className="w-1/2 text-xs p-2.5 bg-dark-950 border border-slate-700 rounded-lg focus:border-cyan-500 focus:outline-none" />
+                  </div>
+                </div>
+              )}
+              {selectedPaymentMethod === 'CASH' && (
+                <div className="p-4 bg-emerald-950/20 border border-emerald-900/50 rounded-lg text-center">
+                  <span className="text-xs font-semibold text-emerald-400">Please pay cash at the counter upon pickup.</span>
+                </div>
+              )}
+
 
               {/* Bug Trigger Educational Callout */}
               <div className="p-2 rounded bg-slate-900/80 border border-slate-800 text-[11px] text-slate-400 flex items-start gap-2">
