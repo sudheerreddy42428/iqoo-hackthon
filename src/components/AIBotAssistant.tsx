@@ -13,7 +13,7 @@ interface ChatMessage {
 }
 
 export const AIBotAssistant: React.FC = () => {
-  const { activeCrash, analysis, isAutoFixed, setAutoFixed } = useInvestigation();
+  const { activeCrash, analysis, isAutoFixed } = useInvestigation();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([{
     id: 'welcome',
@@ -37,8 +37,7 @@ export const AIBotAssistant: React.FC = () => {
       const isEligible = analysis.severity !== 'CRITICAL' && analysis.confidenceScore > 85;
 
       if (isEligible && !isAutoFixed) {
-        // Automatic fix triggered!
-        setAutoFixed(true);
+        // Automatic fix triggered! The AutoFixPanel will handle the animation and set the state.
         addMessage({
           sender: 'ai',
           text: `I detected a minor crash in \`${analysis.suggestedFix.filePath}\` (Confidence: ${analysis.confidenceScore}%). I have **automatically applied a safe fix** for you!`,

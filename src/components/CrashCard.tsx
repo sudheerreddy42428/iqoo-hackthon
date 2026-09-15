@@ -152,7 +152,9 @@ export const CrashCard: React.FC<CrashCardProps> = ({
           </div>
           <div className="p-2.5 rounded bg-dark-950 border border-slate-800 space-y-1">
             <span className="text-[10px] text-slate-500 block">RAM & Battery</span>
-            <span className="text-slate-200 font-semibold">{report.deviceContext.memoryUsageMb}MB / {report.deviceContext.batteryLevelPercent}%</span>
+            <span className="text-slate-200 font-semibold">
+              {Math.round(report.deviceContext.totalMemoryMb / 1024)}GB / {report.deviceContext.batteryLevelPercent}%
+            </span>
           </div>
         </div>
       </div>

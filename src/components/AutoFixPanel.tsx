@@ -33,6 +33,14 @@ export const AutoFixPanel: React.FC<AutoFixPanelProps> = ({
     }
   }, [isFixApplied]);
 
+  useEffect(() => {
+    const isEligible = analysis.severity !== 'CRITICAL' && analysis.confidenceScore > 85;
+    if (isEligible && fixState === 'IDLE' && !isFixApplied) {
+      // Small crash: automatically trigger the fix!
+      handleRunAutoFix();
+    }
+  }, [analysis, fixState, isFixApplied]);
+
   const handleRunAutoFix = () => {
     if (fixState !== 'IDLE') return;
     
