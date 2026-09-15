@@ -27,13 +27,16 @@ export function generateEspressoTest(report: CrashReport, steps: ReproductionSte
 
   const code = `package com.reprox.coffee.regression
 
+import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.action.ViewActions.*
-import androidx.test.espresso.matcher.ViewMatchers.*
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withText
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.rule.ActivityTestRule
 import com.reprox.coffee.MainActivity
+import com.reprox.coffee.R
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -47,7 +50,7 @@ import org.junit.runner.RunWith
 class ${sanitizeName(report.errorType)}RegressionTest {
 
     @get:Rule
-    val activityRule = ActivityTestRule(MainActivity::class.java)
+    val activityRule = ActivityScenarioRule(MainActivity::class.java)
 
     @Test
     fun ${testName}() {
