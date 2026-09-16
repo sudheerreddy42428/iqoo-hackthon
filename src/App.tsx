@@ -158,7 +158,7 @@ export const App: React.FC = () => {
         onOpenAuditModal={() => setShowAuditModal(true)}
       />
 
-      <div className="flex-1 flex flex-col md:flex-row min-w-0">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
         {/* Sidebar (Mobile Header + Desktop Sidebar) */}
         <Sidebar
           currentTab={currentTab}
@@ -171,7 +171,7 @@ export const App: React.FC = () => {
           isDemoRunning={isDemoRunning}
         />
 
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           {/* Floating Demo Mode Controller Banner */}
           {isDemoRunning && (
             <div className="sticky top-11 z-20 bg-gradient-to-r from-purple-950 via-dark-900 to-indigo-950 border-b border-purple-500/30 px-4 py-2.5 shadow-xl animate-slideUp">

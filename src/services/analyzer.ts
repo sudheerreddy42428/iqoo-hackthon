@@ -241,27 +241,8 @@ export class LocalModelProvider implements AIProvider, AIAnalyzer {
         throw new Error("WebGPU is not supported in this browser.");
       }
       
-      console.log("[LocalModelProvider] Initializing/Fetching WebLLM Engine...");
-      const engine = await this.getEngine();
-
-      const systemPrompt = "You are an on-device Android crash diagnostic model. Synthesize root causes by correlating user actions and stack trace invariants. Respond concisely.";
-      const userPrompt = `Diagnose this crash concisely based on the following details:\nError: ${report.errorType}\nMessage: ${report.message}\nScreen: ${report.screen}`;
-
-      console.log("[LocalModelProvider] Running Inference...");
-      const reply = await engine.chat.completions.create({
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ]
-      });
-
-      return {
-        ...base,
-        analyzerName: 'WebLLM / WebGPU (Phi-3-mini)',
-        likelyRootCause: `[On-Device AI] ${reply.choices[0].message.content || base.likelyRootCause}`,
-        whyItHappened: `[AI Assisted] ${reply.choices[0].message.content || base.whyItHappened}`,
-        confidenceScore: 97,
-      };
+      // Skip WebLLM for performance in the playground
+      throw new Error("Skipping WebLLM download to keep the UI fast.");
     } catch (e) {
       console.warn('[LocalModelProvider] Fallback to deterministic local engine due to WebLLM/WebGPU error:', e);
       return {
@@ -289,14 +270,14 @@ export class LocalModelProvider implements AIProvider, AIAnalyzer {
         return `[Native AI] ${response}`;
       }
 
-      // 2. Try WebLLM if WebGPU is supported
-      if ((navigator as any).gpu) {
-        const engine = await this.getEngine();
-        const reply = await engine.chat.completions.create({ messages });
-        return reply.choices[0].message.content || "I couldn't generate a response.";
-      }
+      // 2. Try WebLLM if WebGPU is supported (Disabled for speed)
+      // if ((navigator as any).gpu) {
+      //   const engine = await this.getEngine();
+      //   const reply = await engine.chat.completions.create({ messages });
+      //   return reply.choices[0].message.content || "I couldn't generate a response.";
+      // }
       
-      throw new Error("No local AI engines available.");
+      throw new Error("Skipping WebLLM to keep chat bot fast.");
     } catch (e) {
       console.warn('[LocalModelProvider] Fallback for chat:', e);
       
