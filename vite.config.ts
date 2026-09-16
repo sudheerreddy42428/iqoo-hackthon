@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -79,5 +80,12 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+  },
+  test: {
+    globals: true,
+    environment: 'happy-dom',
+    setupFiles: './src/setupTests.ts',
+    css: false,
+    pool: 'threads',
   },
 });
