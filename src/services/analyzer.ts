@@ -211,13 +211,16 @@ PaymentService.processPayment(paymentMethod)`,
 
 import { CreateMLCEngine, MLCEngine } from "@mlc-ai/web-llm";
 
+/*
 let enginePromise: Promise<MLCEngine> | null = null;
+*/
 
 export class LocalModelProvider implements AIProvider, AIAnalyzer {
   public name = 'On-Device Local AI (Phi-3-mini)';
   public description = 'Quantized in-browser neural reasoning running locally via WebGPU (WebLLM) with 0 external network calls';
   public isLocal = true;
 
+/*
   private async getEngine(): Promise<MLCEngine> {
     if (!enginePromise) {
       enginePromise = CreateMLCEngine(
@@ -231,6 +234,7 @@ export class LocalModelProvider implements AIProvider, AIAnalyzer {
     }
     return enginePromise;
   }
+*/
 
   public async analyzeCrash(report: CrashReport): Promise<AnalysisResult> {
     const ruleEngine = new RuleBasedProvider();
