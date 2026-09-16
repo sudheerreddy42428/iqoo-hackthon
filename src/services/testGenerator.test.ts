@@ -4,24 +4,31 @@ import { CrashReport, ReproductionStep } from '../types/reprox';
 
 const mockReport: CrashReport = {
   id: 'test-123',
-  appName: 'CoffeeApp',
-  packageName: 'com.reprox.coffee',
-  versionName: '1.0',
-  versionCode: 1,
-  deviceModel: 'Pixel 6',
-  osVersion: 'Android 14',
   timestamp: new Date().toISOString(),
+  epochTime: Date.now(),
   errorType: 'NullPointerException',
   message: 'Attempt to invoke virtual method on a null object reference',
   stackTrace: 'java.lang.NullPointerException...',
   screen: 'Checkout',
-  recentActions: []
+  recentActions: [],
+  deviceContext: {
+    os: 'Android',
+    osVersion: '14',
+    deviceModel: 'Pixel 6',
+    appVersion: '1.0',
+    buildNumber: '1',
+    memoryUsageMb: 100,
+    totalMemoryMb: 4000,
+    batteryLevelPercent: 100,
+    networkStatus: 'WIFI',
+    screenOrientation: 'PORTRAIT'
+  }
 };
 
 const mockSteps: ReproductionStep[] = [
-  { stepNumber: 1, action: 'Open Home' },
-  { stepNumber: 2, action: 'Add to Cart', target: 'Cold Brew' },
-  { stepNumber: 3, action: 'Trigger Pay button' },
+  { stepNumber: 1, action: 'Open Home', screen: 'Home' },
+  { stepNumber: 2, action: 'Add to Cart', target: 'Cold Brew', screen: 'Home' },
+  { stepNumber: 3, action: 'Trigger Pay button', screen: 'Cart' },
 ];
 
 describe('testGenerator', () => {

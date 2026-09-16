@@ -1,16 +1,15 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { ActionTimeline } from './ActionTimeline';
 import { UserAction } from '../types/reprox';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
 const mockActions: UserAction[] = [
   {
     id: '1',
     type: 'NAVIGATION',
     screen: 'Home',
     description: 'Opened App',
-    timestamp: Date.now(),
+    timestamp: '12:00:00.000',
+    epochTime: 1700000000000,
   },
   {
     id: '2',
@@ -18,7 +17,8 @@ const mockActions: UserAction[] = [
     screen: 'Cart',
     target: 'Checkout Button',
     description: 'User tapped Checkout',
-    timestamp: Date.now() + 1000,
+    timestamp: '12:00:01.000',
+    epochTime: 1700000001000,
   }
 ];
 
