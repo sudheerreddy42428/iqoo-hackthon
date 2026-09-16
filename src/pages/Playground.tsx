@@ -10,7 +10,7 @@ import { crashSimulator, CRASH_TEMPLATES } from '../services/crashSimulator';
 import { localAIAnalyzer, cloudAIAnalyzer } from '../services/analyzer';
 import { CrashScreenshotUploader } from '../components/CrashScreenshotUploader';
 import { DeveloperReportModal } from '../components/DeveloperReportModal';
-import { AutoFixPanel } from '../components/AutoFixPanel';
+import { ApprovalPanel } from '../components/ApprovalPanel';
 import { useInvestigation } from '../context/InvestigationContext';
 import { FileText } from 'lucide-react';
 
@@ -24,8 +24,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
     analysis, 
     startInvestigation, 
     setAnalysisResult,
-    isAutoFixed,
-    setAutoFixed,
+    investigationState,
     resetDemo 
   } = useInvestigation();
   
@@ -42,7 +41,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
   const handleTriggerCrash = async (templateKey: string = selectedScenario, screen?: string) => {
     // Check if we already applied a fix for the currently selected scenario
     const template = CRASH_TEMPLATES[templateKey as keyof typeof CRASH_TEMPLATES] || { errorType: 'NullPointerException' };
-    if (isAutoFixed && activeCrash && activeCrash.errorType === template.errorType) {
+    if (investigationState === 'RESOLVED' && activeCrash && activeCrash.errorType === template.errorType) {
       alert("✅ Crash prevented! The Auto-Fix engine has safely patched this code.");
       return;
     }
@@ -167,7 +166,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
             onTriggerCrash={handleTriggerCrash}
             activeScreen={currentScreen}
             onScreenChange={setCurrentScreen}
-            isAutoFixed={isAutoFixed}
+            isAutoFixed={investigationState === 'RESOLVED'}
             selectedScenario={selectedScenario}
           />
           
@@ -270,12 +269,12 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
                 onReproduce={startReproduction}
               />
 
-              {/* Safe Auto-Fix Engine */}
-              <AutoFixPanel
+              {/* Developer Approval Flow */}
+              <ApprovalPanel
                 report={activeCrash}
                 analysis={analysis}
-                isFixApplied={isAutoFixed}
-                onApplyFix={() => setAutoFixed(true)}
+                onApprove={() => {}}
+                onReject={() => setShowDeveloperReport(true)}
               />
 
               {/* Regression Test Panel */}

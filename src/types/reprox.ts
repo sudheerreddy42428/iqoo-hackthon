@@ -96,6 +96,12 @@ export interface RootCauseChainNode {
   detail?: string;
 }
 
+export interface ChangeLocation {
+  file: string;
+  line: number;
+  snippet: string;
+}
+
 export interface AnalysisResult {
   reportId: string;
   analyzerName: string;
@@ -113,6 +119,12 @@ export interface AnalysisResult {
   severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   timestamp: string;
   correlationExplanation?: string;
+  // PRD New Fields
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  autoDebugEligible: boolean;
+  approvalRequired: boolean;
+  possibleSolutions?: string[];
+  changeLocation?: ChangeLocation;
 }
 
 export interface RegressionTest {

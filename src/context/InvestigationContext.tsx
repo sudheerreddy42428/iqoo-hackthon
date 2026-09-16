@@ -1,13 +1,22 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { CrashReport, AnalysisResult, CrashScreenshot, UserAction } from '../types/reprox';
 
+export type InvestigationStatePhase = 
+  | 'IDLE' 
+  | 'CRASH_DETECTED' 
+  | 'ANALYZING' 
+  | 'WAITING_APPROVAL' 
+  | 'DEBUGGING' 
+  | 'REPORT_GENERATED' 
+  | 'RESOLVED';
+
 interface InvestigationState {
   activeCrash: CrashReport | null;
   analysis: AnalysisResult | null;
   screenshots: CrashScreenshot[];
   actionBuffer: UserAction[];
   isDemoRunning: boolean;
-  isAutoFixed: boolean;
+  investigationState: InvestigationStatePhase;
 }
 
 interface InvestigationContextType extends InvestigationState {
@@ -17,7 +26,7 @@ interface InvestigationContextType extends InvestigationState {
   removeScreenshot: (screenshotId: string) => void;
   updateActionBuffer: (actions: UserAction[]) => void;
   setDemoRunning: (isRunning: boolean) => void;
-  setAutoFixed: (isFixed: boolean) => void;
+  setInvestigationState: (state: InvestigationStatePhase) => void;
   resetDemo: () => void;
 }
 
@@ -29,7 +38,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
   const [screenshots, setScreenshots] = useState<CrashScreenshot[]>([]);
   const [actionBuffer, setActionBuffer] = useState<UserAction[]>([]);
   const [isDemoRunning, setIsDemoRunning] = useState(false);
-  const [isAutoFixed, setIsAutoFixed] = useState(false);
+  const [investigationState, setInvestigationState] = useState<InvestigationStatePhase>('IDLE');
 
   const startInvestigation = (crash: CrashReport, actions: UserAction[]) => {
     // Attach current screenshots to crash report
@@ -40,7 +49,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
     setActiveCrash(crashWithScreenshots);
     setActionBuffer(actions);
     setAnalysis(null);
-    setIsAutoFixed(false);
+    setInvestigationState('CRASH_DETECTED');
   };
 
   const setAnalysisResult = (result: AnalysisResult | null) => {
@@ -77,9 +86,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
     setIsDemoRunning(isRunning);
   };
 
-  const setAutoFixed = (isFixed: boolean) => {
-    setIsAutoFixed(isFixed);
-  };
+
 
   const resetDemo = () => {
     setActiveCrash(null);
@@ -94,7 +101,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
     setScreenshots([]);
     setActionBuffer([]);
     setIsDemoRunning(false);
-    setIsAutoFixed(false);
+    setInvestigationState('IDLE');
   };
 
   return (
@@ -105,14 +112,14 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
         screenshots,
         actionBuffer,
         isDemoRunning,
-        isAutoFixed,
+        investigationState,
         startInvestigation,
         setAnalysisResult,
         addScreenshot,
         removeScreenshot,
         updateActionBuffer,
         setDemoRunning,
-        setAutoFixed,
+        setInvestigationState,
         resetDemo
       }}
     >

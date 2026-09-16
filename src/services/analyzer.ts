@@ -54,6 +54,21 @@ export class RuleBasedProvider implements AIProvider, AIAnalyzer {
     let confidenceScore = report.screenshots && report.screenshots.length > 0 ? 98 : 94;
     let affectedComponent = 'PaymentService.processPayment()';
     let severity: AnalysisResult['severity'] = 'CRITICAL';
+    
+    // PRD Fields Defaults
+    let riskLevel: AnalysisResult['riskLevel'] = 'LOW';
+    let autoDebugEligible = true;
+    let approvalRequired = true;
+    let possibleSolutions = [
+      'Disable the "Pay Now" button until a payment method is selected.',
+      'Show an error Toast/Snackbar prompting the user to select a payment method.',
+      'Provide a default payment method on screen load.'
+    ];
+    let changeLocation = {
+      file: 'CheckoutScreen.kt',
+      line: 142,
+      snippet: 'Button(\n  onClick = { viewModel.onPayClicked() },\n  enabled = true\n) {\n  Text("Pay Now")\n}'
+    };
 
     let whyItHappened = 'The application allowed the user to press Pay Now without selecting a payment method.';
     let whatShouldHaveHappened = "The application should have blocked payment and displayed 'Select a payment method first.'";
@@ -105,6 +120,19 @@ PaymentService.processPayment(paymentMethod)`,
       confidenceScore = report.screenshots && report.screenshots.length > 0 ? 96 : 91;
       affectedComponent = 'CartAdapter.onBindViewHolder()';
       severity = 'HIGH';
+      riskLevel = 'MEDIUM';
+      autoDebugEligible = true;
+      possibleSolutions = [
+        'Migrate from RecyclerView.Adapter to ListAdapter to automatically handle DiffUtil in background.',
+        'Synchronize block the dataset modification code.',
+        'Use snapshot state lists in Compose instead of traditional RecyclerViews.'
+      ];
+      changeLocation = {
+        file: 'CartAdapter.kt',
+        line: 45,
+        snippet: 'override fun onBindViewHolder(holder: CartViewHolder, position: Int) {\n  holder.bind(items[position])\n}'
+      };
+      
       rootCauseChain = [
         { label: 'Rapid Delete Taps', type: 'action', detail: 'User clicked remove multiple times' },
         { label: 'List Index Out of Bounds', type: 'state', detail: 'Adapter position > array bounds' },
@@ -141,6 +169,19 @@ PaymentService.processPayment(paymentMethod)`,
       confidenceScore = report.screenshots && report.screenshots.length > 0 ? 93 : 88;
       affectedComponent = 'PaymentClient.submitOrder()';
       severity = 'HIGH';
+      riskLevel = 'HIGH';
+      autoDebugEligible = false; // Complex network state requires manual developer input
+      possibleSolutions = [
+        'Implement an exponential backoff retry mechanism.',
+        'Increase socket read timeout configuration to 15s for unreliable cellular connections.',
+        'Create a local "offline queue" that syncs the payment state once the connection is restored.'
+      ];
+      changeLocation = {
+        file: 'PaymentClient.kt',
+        line: 88,
+        snippet: 'suspend fun submitOrder(order: Order): PaymentResponse {\n  return orderApi.submit(order)\n}'
+      };
+
       rootCauseChain = [
         { label: 'Submit Order Request', type: 'action', detail: 'Dispatched payment payload' },
         { label: 'Gateway Latency > 8000ms', type: 'state', detail: 'Socket read timeout reached' },
@@ -195,6 +236,11 @@ PaymentService.processPayment(paymentMethod)`,
       severity,
       timestamp: new Date().toLocaleTimeString(),
       correlationExplanation: 'ReproX derived this conclusion by correlating STACK TRACE + USER ACTIONS + APPLICATION STATE.',
+      riskLevel,
+      autoDebugEligible,
+      approvalRequired,
+      possibleSolutions,
+      changeLocation
     };
   }
 
