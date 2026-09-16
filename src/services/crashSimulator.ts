@@ -1,7 +1,7 @@
 import { CrashReport, DeviceContext, UserAction } from '../types/reprox';
 import { actionTracker } from './actionTracker';
 
-const CRASHES_STORAGE_KEY = 'reprox_crash_reports';
+const CRASHES_STORAGE_KEY = 'reprox_crash_reports_v2';
 
 export interface CrashTemplate {
   errorType: string;
@@ -71,18 +71,6 @@ class CrashSimulatorService {
   }
 
   private async initDeviceContext() {
-    try {
-      if ((navigator as any).getBattery) {
-        const battery = await (navigator as any).getBattery();
-        this.cachedBatteryLevel = Math.floor(battery.level * 100);
-        battery.addEventListener('levelchange', () => {
-          this.cachedBatteryLevel = Math.floor(battery.level * 100);
-        });
-      }
-    } catch (e) {
-      // ignore
-    }
-
     const ua = navigator.userAgent;
     
     // Parse OS
@@ -101,6 +89,31 @@ class CrashSimulatorService {
       if (ua.includes('Chrome')) this.cachedDeviceModel = 'Chrome Browser';
       else if (ua.includes('Firefox')) this.cachedDeviceModel = 'Firefox Browser';
       else if (ua.includes('Safari')) this.cachedDeviceModel = 'Safari Browser';
+    }
+
+    try {
+      if ((navigator as any).getBattery) {
+        const battery = await (navigator as any).getBattery();
+        this.cachedBatteryLevel = Math.floor(battery.level * 100);
+        
+        // Update any existing baseline crashes that might have the default 84%
+        this.crashes.forEach(c => {
+          if (c.deviceContext.batteryLevelPercent === 84) {
+            c.deviceContext.batteryLevelPercent = this.cachedBatteryLevel;
+          }
+          if (c.deviceContext.deviceModel === 'Unknown Device') {
+            c.deviceContext.deviceModel = this.cachedDeviceModel;
+          }
+        });
+        this.saveToStorage();
+        this.notify();
+
+        battery.addEventListener('levelchange', () => {
+          this.cachedBatteryLevel = Math.floor(battery.level * 100);
+        });
+      }
+    } catch (e) {
+      // ignore
     }
   }
 

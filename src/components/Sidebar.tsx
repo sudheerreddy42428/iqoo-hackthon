@@ -77,36 +77,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between h-16 px-4 border-b border-slate-800 bg-dark-950 sticky top-0 z-50">
-        <div className="flex items-center gap-2">
-          <Terminal className="w-5 h-5 text-cyan-400" />
-          <span className="font-bold text-lg text-white">ReproX</span>
+      {/* Mobile View */}
+      <div className="md:hidden w-full relative z-50 shrink-0">
+        <div className="flex items-center justify-between h-16 px-4 border-b border-slate-800 bg-dark-950">
+          <div className="flex items-center gap-2">
+            <Terminal className="w-5 h-5 text-cyan-400" />
+            <span className="font-bold text-lg text-white">ReproX</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onRunFullDemo}
+              disabled={isDemoRunning}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-purple-600 text-white"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Demo
+            </button>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-1.5 text-slate-400 hover:text-white"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onRunFullDemo}
-            disabled={isDemoRunning}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-purple-600 text-white"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            Demo
-          </button>
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-1.5 text-slate-400 hover:text-white"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
-      </div>
 
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-dark-950 pt-16 flex flex-col">
-          {renderNavItems()}
-        </div>
-      )}
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="absolute top-16 left-0 right-0 h-[calc(100dvh-4rem)] bg-dark-950 flex flex-col shadow-2xl">
+            {renderNavItems()}
+          </div>
+        )}
+      </div>
 
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-dark-950 border-r border-slate-800/80 h-screen sticky top-0 shrink-0">
