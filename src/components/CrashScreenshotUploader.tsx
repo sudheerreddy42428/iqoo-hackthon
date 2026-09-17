@@ -41,8 +41,9 @@ export const CrashScreenshotUploader: React.FC<CrashScreenshotUploaderProps> = (
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
 
-      if (!file.type.startsWith('image/')) {
-        setErrorMsg(`File ${file.name} is not a valid image (PNG, JPG, WEBP).`);
+      const validTypes = ['image/png', 'image/jpeg', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        setErrorMsg(`File ${file.name} is not a valid format. Only PNG, JPG, or WEBP are allowed.`);
         continue;
       }
       

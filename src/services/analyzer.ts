@@ -5,7 +5,8 @@ import {
   AIAnalyzer,
   ReproductionStep,
   SuggestedFix,
-  RootCauseChainNode
+  RootCauseChainNode,
+  SolutionOption
 } from '../types/reprox';
 
 /**
@@ -59,16 +60,31 @@ export class RuleBasedProvider implements AIProvider, AIAnalyzer {
     let riskLevel: AnalysisResult['riskLevel'] = 'LOW';
     let autoDebugEligible = true;
     let approvalRequired = true;
-    let possibleSolutions = [
-      'Disable the "Pay Now" button until a payment method is selected.',
-      'Show an error Toast/Snackbar prompting the user to select a payment method.',
-      'Provide a default payment method on screen load.'
-    ];
     let changeLocation = {
       file: 'CheckoutScreen.kt',
       line: 142,
-      snippet: 'Button(\n  onClick = { viewModel.onPayClicked() },\n  enabled = true\n) {\n  Text("Pay Now")\n}'
+      snippet: 'Button(\n  onClick = { viewModel.onPayClicked() },\n  enabled = true\n) {\n  Text("Pay Now")\n}',
+      isConfirmed: true
     };
+    
+    let recommendedApproach = 'Disable the "Pay Now" button until a payment method is selected.';
+    let possibleSolutions: SolutionOption[] = [
+      {
+        title: 'Disable Button (Recommended)',
+        description: 'Disable the "Pay Now" button entirely if `paymentMethod == null`.',
+        tradeOffs: 'Safe and standard. Requires UI state mapping.'
+      },
+      {
+        title: 'Validation Snackbar',
+        description: 'Allow clicking but show a snackbar error message.',
+        tradeOffs: 'More interactive, but allows the user to perform an invalid action.'
+      },
+      {
+        title: 'Default Payment Method',
+        description: 'Auto-select a saved payment method on load.',
+        tradeOffs: 'Reduces friction but may surprise users if they want to change cards.'
+      }
+    ];
 
     let whyItHappened = 'The application allowed the user to press Pay Now without selecting a payment method.';
     let whatShouldHaveHappened = "The application should have blocked payment and displayed 'Select a payment method first.'";
@@ -122,15 +138,29 @@ PaymentService.processPayment(paymentMethod)`,
       severity = 'HIGH';
       riskLevel = 'MEDIUM';
       autoDebugEligible = true;
+      recommendedApproach = 'Migrate from RecyclerView.Adapter to ListAdapter to automatically handle DiffUtil in background.';
       possibleSolutions = [
-        'Migrate from RecyclerView.Adapter to ListAdapter to automatically handle DiffUtil in background.',
-        'Synchronize block the dataset modification code.',
-        'Use snapshot state lists in Compose instead of traditional RecyclerViews.'
+        {
+          title: 'Use ListAdapter & DiffUtil',
+          description: 'Migrate to ListAdapter which calculates diffs asynchronously and prevents index desync.',
+          tradeOffs: 'Requires refactoring adapter boilerplate but provides the safest, most performant UX.'
+        },
+        {
+          title: 'Synchronize Modification',
+          description: 'Wrap the dataset modification in a synchronized block.',
+          tradeOffs: 'Quick to implement, but can cause UI thread blocking and frame drops.'
+        },
+        {
+          title: 'Compose Migration',
+          description: 'Use snapshot state lists in Jetpack Compose.',
+          tradeOffs: 'Requires a complete architectural rewrite.'
+        }
       ];
       changeLocation = {
         file: 'CartAdapter.kt',
         line: 45,
-        snippet: 'override fun onBindViewHolder(holder: CartViewHolder, position: Int) {\n  holder.bind(items[position])\n}'
+        snippet: 'override fun onBindViewHolder(holder: CartViewHolder, position: Int) {\n  holder.bind(items[position])\n}',
+        isConfirmed: true
       };
       
       rootCauseChain = [
@@ -171,15 +201,29 @@ PaymentService.processPayment(paymentMethod)`,
       severity = 'HIGH';
       riskLevel = 'HIGH';
       autoDebugEligible = false; // Complex network state requires manual developer input
+      recommendedApproach = 'Implement an exponential backoff retry mechanism.';
       possibleSolutions = [
-        'Implement an exponential backoff retry mechanism.',
-        'Increase socket read timeout configuration to 15s for unreliable cellular connections.',
-        'Create a local "offline queue" that syncs the payment state once the connection is restored.'
+        {
+          title: 'Exponential Backoff Retry',
+          description: 'Implement a resilience layer that automatically retries 3 times with exponential backoff.',
+          tradeOffs: 'Increases perceived latency but drastically reduces failure rate on flaky networks.'
+        },
+        {
+          title: 'Increase Socket Timeout',
+          description: 'Increase the hard timeout from 8s to 15s.',
+          tradeOffs: 'Easy to implement but frustrates users with long loading spinners.'
+        },
+        {
+          title: 'Offline Queue',
+          description: 'Store the order locally and sync when the network restores.',
+          tradeOffs: 'Highly robust but requires complex local database management (Room/SqlDelight).'
+        }
       ];
       changeLocation = {
         file: 'PaymentClient.kt',
         line: 88,
-        snippet: 'suspend fun submitOrder(order: Order): PaymentResponse {\n  return orderApi.submit(order)\n}'
+        snippet: 'suspend fun submitOrder(order: Order): PaymentResponse {\n  return orderApi.submit(order)\n}',
+        isConfirmed: false // Simulated hallucination guard! We don't have exact stack frame match for this.
       };
 
       rootCauseChain = [
@@ -221,6 +265,7 @@ PaymentService.processPayment(paymentMethod)`,
 
     return {
       reportId: report.id,
+      investigationId: report.investigationId,
       analyzerName: this.name,
       likelyRootCause,
       whyItHappened,
@@ -240,6 +285,7 @@ PaymentService.processPayment(paymentMethod)`,
       autoDebugEligible,
       approvalRequired,
       possibleSolutions,
+      recommendedApproach,
       changeLocation
     };
   }

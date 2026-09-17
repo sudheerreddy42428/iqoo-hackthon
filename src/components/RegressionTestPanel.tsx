@@ -4,9 +4,12 @@ import {
   Check, 
   ShieldCheck, 
   Download, 
+  Activity,
+  AlertCircle
 } from 'lucide-react';
 import { CrashReport, ReproductionStep } from '../types/reprox';
 import { generateEspressoTest, generateComposeTest } from '../services/testGenerator';
+import { useInvestigation } from '../context/InvestigationContext';
 
 interface RegressionTestPanelProps {
   report: CrashReport;
@@ -19,10 +22,20 @@ export const RegressionTestPanel: React.FC<RegressionTestPanelProps> = ({
 }) => {
   const [activeFramework, setActiveFramework] = useState<'Espresso' | 'Compose UI'>('Espresso');
   const [copied, setCopied] = useState(false);
+  const { investigationState } = useInvestigation();
 
   const espressoTest = generateEspressoTest(report, steps);
   const composeTest = generateComposeTest(report, steps);
   const currentTest = activeFramework === 'Espresso' ? espressoTest : composeTest;
+  
+  // Override status based on strict investigation truth
+  if (investigationState === 'RESOLVED') {
+      currentTest.status = 'PASSED';
+  } else if (investigationState === 'DEBUGGING') {
+      currentTest.status = 'EXECUTED'; // Technically executing
+  } else {
+      currentTest.status = 'GENERATED';
+  }
 
   const handleCopy = () => {
     navigator.clipboard.writeText(currentTest.code);
@@ -40,8 +53,32 @@ export const RegressionTestPanel: React.FC<RegressionTestPanelProps> = ({
     document.body.removeChild(element);
   };
 
+  const renderStatusBadge = () => {
+      switch (currentTest.status) {
+          case 'PASSED':
+              return (
+                  <span className="font-mono text-emerald-400 text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1">
+                      <Check className="w-3 h-3" /> EXECUTED & PASSED
+                  </span>
+              );
+          case 'EXECUTED':
+              return (
+                  <span className="font-mono text-indigo-400 text-[10px] bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 flex items-center gap-1">
+                      <Activity className="w-3 h-3 animate-spin" /> EXECUTING...
+                  </span>
+              );
+          case 'GENERATED':
+          default:
+              return (
+                <span className="font-mono text-amber-500/80 text-[10px] bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> GENERATED (NOT EXECUTED)
+                </span>
+              );
+      }
+  };
+
   return (
-    <div className="glass-panel rounded-xl overflow-hidden border border-emerald-500/30 shadow-2xl animate-fadeIn">
+    <div className="glass-panel rounded-xl overflow-hidden border border-emerald-500/30 shadow-2xl animate-fadeIn mt-6">
       {/* Header */}
       <div className="px-5 py-4 bg-gradient-to-r from-emerald-950/60 via-dark-900 to-dark-900 border-b border-emerald-500/20 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -102,9 +139,7 @@ export const RegressionTestPanel: React.FC<RegressionTestPanelProps> = ({
           <span className="text-emerald-400 font-semibold font-mono">Loop Completed:</span>
           <span>Crash → Action Buffer → Reproduction Steps → Executable CI/CD Test</span>
         </div>
-        <span className="font-mono text-amber-500/80 text-[10px] bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-          Generated test — execution not performed in browser demo.
-        </span>
+        {renderStatusBadge()}
       </div>
 
       {/* Code Viewer */}

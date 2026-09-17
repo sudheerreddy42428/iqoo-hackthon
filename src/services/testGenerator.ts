@@ -67,6 +67,7 @@ ${espressoActions}
     language: 'kotlin',
     testName,
     code,
+    status: 'GENERATED'
   };
 }
 
@@ -121,5 +122,6 @@ ${composeActions}
     language: 'kotlin',
     testName,
     code,
+    status: 'GENERATED'
   };
 }

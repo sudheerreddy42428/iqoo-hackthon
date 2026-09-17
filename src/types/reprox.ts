@@ -56,7 +56,8 @@ export interface DeviceContext {
 export type CrashStatus = 'New' | 'Investigating' | 'Reproduced' | 'Fixed' | 'Verified';
 
 export interface CrashReport {
-  id: string;
+  id: string; // Unique crash ID
+  investigationId?: string; // Tied to specific session
   timestamp: string;
   epochTime: number;
   errorType: string;
@@ -102,10 +103,18 @@ export interface ChangeLocation {
   file: string;
   line: number;
   snippet: string;
+  isConfirmed: boolean; // True if exact match in stack trace, False if inferred
+}
+
+export interface SolutionOption {
+  title: string;
+  description: string;
+  tradeOffs: string;
 }
 
 export interface AnalysisResult {
   reportId: string;
+  investigationId?: string;
   analyzerName: string;
   likelyRootCause: string;
   whyItHappened: string;
@@ -125,15 +134,19 @@ export interface AnalysisResult {
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   autoDebugEligible: boolean;
   approvalRequired: boolean;
-  possibleSolutions?: string[];
+  possibleSolutions?: SolutionOption[];
+  recommendedApproach?: string;
   changeLocation?: ChangeLocation;
 }
+
+export type RegressionTestStatus = 'GENERATED' | 'NOT_EXECUTED' | 'EXECUTED' | 'PASSED' | 'FAILED';
 
 export interface RegressionTest {
   framework: 'Espresso' | 'Compose UI';
   language: 'kotlin';
   testName: string;
   code: string;
+  status: RegressionTestStatus;
 }
 
 export interface AIProvider {
@@ -171,3 +184,4 @@ export interface CartItem {
 }
 
 export type SimulatedScreen = 'Home' | 'Products' | 'Cart' | 'Checkout' | 'Payment';
+
