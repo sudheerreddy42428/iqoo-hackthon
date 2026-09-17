@@ -21,6 +21,7 @@ interface SimulatedAppProps {
   onScreenChange?: (screen: SimulatedScreen) => void;
   isAutoFixed?: boolean;
   selectedScenario?: string;
+  autoPlay?: boolean;
 }
 
 export const SimulatedApp: React.FC<SimulatedAppProps> = ({
@@ -29,6 +30,7 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
   onScreenChange,
   isAutoFixed = false,
   selectedScenario = 'NULL_POINTER_CHECKOUT',
+  autoPlay = false,
 }) => {
   const [screen, setScreen] = useState<SimulatedScreen>(activeScreen);
   const [isPlayingCrash, setIsPlayingCrash] = useState(false);
@@ -204,10 +206,31 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
       selectPayment('UPI');
       await new Promise(r => setTimeout(r, 1200));
       onTriggerCrash(selectedScenario, 'Checkout');
+    } else if (selectedScenario === 'HAPPY_PATH') {
+      navigateTo('Products');
+      await new Promise(r => setTimeout(r, 800));
+      addToCart(COFFEE_PRODUCTS[0]);
+      await new Promise(r => setTimeout(r, 800));
+      navigateTo('Cart');
+      await new Promise(r => setTimeout(r, 800));
+      navigateTo('Checkout');
+      await new Promise(r => setTimeout(r, 800));
+      selectPayment('CREDIT_CARD');
+      await new Promise(r => setTimeout(r, 800));
+      handlePayClick(); // This will trigger happy path logic in SimulatedApp (setTimeout 1200ms -> setOrderComplete(true))
+      await new Promise(r => setTimeout(r, 1500));
+      onTriggerCrash('HAPPY_PATH', 'Checkout'); // Use onTriggerCrash to pass back success state to parent
     }
 
     setIsPlayingCrash(false);
   };
+
+  React.useEffect(() => {
+    if (autoPlay) {
+      playCrashSequence();
+    }
+  }, [autoPlay, selectedScenario]);
+
 
 
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);

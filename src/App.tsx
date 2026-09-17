@@ -3,6 +3,7 @@ import { Sidebar } from './components/Sidebar';
 import { Home } from './pages/Home';
 import { Playground } from './pages/Playground';
 import { Dashboard } from './pages/Dashboard';
+import { TestJourneyRouter } from './pages/TestJourneyRouter';
 import { HowItWorks } from './pages/HowItWorks';
 import { Documentation } from './pages/Documentation';
 import { Architecture } from './pages/Architecture';
@@ -226,6 +227,9 @@ export const App: React.FC = () => {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               />
+            )}
+            {currentTab === 'test-center' && (
+              <TestJourneyRouter />
             )}
 
             {/* Dedicated Tab Views for Phone-First Features */}

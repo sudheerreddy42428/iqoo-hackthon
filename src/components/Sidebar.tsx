@@ -40,8 +40,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems = [
     { id: 'home', label: 'Overview', icon: Terminal },
-    { id: 'playground', label: 'Playground', icon: Play },
+    { id: 'test-center', label: 'Coffee Shop Tests', icon: Play },
     { id: 'dashboard', label: 'Telemetry & AI', icon: ShieldAlert },
+    { id: 'playground', label: 'Playground', icon: Play },
     { id: 'voice', label: 'Voice Input (Speech)', icon: Sparkles },
     { id: 'camera', label: 'Camera OCR Scan', icon: Cpu },
     { id: 'audit', label: 'Airplane Mode Audit', icon: Layers },
