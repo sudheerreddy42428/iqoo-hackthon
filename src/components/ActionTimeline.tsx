@@ -4,12 +4,31 @@ import {
   Trash2, 
   Lock,
   CheckCircle2,
-  AlertTriangle,
+  MousePointerClick,
+  MonitorSmartphone,
+  Cpu,
+  ShieldAlert,
+  Navigation
 } from 'lucide-react';
 import { UserAction, ActionType } from '../types/reprox';
 import { actionTracker } from '../services/actionTracker';
 import { useInvestigation } from '../context/InvestigationContext';
 import { EducationalBadge } from './EducationalBadge';
+
+// Helper to mask sensitive data before displaying
+const maskSensitiveData = (key: string, value: any): string => {
+  const sensitiveKeys = ['cardnumber', 'cvv', 'password', 'pin', 'token', 'secret', 'auth'];
+  const lowerKey = key.toLowerCase();
+  const strValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
+
+  if (sensitiveKeys.some(sk => lowerKey.includes(sk))) {
+    if (lowerKey.includes('cardnumber') && strValue.length > 4) {
+      return `**** **** **** ${strValue.slice(-4)}`;
+    }
+    return '*'.repeat(strValue.length > 8 ? 8 : strValue.length);
+  }
+  return strValue;
+};
 
 export const ActionTimeline: React.FC = () => {
   const { activeCrash } = useInvestigation();
@@ -35,18 +54,57 @@ export const ActionTimeline: React.FC = () => {
     return () => unsubscribe();
   }, [isFrozen, activeCrash]);
 
-  const getActionBadgeColor = (type: ActionType) => {
+  const getActionStyles = (type: ActionType) => {
     switch (type) {
       case 'NAVIGATION':
-        return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
+        return {
+          bg: 'bg-cyan-500/10 border-cyan-500/30 shadow-cyan-500/10',
+          dot: 'bg-cyan-500 border-cyan-300',
+          text: 'text-cyan-400',
+          icon: <Navigation className="w-3.5 h-3.5" />,
+          label: 'User Navigation'
+        };
       case 'CLICK':
-        return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+      case 'INPUT':
+        return {
+          bg: 'bg-indigo-500/10 border-indigo-500/30 shadow-indigo-500/10',
+          dot: 'bg-indigo-500 border-indigo-300',
+          text: 'text-indigo-400',
+          icon: <MousePointerClick className="w-3.5 h-3.5" />,
+          label: 'User Action'
+        };
       case 'STATE_CHANGE':
-        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+        return {
+          bg: 'bg-emerald-500/10 border-emerald-500/30 shadow-emerald-500/10',
+          dot: 'bg-emerald-500 border-emerald-300',
+          text: 'text-emerald-400',
+          icon: <MonitorSmartphone className="w-3.5 h-3.5" />,
+          label: 'App State'
+        };
+      case 'API_CALL':
+        return {
+          bg: 'bg-purple-500/10 border-purple-500/30 shadow-purple-500/10',
+          dot: 'bg-purple-500 border-purple-300',
+          text: 'text-purple-400',
+          icon: <Cpu className="w-3.5 h-3.5" />,
+          label: 'System Event'
+        };
       case 'CRASH_TRIGGER':
-        return 'bg-rose-500/10 text-rose-400 border-rose-500/30 font-bold';
+        return {
+          bg: 'bg-rose-950/50 border-rose-500/50 shadow-rose-900/40',
+          dot: 'bg-rose-500 border-rose-300 animate-pulse',
+          text: 'text-rose-400',
+          icon: <ShieldAlert className="w-4 h-4" />,
+          label: 'Fatal Crash'
+        };
       default:
-        return 'bg-slate-800 text-slate-300 border-slate-700';
+        return {
+          bg: 'bg-slate-800 border-slate-700',
+          dot: 'bg-slate-500 border-slate-400',
+          text: 'text-slate-300',
+          icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+          label: 'Event'
+        };
     }
   };
 
@@ -157,7 +215,7 @@ export const ActionTimeline: React.FC = () => {
       </div>
 
       {/* Actions Scroll List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {actions.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500 space-y-3">
             <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400">
@@ -171,92 +229,83 @@ export const ActionTimeline: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="space-y-2 relative">
-            {/* Timeline line */}
-            <div className="absolute left-3 top-2 bottom-2 w-px bg-slate-800/80 -z-0" />
+          <div className="relative pl-3">
+            {/* Connected Graph Vertical Line */}
+            <div className="absolute left-6 top-6 bottom-4 w-1 bg-gradient-to-b from-slate-800 via-slate-700 to-rose-900/50 rounded-full" />
 
             {actions.map((act, index) => {
-              const isLast = index === actions.length - 1;
-              const isPreCrashCrucial = isFrozen && index >= actions.length - 2;
               const isCrash = act.type === 'CRASH_TRIGGER';
+              const styles = getActionStyles(act.type);
 
               return (
-                <div
-                  key={act.id}
-                  className={`group relative pl-7 pr-3 py-2 rounded-lg border text-xs transition-all ${
-                    isCrash
-                      ? 'bg-rose-950/40 border-rose-500/50 shadow-md shadow-rose-950/50'
-                      : isPreCrashCrucial
-                      ? 'bg-amber-950/30 border-amber-500/40 shadow-sm'
-                      : isLast && !isFrozen
-                      ? 'bg-slate-850/80 border-cyan-500/30 shadow-sm'
-                      : 'bg-dark-900/40 border-slate-800/70 hover:border-slate-700/80'
-                  }`}
-                >
-                  {/* Timeline dot icon */}
-                  <div
-                    className={`absolute left-1.5 top-2.5 w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                      isCrash
-                        ? 'bg-rose-500 border-rose-400 shadow-sm shadow-rose-500/50'
-                        : isPreCrashCrucial
-                        ? 'bg-amber-500 border-amber-400'
-                        : isLast
-                        ? 'bg-cyan-500 border-cyan-400 shadow-sm shadow-cyan-500/50'
-                        : 'bg-slate-900 border-slate-700'
-                    }`}
-                  >
-                    <span className="w-1 h-1 rounded-full bg-white" />
+                <div key={act.id} className="relative mb-6 last:mb-0 animate-slideUp" style={{ animationDelay: `${index * 50}ms` }}>
+                  
+                  {/* Outer connecting circle */}
+                  <div className={`absolute -left-3 top-2.5 w-6 h-6 rounded-full border-2 bg-dark-950 flex items-center justify-center z-10 ${styles.dot}`}>
+                    <span className="w-2 h-2 rounded-full bg-white opacity-80" />
                   </div>
 
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-mono border ${getActionBadgeColor(
-                            act.type
-                          )}`}
-                        >
-                          {act.type}
-                        </span>
-                        <span className="text-[11px] font-mono font-semibold text-slate-300">
-                          {act.screen}
-                        </span>
-                        {isPreCrashCrucial && !isCrash && (
-                          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
-                            <AlertTriangle className="w-2.5 h-2.5" />
-                            <span>Pre-Crash Trigger</span>
+                  {/* Main Event Card */}
+                  <div className={`ml-8 p-3 rounded-lg border shadow-lg transition-all ${styles.bg}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      
+                      <div className="flex-1 space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className={`flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-wider ${styles.text}`}>
+                            {styles.icon}
+                            {styles.label}
                           </span>
-                        )}
-                      </div>
-                      <div className={`text-xs ${isCrash ? 'text-rose-200 font-semibold' : 'text-slate-200'}`}>
-                        {act.actionName && act.target ? (
-                          <div className="flex items-center gap-1">
-                            <span className="font-medium text-slate-300">{act.actionName}</span>
-                            <span className="text-cyan-300 font-mono">"{act.target}"</span>
-                          </div>
-                        ) : (
-                          <p>{act.description}</p>
-                        )}
+                          <span className="text-slate-500 text-[10px] font-mono">•</span>
+                          <span className="text-slate-400 text-[10px] font-mono font-medium">Screen: {act.screen}</span>
+                        </div>
+                        
+                        <div className={`text-sm ${isCrash ? 'text-rose-100 font-bold' : 'text-slate-100 font-medium'}`}>
+                          {act.actionName && act.target ? (
+                            <div className="flex items-center gap-1.5">
+                              <span>{act.actionName}</span>
+                              <span className="px-1.5 py-0.5 rounded bg-dark-950 border border-slate-700 font-mono text-cyan-300 text-xs">
+                                "{act.target}"
+                              </span>
+                            </div>
+                          ) : (
+                            <span>{act.description}</span>
+                          )}
+                        </div>
+
                         {act.actionName && act.target && act.description && act.description !== `${act.actionName} "${act.target}"` && (
-                          <p className="text-slate-400 text-[11px] mt-0.5">{act.description}</p>
+                           <div className="text-slate-400 text-xs italic">
+                             {act.description}
+                           </div>
+                        )}
+                        
+                        {/* Render Metadata with Masking */}
+                        {act.metadata && Object.keys(act.metadata).length > 0 && (
+                          <div className="mt-2 p-2 bg-dark-950/60 rounded border border-slate-800/80">
+                            <div className="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-1">Payload Metadata</div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+                              {Object.entries(act.metadata).map(([k, v]) => {
+                                const maskedValue = maskSensitiveData(k, v);
+                                const isMasked = maskedValue !== String(v) && typeof v !== 'object' && maskedValue !== JSON.stringify(v);
+                                return (
+                                  <div key={k} className="flex items-start gap-1 font-mono text-[11px]">
+                                    <span className="text-slate-500">{k}:</span>
+                                    <span className={`${isMasked ? 'text-amber-400/80 font-bold' : 'text-slate-300'} break-all`}>
+                                      {maskedValue}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
                         )}
                       </div>
-                    </div>
 
-                    <span className="text-[10px] font-mono text-slate-500 shrink-0">
-                      {act.timestamp}
-                    </span>
+                      <div className="text-[10px] font-mono text-slate-500 whitespace-nowrap bg-dark-950/50 px-1.5 py-0.5 rounded border border-slate-800">
+                        {act.timestamp}
+                      </div>
+
+                    </div>
                   </div>
-
-                  {act.metadata && Object.keys(act.metadata).length > 0 && (
-                    <div className="mt-1 pt-1 border-t border-slate-800/60 font-mono text-[10px] text-slate-400">
-                      {Object.entries(act.metadata).map(([k, v]) => (
-                        <span key={k} className="mr-2 inline-block">
-                          <span className="text-slate-500">{k}:</span> {typeof v === 'object' ? JSON.stringify(v) : String(v)}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
               );
             })}

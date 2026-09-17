@@ -8,7 +8,8 @@ import {
   Sparkles, 
   Cpu, 
   History, 
-  FileCode
+  FileCode,
+  ShieldCheck
 } from 'lucide-react';
 import { FlowDiagram } from '../components/FlowDiagram';
 import { EducationalBadge } from '../components/EducationalBadge';
@@ -129,7 +130,7 @@ at com.app.CheckoutScreen.onPayClicked(CheckoutScreen.kt:142)`}
       <section className="max-w-5xl mx-auto space-y-4">
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-white tracking-tight">
-            Traditional Debugging vs. ReproX
+            Why ReproX? Traditional Debugging vs The ReproX Way
           </h2>
           <p className="text-sm text-slate-400">
             Compare the slow guesswork of raw stack traces with the deterministic loop of ReproX.
@@ -179,6 +180,58 @@ at com.app.CheckoutScreen.onPayClicked(CheckoutScreen.kt:142)`}
             <p className="text-xs text-slate-400 leading-relaxed">
               Synthesizes ready-to-run Kotlin Espresso and Jetpack Compose regression tests reproducing the exact tap sequence in CI/CD pipelines.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Privacy by Design Section */}
+      <section className="max-w-5xl mx-auto space-y-6">
+        <div className="glass-panel p-6 sm:p-8 rounded-2xl border border-emerald-500/30 bg-emerald-950/10 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
+          <div className="absolute -right-20 -top-20 w-64 h-64 bg-emerald-500/10 blur-3xl rounded-full pointer-events-none" />
+          
+          <div className="flex-1 space-y-4 relative z-10">
+            <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono font-bold uppercase tracking-wider">
+              <ShieldCheck className="w-5 h-5" />
+              <span>Privacy by Design</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white tracking-tight">
+              PII Masking at the Edge
+            </h2>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              ReproX is designed for enterprise compliance. Sensitive user data (PII, passwords, credit cards) is <strong>scrubbed directly on the device</strong> before it ever reaches the buffer or the network. 
+            </p>
+            <ul className="space-y-2 text-xs text-slate-400">
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                No unmasked passwords or CVVs stored in memory
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                Local deterministic fallback ensures data never has to leave the network
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                Regex-based sanitization pipeline runs inline with action tracking
+              </li>
+            </ul>
+          </div>
+
+          <div className="flex-1 w-full max-w-md relative z-10">
+            <div className="p-4 rounded-xl bg-dark-950 border border-slate-800 space-y-3 font-mono text-xs shadow-xl shadow-emerald-900/10">
+              <div className="text-slate-500 mb-1">Before Masking (Never Stored)</div>
+              <div className="text-rose-400 bg-rose-950/30 p-2.5 rounded border border-rose-900/50 flex items-center justify-between">
+                <span>Action: "Entered card 4111-1111-1111-1234"</span>
+                <AlertOctagon className="w-3.5 h-3.5 shrink-0" />
+              </div>
+              <div className="flex justify-center py-1">
+                <ArrowRight className="w-4 h-4 text-slate-600 rotate-90 md:rotate-0" />
+              </div>
+              <div className="text-slate-500 mb-1">After Edge Masking (Stored in Buffer)</div>
+              <div className="text-emerald-400 bg-emerald-950/30 p-2.5 rounded border border-emerald-900/50 flex items-center justify-between">
+                <span>Action: "Entered card ****-****-****-1234"</span>
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+              </div>
+            </div>
           </div>
         </div>
       </section>

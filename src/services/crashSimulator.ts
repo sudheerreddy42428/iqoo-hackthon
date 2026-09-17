@@ -210,7 +210,7 @@ class CrashSimulatorService {
         lastSeen: '1d ago',
         stackTrace: CRASH_TEMPLATES.NETWORK_TIMEOUT_API.stackTrace,
         recentActions: [
-          { id: 'act-21', timestamp: '14:10:02', epochTime: Date.now() - 50000, type: 'CLICK', screen: 'Checkout', description: 'Selected UPI Payment', actionName: 'Select', target: 'UPI' },
+          { id: 'act-21', timestamp: '14:10:02', epochTime: Date.now() - 50000, type: 'INPUT', screen: 'Checkout', description: 'Entered Card Details', actionName: 'Input', target: 'CardForm', metadata: { cardNumber: '4111222233334444', cvv: '123' } },
           { id: 'act-22', timestamp: '14:10:05', epochTime: Date.now() - 47000, type: 'CLICK', screen: 'Checkout', description: 'Dispatched order payment payload', actionName: 'Tap', target: 'Pay Now' },
         ],
         deviceContext: dc,

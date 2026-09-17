@@ -33,6 +33,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
   const [selectedScenario, setSelectedScenario] = useState<string>('NULL_POINTER_CHECKOUT');
   const [isReproducing, setIsReproducing] = useState(false);
   const [reproductionStep, setReproductionStep] = useState(0);
+  const [reproductionResult, setReproductionResult] = useState<'success' | 'failed' | null>(null);
   const [showDeveloperReport, setShowDeveloperReport] = useState(false);
 
   // Note: We don't auto-load recent crashes anymore to keep the demo clean for judges
@@ -51,6 +52,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
     
     // Start investigation globally
     startInvestigation(report, report.recentActions);
+    setReproductionResult(null);
 
     // Run analyzer automatically
     try {
@@ -77,6 +79,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
     if (!analysis) return;
     setIsReproducing(true);
     setReproductionStep(0);
+    setReproductionResult(null);
     
     // Smoothly scroll to the top so they can see the playground
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -91,6 +94,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
         clearInterval(interval);
         setTimeout(() => {
           setIsReproducing(false);
+          setReproductionResult('success');
         }, 1500);
       } else {
         setReproductionStep(current);
@@ -160,8 +164,8 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
 
       {/* Main Two-Column Playground Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Interactive Simulated Coffee Shop App (7 cols) */}
-        <div className="lg:col-span-7 h-[580px] relative">
+        {/* Left Column: Interactive Simulated Coffee Shop App (5 cols, sticky) */}
+        <div className="lg:col-span-5 h-[580px] lg:h-[calc(100vh-120px)] lg:sticky lg:top-6 relative z-10">
           <SimulatedApp
             onTriggerCrash={handleTriggerCrash}
             activeScreen={currentScreen}
@@ -206,104 +210,119 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
               </div>
             </div>
           )}
-        </div>
 
-        {/* Right Column: Live Rolling Event Timeline & Buffer (5 cols) */}
-        <div className="lg:col-span-5 h-[580px]">
-          <ActionTimeline />
-        </div>
-      </div>
-
-      {/* Active Crash Diagnosis & Remediation Section */}
-      {activeCrash && (
-        <section className="space-y-6 pt-4 border-t border-slate-800 animate-slideUp">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
-                <h2 className="text-lg font-bold text-white tracking-tight">
-                  Crash Report & Automated Diagnostics
-                </h2>
-                <EducationalBadge type="SIMULATED CRASH" size="sm" />
+          {/* Persistent Reproduction Result Overlay */}
+          {!isReproducing && reproductionResult === 'success' && (
+            <div className="absolute top-4 right-4 z-40 animate-slideDown">
+              <div className="bg-dark-950/90 backdrop-blur-md border border-emerald-500/50 shadow-lg shadow-emerald-900/20 px-4 py-2.5 rounded-xl flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <span className="text-lg">✓</span>
+                </div>
+                <div>
+                  <h4 className="text-emerald-400 font-bold text-xs uppercase tracking-wider">AI Verified</h4>
+                  <p className="text-white text-xs font-semibold">Crash Successfully Reproduced</p>
+                </div>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Captured at {activeCrash.timestamp} with {activeCrash.recentActions.length} actions in context buffer
-              </p>
-            </div>
-            
-            {analysis && (
-              <button
-                onClick={() => setShowDeveloperReport(true)}
-                className="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-indigo-950/50 transition-all hover:scale-105"
-              >
-                <FileText className="w-4 h-4" />
-                <span>Generate Developer Report</span>
-              </button>
-            )}
-          </div>
-
-          {/* Crash Card */}
-          <CrashCard
-            report={activeCrash}
-            onAnalyze={() => handleReAnalyze('rule-based')}
-            isAnalyzing={isAnalyzing}
-          />
-
-          {/* Screenshot Evidence Uploader */}
-          <div className="glass-panel p-5 rounded-2xl border border-slate-800 animate-fadeIn">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="w-6 h-6 rounded bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/40">📸</span>
-              <h3 className="text-sm font-semibold text-white">Visual Evidence</h3>
-            </div>
-            <CrashScreenshotUploader maxSizeMB={5} maxFiles={5} />
-          </div>
-
-          {/* Analysis Panel */}
-          {analysis && (
-            <div className="space-y-6">
-              <AnalysisPanel
-                analysis={analysis}
-                report={activeCrash}
-                onReAnalyze={handleReAnalyze}
-                isAnalyzing={isAnalyzing}
-                onReproduce={startReproduction}
-              />
-
-              {/* Developer Approval Flow */}
-              <ApprovalPanel
-                report={activeCrash}
-                analysis={analysis}
-                onApprove={() => {}}
-                onReject={() => setShowDeveloperReport(true)}
-              />
-
-              {/* Regression Test Panel */}
-              <RegressionTestPanel
-                report={activeCrash}
-                steps={analysis.reproductionSteps}
-              />
             </div>
           )}
-        </section>
-      )}
-
-      {/* Concept Architecture Card */}
-      {!activeCrash && (
-        <div className="p-6 rounded-2xl bg-dark-900/50 border border-slate-800/80 text-center space-y-3">
-          <h3 className="text-sm font-semibold text-slate-200">
-            How ReproX Operates In This Playground
-          </h3>
-          <p className="text-xs text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            1. Every tap on products, navigation tabs, or payment methods is piped through the rolling FIFO buffer.
-            <br />
-            2. When the buffer reaches 15 items, the oldest drops off, guaranteeing negligible overhead.
-            <br />
-            3. Clicking <span className="text-rose-400 font-mono font-semibold">"Simulate Crash"</span> freezes the buffer into a structured crash report.
-            <br />
-            4. The analyzer converts the action sequence into concrete reproduction steps and a Kotlin Espresso test.
-          </p>
         </div>
-      )}
+
+        {/* Right Column: Developer Dashboard (7 cols) */}
+        <div className="lg:col-span-7 space-y-6">
+          <ActionTimeline />
+          
+          {/* Active Crash Diagnosis & Remediation Section */}
+          {activeCrash && (
+            <section className="space-y-6 pt-4 border-t border-slate-800 animate-slideUp">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+                    <h2 className="text-lg font-bold text-white tracking-tight">
+                      Crash Report & Automated Diagnostics
+                    </h2>
+                    <EducationalBadge type="SIMULATED CRASH" size="sm" />
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Captured at {activeCrash.timestamp} with {activeCrash.recentActions.length} actions in context buffer
+                  </p>
+                </div>
+                
+                {analysis && (
+                  <button
+                    onClick={() => setShowDeveloperReport(true)}
+                    className="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-indigo-950/50 transition-all hover:scale-105"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>Generate Developer Report</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Crash Card */}
+              <CrashCard
+                report={activeCrash}
+                onAnalyze={() => handleReAnalyze('rule-based')}
+                isAnalyzing={isAnalyzing}
+              />
+
+              {/* Screenshot Evidence Uploader */}
+              <div className="glass-panel p-5 rounded-2xl border border-slate-800 animate-fadeIn">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="w-6 h-6 rounded bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/40">📸</span>
+                  <h3 className="text-sm font-semibold text-white">Visual Evidence</h3>
+                </div>
+                <CrashScreenshotUploader maxSizeMB={5} maxFiles={5} />
+              </div>
+
+              {/* Analysis Panel */}
+              {analysis && (
+                <div className="space-y-6">
+                  <AnalysisPanel
+                    analysis={analysis}
+                    report={activeCrash}
+                    onReAnalyze={handleReAnalyze}
+                    isAnalyzing={isAnalyzing}
+                    onReproduce={startReproduction}
+                  />
+
+                  {/* Developer Approval Flow */}
+                  <ApprovalPanel
+                    report={activeCrash}
+                    analysis={analysis}
+                    onApprove={() => {}}
+                    onReject={() => setShowDeveloperReport(true)}
+                  />
+
+                  {/* Regression Test Panel */}
+                  <RegressionTestPanel
+                    report={activeCrash}
+                    steps={analysis.reproductionSteps}
+                  />
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Concept Architecture Card */}
+          {!activeCrash && (
+            <div className="p-6 rounded-2xl bg-dark-900/50 border border-slate-800/80 text-center space-y-3">
+              <h3 className="text-sm font-semibold text-slate-200">
+                How ReproX Operates In This Playground
+              </h3>
+              <p className="text-xs text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                1. Every tap on products, navigation tabs, or payment methods is piped through the rolling FIFO buffer.
+                <br />
+                2. When the buffer reaches 15 items, the oldest drops off, guaranteeing negligible overhead.
+                <br />
+                3. Clicking <span className="text-rose-400 font-mono font-semibold">"Simulate Crash"</span> freezes the buffer into a structured crash report.
+                <br />
+                4. The analyzer converts the action sequence into concrete reproduction steps and a Kotlin Espresso test.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Modals */}
       {showDeveloperReport && activeCrash && analysis && (

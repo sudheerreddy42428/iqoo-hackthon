@@ -367,13 +367,15 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
 
         {/* Reproduce CTA button */}
         {onReproduce && (
-          <div className="pt-2 flex justify-end">
+          <div className="pt-5 mt-2 border-t border-slate-800">
             <button
               onClick={onReproduce}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-dark-950 font-bold text-xs flex items-center gap-2 shadow-lg shadow-cyan-950 transition-all hover:scale-105"
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-600 hover:from-cyan-400 hover:via-blue-400 hover:to-indigo-500 text-dark-950 font-black text-sm flex items-center justify-center gap-3 shadow-lg shadow-cyan-900/40 transition-all hover:scale-[1.02] border border-cyan-400/30 group"
             >
-              <Play className="w-4 h-4 fill-current" />
-              <span>Reproduce Crash (Replay Action Trace)</span>
+              <div className="w-8 h-8 rounded-full bg-dark-950/20 flex items-center justify-center group-hover:bg-dark-950/30 transition-colors">
+                <Play className="w-4 h-4 fill-current text-white" />
+              </div>
+              <span className="tracking-wide text-white uppercase">Reproduce Crash (Replay Action Trace)</span>
             </button>
           </div>
         )}

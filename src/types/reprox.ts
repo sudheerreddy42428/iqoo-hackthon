@@ -48,6 +48,8 @@ export interface DeviceContext {
   batteryLevelPercent: number;
   networkStatus: 'WIFI' | 'CELLULAR' | 'OFFLINE';
   screenOrientation: 'PORTRAIT' | 'LANDSCAPE';
+  cpuLoadPercent?: number;
+  thermalState?: 'NORMAL' | 'FAIR' | 'SERIOUS' | 'CRITICAL';
   isSimulated?: boolean;
 }
 
