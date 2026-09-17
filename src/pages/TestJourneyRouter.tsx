@@ -33,7 +33,7 @@ export const TestJourneyRouter: React.FC = () => {
 
   const [currentStep, setCurrentStep] = useState<JourneyStep>(() => loadState('step', 'test-center'));
   const [activeTestId, setActiveTestId] = useState<string | null>(() => loadState('testId', null));
-  const { resetDemo } = useInvestigation();
+  const { resetDemo, activeCrash, analysis } = useInvestigation();
 
   React.useEffect(() => {
     sessionStorage.setItem('reprox_router_step', JSON.stringify(currentStep));
@@ -45,6 +45,16 @@ export const TestJourneyRouter: React.FC = () => {
     setActiveTestId(null);
     setCurrentStep('test-center');
   };
+
+  React.useEffect(() => {
+    // Safety fallback: if sessionStorage restored a step but the required context is missing, reset
+    const requiresAnalysis = ['code-access', 'ai-analysis', 'approval-view', 'debug-execution', 'developer-report'];
+    if (requiresAnalysis.includes(currentStep) && (!activeCrash || !analysis)) {
+      handleExit();
+    } else if (currentStep === 'crash-summary' && !activeCrash) {
+      handleExit();
+    }
+  }, [currentStep, activeCrash, analysis]);
 
   return (
     <div className="w-full h-full">
