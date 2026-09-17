@@ -65,7 +65,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
         setInvestigationState('RESOLVED');
         setShowDeveloperReport(true);
       } else {
-        setInvestigationState('WAITING_CODE_ACCESS');
+        setInvestigationState('CODE_ACCESS_REQUESTED');
       }
     } finally {
       setIsAnalyzing(false);
@@ -83,7 +83,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
         setInvestigationState('RESOLVED');
         setShowDeveloperReport(true);
       } else {
-        setInvestigationState('WAITING_CODE_ACCESS');
+        setInvestigationState('CODE_ACCESS_REQUESTED');
       }
     } finally {
       setIsAnalyzing(false);
@@ -301,7 +301,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
                   />
 
                   {/* Developer Approval Flow / Code Access Flow */}
-                  {investigationState === 'WAITING_CODE_ACCESS' && (
+                  {investigationState === 'CODE_ACCESS_REQUESTED' && (
                     <CodeAccessView
                       onAccessGranted={() => setInvestigationState('WAITING_APPROVAL')}
                       onAccessDenied={() => {
