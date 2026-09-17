@@ -219,18 +219,18 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
     <div className="flex flex-col h-full bg-dark-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
       {/* Device Chrome / Header */}
       <div className="px-4 py-2.5 bg-dark-950 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
           <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
-            <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+            <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80 hidden sm:block" />
+            <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80 hidden sm:block" />
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80 hidden sm:block" />
+            <span className="font-mono text-[11px] text-slate-300 font-semibold ml-1 sm:ml-0">
+              {crashSimulator.getMockDeviceContext().deviceModel}
+            </span>
           </div>
-          <span className="font-mono text-[11px] text-slate-300 font-semibold">
-            Device: {crashSimulator.getMockDeviceContext().deviceModel} <span className="text-slate-500 font-normal">(Simulated device environment)</span>
-          </span>
           <span className="hidden sm:inline text-slate-600 font-mono">|</span>
-          <span className="hidden sm:inline font-mono text-[10px] text-slate-400">
-            {crashSimulator.getMockDeviceContext().os} • {Math.round(crashSimulator.getMockDeviceContext().totalMemoryMb / 1024)}GB RAM • {crashSimulator.getMockDeviceContext().batteryLevelPercent}% Battery
+          <span className="font-mono text-[10px] text-slate-400">
+            {crashSimulator.getMockDeviceContext().os} • {crashSimulator.getMockDeviceContext().batteryLevelPercent}% Battery
           </span>
         </div>
 
