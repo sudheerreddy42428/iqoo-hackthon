@@ -100,7 +100,7 @@ export const AIBotAssistant: React.FC = () => {
     return (
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-purple-600 hover:bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.4)] flex items-center justify-center text-white transition-transform hover:scale-110 z-50 animate-bounce"
+        className="fixed bottom-4 left-4 w-14 h-14 rounded-full bg-purple-600 hover:bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.4)] flex items-center justify-center text-white transition-transform hover:scale-110 z-50 animate-bounce"
       >
         <Bot className="w-6 h-6" />
       </button>
@@ -111,7 +111,7 @@ export const AIBotAssistant: React.FC = () => {
     return (
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 px-4 py-3 rounded-full bg-dark-900 border border-purple-500/30 shadow-2xl flex items-center gap-3 text-white transition-all hover:scale-105 z-50 hover:bg-dark-800"
+        className="fixed bottom-4 left-4 px-4 py-3 rounded-full bg-dark-900 border border-purple-500/30 shadow-2xl flex items-center gap-3 text-white transition-all hover:scale-105 z-50 hover:bg-dark-800"
       >
         <div className="relative">
           <Bot className="w-5 h-5 text-purple-400" />
@@ -124,7 +124,7 @@ export const AIBotAssistant: React.FC = () => {
 
   return (
     <>
-      <div className="fixed bottom-6 right-6 w-[380px] max-h-[600px] flex flex-col bg-dark-950 border border-purple-500/30 rounded-2xl shadow-2xl z-50 overflow-hidden animate-fadeIn">
+      <div className="fixed bottom-4 left-4 w-[380px] max-h-[600px] flex flex-col bg-dark-950 border border-purple-500/30 rounded-2xl shadow-2xl z-50 overflow-hidden animate-fadeIn">
         {/* Header */}
         <div className="px-4 py-3 bg-gradient-to-r from-purple-900/60 to-dark-900 border-b border-purple-500/20 flex items-center justify-between">
           <div className="flex items-center gap-3">
