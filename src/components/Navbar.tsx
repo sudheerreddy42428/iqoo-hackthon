@@ -19,7 +19,6 @@ interface NavbarProps {
   currentTab: string;
   onSelectTab: (tab: string) => void;
   onRunFullDemo: () => void;
-  onOpenVoiceModal?: () => void;
   isDemoRunning?: boolean;
 }
 
@@ -27,7 +26,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentTab,
   onSelectTab,
   onRunFullDemo,
-  onOpenVoiceModal,
   isDemoRunning = false,
 }) => {
   const [actionCount, setActionCount] = useState<number>(0);
@@ -117,17 +115,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="text-slate-500 text-[11px]">buffered</span>
             </button>
 
-            {/* Voice Crash Input CTA */}
-            {onOpenVoiceModal && (
-              <button
-                onClick={onOpenVoiceModal}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700/60 transition-all hover:scale-[1.02]"
-                title="Speak a crash description"
-              >
-                <span className="text-base">🎙️</span>
-                Voice Input
-              </button>
-            )}
 
             {/* Run Full Demo CTA */}
             <button
