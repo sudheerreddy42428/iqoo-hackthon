@@ -64,6 +64,7 @@ class CrashSimulatorService {
   private cachedBatteryLevel = 84;
   private cachedDeviceModel = 'Unknown Device';
   private cachedOs = 'Unknown OS';
+  private cachedOsVersion = 'Unknown Version';
   
   constructor() {
     this.initDeviceContext();
@@ -73,22 +74,40 @@ class CrashSimulatorService {
   private async initDeviceContext() {
     const ua = navigator.userAgent;
     
-    // Parse OS
-    if (ua.includes('Windows')) this.cachedOs = 'Windows';
-    else if (ua.includes('Mac OS X')) this.cachedOs = 'macOS';
-    else if (ua.includes('Android')) this.cachedOs = 'Android';
-    else if (ua.includes('Linux')) this.cachedOs = 'Linux';
-    else if (ua.includes('iPhone') || ua.includes('iPad')) this.cachedOs = 'iOS';
+    // Parse OS and OS Version
+    if (ua.includes('Windows')) {
+      this.cachedOs = 'Windows';
+      const match = ua.match(/Windows NT ([0-9.]+)/);
+      if (match) this.cachedOsVersion = match[1];
+    } else if (ua.includes('Mac OS X')) {
+      this.cachedOs = 'macOS';
+      const match = ua.match(/Mac OS X ([0-9_]+)/);
+      if (match) this.cachedOsVersion = match[1].replace(/_/g, '.');
+    } else if (ua.includes('Android')) {
+      this.cachedOs = 'Android';
+      const match = ua.match(/Android ([0-9.]+)/);
+      if (match) this.cachedOsVersion = match[1];
+    } else if (ua.includes('Linux')) {
+      this.cachedOs = 'Linux';
+    } else if (ua.includes('iPhone') || ua.includes('iPad')) {
+      this.cachedOs = 'iOS';
+      const match = ua.match(/OS ([0-9_]+)/);
+      if (match) this.cachedOsVersion = match[1].replace(/_/g, '.');
+    }
     
     // Attempt to extract Android model if available
     const androidMatch = ua.match(/Android [^;]+; ([^)]+)\)/);
     if (androidMatch && androidMatch[1]) {
       this.cachedDeviceModel = androidMatch[1].trim();
+    } else if (this.cachedOs === 'iOS') {
+       if (ua.includes('iPhone')) this.cachedDeviceModel = 'iPhone';
+       else if (ua.includes('iPad')) this.cachedDeviceModel = 'iPad';
     } else {
       // Basic browser detection for non-mobile
       if (ua.includes('Chrome')) this.cachedDeviceModel = 'Chrome Browser';
       else if (ua.includes('Firefox')) this.cachedDeviceModel = 'Firefox Browser';
-      else if (ua.includes('Safari')) this.cachedDeviceModel = 'Safari Browser';
+      else if (ua.includes('Safari') && !ua.includes('Chrome')) this.cachedDeviceModel = 'Safari Browser';
+      else if (ua.includes('Edge')) this.cachedDeviceModel = 'Edge Browser';
     }
 
     try {
@@ -103,6 +122,9 @@ class CrashSimulatorService {
           }
           if (c.deviceContext.deviceModel === 'Unknown Device') {
             c.deviceContext.deviceModel = this.cachedDeviceModel;
+          }
+          if (c.deviceContext.osVersion === 'Unknown Version' || c.deviceContext.osVersion.includes('...')) {
+            c.deviceContext.osVersion = this.cachedOsVersion;
           }
         });
         this.saveToStorage();
@@ -121,7 +143,7 @@ class CrashSimulatorService {
     const memoryGb = (navigator as any).deviceMemory || 4; // default to 4GB if not supported
     return {
       os: this.cachedOs,
-      osVersion: navigator.userAgent.substring(0, 40) + '...',
+      osVersion: this.cachedOsVersion !== 'Unknown Version' ? this.cachedOsVersion : navigator.userAgent.substring(0, 40) + '...',
       deviceModel: this.cachedDeviceModel,
       appVersion: '1.4.2',
       buildNumber: '1042',
