@@ -118,13 +118,11 @@ export const CameraCrashScanner: React.FC<CameraCrashScannerProps> = ({
       
       let parsedSnippet = text.trim();
       
-      // If OCR produces garbage or fails, provide a fallback for demo purposes
       if (!parsedSnippet || parsedSnippet.length < 5) {
-        parsedSnippet = `java.lang.NullPointerException: Attempt to invoke virtual method 'void com.reprox.coffee.controller.PaymentController.processPayment' on a null object reference
-    at com.reprox.coffee.ui.CheckoutScreenKt.invoke(CheckoutScreen.kt:142)`;
+        setExtractedText('No text detected in the image. Please try again with a clearer picture of the error screen or stack trace.');
+      } else {
+        setExtractedText(parsedSnippet);
       }
-      
-      setExtractedText(parsedSnippet);
     } catch (err) {
       console.error('Tesseract OCR failed:', err);
       setExtractedText('Failed to parse text from image using local OCR.');
@@ -337,15 +335,17 @@ export const CameraCrashScanner: React.FC<CameraCrashScannerProps> = ({
             <code>{extractedText}</code>
           </pre>
 
-          <div className="pt-2 flex justify-end">
-            <button
-              onClick={handleApplyExtractedCrash}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:brightness-110 text-dark-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-cyan-950"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Analyze Extracted Error in ReproX</span>
-            </button>
-          </div>
+          {(!extractedText.startsWith('No text') && !extractedText.startsWith('Failed')) && (
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={handleApplyExtractedCrash}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:brightness-110 text-dark-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-cyan-950"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Analyze Extracted Error in ReproX</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
