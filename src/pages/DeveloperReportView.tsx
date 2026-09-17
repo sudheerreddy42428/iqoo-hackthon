@@ -3,18 +3,21 @@ import { useInvestigation } from '../context/InvestigationContext';
 import { Download, Copy, Check, FileText } from 'lucide-react';
 
 export const DeveloperReportView: React.FC = () => {
-  const { activeCrash, analysis, resetDemo } = useInvestigation();
+  const { activeCrash, analysis, resetDemo, investigationState } = useInvestigation();
   const [copied, setCopied] = useState(false);
 
   if (!activeCrash || !analysis) {
     return <div className="p-8 text-white">No analysis context available.</div>;
   }
 
+  const isAutoFixed = investigationState === 'RESOLVED' && analysis.riskLevel === 'LOW';
+
   const generateMarkdown = () => {
     return `# ReproX Exhaustive Crash Diagnostic Report
 **Crash ID**: ${activeCrash.id}
 **Investigation ID**: ${analysis.investigationId || 'N/A'}
 **Timestamp**: ${activeCrash.timestamp}
+**Status**: ${isAutoFixed ? 'Auto-Fixed by ReproX (Low Risk)' : 'Pending Manual Review'}
 
 ---
 
@@ -170,7 +173,9 @@ Review the patch and apply it manually.
             Exhaustive Developer Report
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            The AI could not automatically debug this issue. Please review the 33-point manual report.
+            {isAutoFixed 
+              ? 'This crash was safely auto-fixed in the background because it was a Low Risk issue. See the patch details below.' 
+              : 'The AI could not automatically debug this issue. Please review the 33-point manual report.'}
           </p>
         </div>
         <button

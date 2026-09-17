@@ -11,6 +11,7 @@ import { localAIAnalyzer, cloudAIAnalyzer } from '../services/analyzer';
 import { CrashScreenshotUploader } from '../components/CrashScreenshotUploader';
 import { DeveloperReportModal } from '../components/DeveloperReportModal';
 import { ApprovalPanel } from '../components/ApprovalPanel';
+import { CodeAccessView } from './CodeAccessView';
 import { useInvestigation } from '../context/InvestigationContext';
 import { FileText } from 'lucide-react';
 
@@ -25,6 +26,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
     startInvestigation, 
     setAnalysisResult,
     investigationState,
+    setInvestigationState,
     resetDemo 
   } = useInvestigation();
   
@@ -58,6 +60,13 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
     try {
       const result = await localAIAnalyzer.analyze(report);
       setAnalysisResult(result);
+      
+      if (result.riskLevel === 'LOW') {
+        setInvestigationState('RESOLVED');
+        setShowDeveloperReport(true);
+      } else {
+        setInvestigationState('WAITING_CODE_ACCESS');
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -70,6 +79,12 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
       const analyzer = analyzerType === 'llm' ? cloudAIAnalyzer : localAIAnalyzer;
       const result = await analyzer.analyze(activeCrash);
       setAnalysisResult(result);
+      if (result.riskLevel === 'LOW') {
+        setInvestigationState('RESOLVED');
+        setShowDeveloperReport(true);
+      } else {
+        setInvestigationState('WAITING_CODE_ACCESS');
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -170,7 +185,6 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
             onTriggerCrash={handleTriggerCrash}
             activeScreen={currentScreen}
             onScreenChange={setCurrentScreen}
-            isAutoFixed={investigationState === 'RESOLVED'}
             selectedScenario={selectedScenario}
           />
           
@@ -286,13 +300,32 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
                     onReproduce={startReproduction}
                   />
 
-                  {/* Developer Approval Flow */}
-                  <ApprovalPanel
-                    report={activeCrash}
-                    analysis={analysis}
-                    onApprove={() => {}}
-                    onReject={() => setShowDeveloperReport(true)}
-                  />
+                  {/* Developer Approval Flow / Code Access Flow */}
+                  {investigationState === 'WAITING_CODE_ACCESS' && (
+                    <CodeAccessView
+                      onAccessGranted={() => setInvestigationState('WAITING_APPROVAL')}
+                      onAccessDenied={() => {
+                        setInvestigationState('REPORT_GENERATED');
+                        setShowDeveloperReport(true);
+                      }}
+                      onExit={() => {
+                        setInvestigationState('REPORT_GENERATED');
+                        setShowDeveloperReport(true);
+                      }}
+                    />
+                  )}
+
+                  {(investigationState === 'WAITING_APPROVAL' || investigationState === 'DEBUGGING' || (investigationState === 'RESOLVED' && analysis.riskLevel !== 'LOW')) && (
+                    <ApprovalPanel
+                      report={activeCrash}
+                      analysis={analysis}
+                      onApprove={() => setInvestigationState('RESOLVED')}
+                      onReject={() => {
+                        setInvestigationState('REPORT_GENERATED');
+                        setShowDeveloperReport(true);
+                      }}
+                    />
+                  )}
 
                   {/* Regression Test Panel */}
                   <RegressionTestPanel

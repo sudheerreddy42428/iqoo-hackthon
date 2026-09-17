@@ -77,25 +77,28 @@ export const TestJourneyRouter: React.FC = () => {
 
       {currentStep === 'crash-summary' && (
         <CrashSummary
-          onAnalyze={() => setCurrentStep('code-access')}
-          onExit={handleExit}
-        />
-      )}
-
-      {currentStep === 'code-access' && (
-        <CodeAccessView
-          onAccessGranted={() => setCurrentStep('ai-analysis')}
-          onAccessDenied={() => setCurrentStep('developer-report')}
+          onAnalyze={() => setCurrentStep('ai-analysis')}
           onExit={handleExit}
         />
       )}
 
       {currentStep === 'ai-analysis' && (
         <AIAnalysisView
-          onApprovalRequest={() => setCurrentStep('approval-view')}
+          onApprovalRequest={() => setCurrentStep('code-access')}
+          onExit={handleExit}
+          onReject={() => setCurrentStep('developer-report')}
+        />
+      )}
+
+      {currentStep === 'code-access' && (
+        <CodeAccessView
+          onAccessGranted={() => setCurrentStep('approval-view')}
+          onAccessDenied={() => setCurrentStep('developer-report')}
           onExit={handleExit}
         />
       )}
+
+
 
       {currentStep === 'approval-view' && (
         <ApprovalView

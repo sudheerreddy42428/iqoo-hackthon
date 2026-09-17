@@ -50,6 +50,21 @@ export const ApprovalView: React.FC<ApprovalViewProps> = ({ onApprovalComplete, 
           </div>
         </div>
 
+        <div className="bg-[#0a0a0c] border border-slate-800 rounded-lg p-5 space-y-4 relative z-10 mb-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+            Proposed Patch
+          </div>
+          <div className="bg-dark-900 p-4 rounded-lg border border-slate-800 overflow-x-auto">
+            <pre className="text-xs font-mono">
+              {analysis.suggestedFix.diffSnippet?.split('\n').map((line, i) => (
+                <div key={i} className={line.startsWith('+') ? 'text-emerald-400 bg-emerald-400/10' : line.startsWith('-') ? 'text-rose-400 bg-rose-400/10' : 'text-slate-400'}>
+                  {line}
+                </div>
+              ))}
+            </pre>
+          </div>
+        </div>
+
         <div className="bg-dark-950 border border-slate-800 rounded-lg p-5 space-y-4 relative z-10">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
             <AlertTriangle className="w-4 h-4 text-amber-500" />

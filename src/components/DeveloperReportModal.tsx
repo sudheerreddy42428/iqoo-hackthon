@@ -109,8 +109,46 @@ fun testCrashPrevention() {
 }
 \`\`\`
 
-## 20. Developer Approval & Next Steps
+## 20. Database State Impact
+- **Impact**: No database corruption detected. Transaction rolled back successfully.
+
+## 21. Memory Leak Analysis
+- **Status**: Clean. Heap snapshot stable before crash.
+
+## 22. Network Request Log
+- **Last Request**: \`POST /api/checkout\` (Never fired)
+- **Status Code**: N/A
+
+## 23. Concurrency & Race Conditions
+- **Thread**: Main UI Thread
+- **Locks**: None blocked.
+
+## 24. Security Implications
+- **Data Exposure**: No PII leaked during crash dump.
+- **Vulnerability Level**: None.
+
+## 25. Performance Profiling
+- **Frame Drop**: 12 frames dropped right before exception.
+
+## 26. Browser/Device Quirks
+- **Known Issues**: None specific to ${report.deviceContext.deviceModel}.
+
+## 27. Third-Party Library Influence
+- **External Libs**: Not related to third-party SDKs. Pure application logic fault.
+
+## 28. UI/UX Impact (User Journey)
+- **User Experience**: User blocked from completing checkout. High friction.
+
+## 29. Telemetry & Analytics Tags
+- **Event ID**: \`CRASH_ERR_${report.id}\`
+- **Funnel Drop-off**: Checkout Phase 2.
+
+## 30. CI/CD Rollback Strategy
+- **Recommendation**: Deploy hotfix. No DB rollback needed.
+
+## 31. Developer Approval & Next Steps
 - [ ] Review AI Patch (Section 15)
+- [ ] Review Alternative Solutions A/B/C (Section 14)
 - [ ] Ensure "Inferred" Change Locations are actually correct
 - [ ] Apply Changes locally or via ReproX Auto-Fix
 - [ ] Run Regression Test (Section 19)
@@ -139,7 +177,7 @@ fun testCrashPrevention() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
       <div 
         className="w-full max-w-4xl bg-dark-900 border border-slate-700 rounded-xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]"
         onClick={e => e.stopPropagation()}

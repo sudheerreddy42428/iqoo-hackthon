@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useInvestigation } from '../context/InvestigationContext';
 import { localAIAnalyzer } from '../services/analyzer';
-import { Brain, FileCode2, MapPin, CheckCircle, ArrowRight, X, GitCommit } from 'lucide-react';
+import { Brain, FileCode2, MapPin, CheckCircle, ArrowRight, X } from 'lucide-react';
 
 interface AIAnalysisViewProps {
   onApprovalRequest: () => void;
   onExit: () => void;
+  onReject?: () => void;
 }
 
-export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ onApprovalRequest, onExit }) => {
+export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ onApprovalRequest, onExit, onReject }) => {
   const { activeCrash, analysis, setAnalysisResult, setInvestigationState } = useInvestigation();
   const [isAnalyzing, setIsAnalyzing] = useState(!analysis);
 
@@ -21,12 +22,20 @@ export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ onApprovalReques
         await new Promise(r => setTimeout(r, 2500));
         const result = await localAIAnalyzer.analyze(activeCrash);
         setAnalysisResult(result);
-        setInvestigationState('WAITING_APPROVAL');
+        
+        if (result.riskLevel === 'LOW') {
+          setInvestigationState('RESOLVED');
+          setTimeout(() => {
+            if (onReject) onReject(); // Route to Developer Report
+          }, 1500);
+        } else {
+          setInvestigationState('WAITING_APPROVAL');
+        }
         setIsAnalyzing(false);
       };
       runAnalysis();
     }
-  }, [activeCrash, analysis, setAnalysisResult, setInvestigationState]);
+  }, [activeCrash, analysis, setAnalysisResult, setInvestigationState, onReject]);
 
   if (!activeCrash) {
     return <div className="p-8 text-white">No crash context.</div>;
@@ -99,24 +108,6 @@ export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ onApprovalReques
             )}
           </div>
 
-          <div className="p-5 rounded-xl bg-[#0a0a0c] border border-slate-800 space-y-4">
-            <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-              <GitCommit className="w-4 h-4 text-emerald-500" />
-              Proposed Patch
-            </h3>
-            <p className="text-sm text-slate-300">
-              {analysis.suggestedFix.explanation}
-            </p>
-            <div className="bg-dark-900 p-4 rounded-lg border border-slate-800 overflow-x-auto">
-              <pre className="text-xs font-mono">
-                {analysis.suggestedFix.diffSnippet?.split('\n').map((line, i) => (
-                  <div key={i} className={line.startsWith('+') ? 'text-emerald-400 bg-emerald-400/10' : line.startsWith('-') ? 'text-rose-400 bg-rose-400/10' : 'text-slate-400'}>
-                    {line}
-                  </div>
-                ))}
-              </pre>
-            </div>
-          </div>
         </div>
 
         {/* Right Column: Risk & Action */}
@@ -172,8 +163,12 @@ export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ onApprovalReques
                 : 'This crash requires architectural changes. Generate a comprehensive developer report for the engineering team.'}
             </p>
             <button
-              onClick={onApprovalRequest}
-              className="w-full py-3.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all"
+              onClick={analysis.autoDebugEligible ? onApprovalRequest : onReject}
+              className={`w-full py-3.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all text-white ${
+                analysis.autoDebugEligible 
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500'
+                  : 'bg-rose-600 hover:bg-rose-500 shadow-[0_0_20px_rgba(225,29,72,0.3)]'
+              }`}
             >
               <span>{analysis.autoDebugEligible ? 'Ask Developer for Approval' : 'Generate Developer Report'}</span>
               <ArrowRight className="w-4 h-4" />
