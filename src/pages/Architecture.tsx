@@ -46,8 +46,9 @@ export const Architecture: React.FC = () => {
         </p>
 
         {/* Analyzer flow diagram */}
-        <div className="p-4 rounded-xl bg-dark-950 border border-slate-800 text-center space-y-2">
-          <div className="font-mono text-xs text-cyan-300 leading-relaxed">
+        <div className="p-6 rounded-2xl bg-[#030712] border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)] relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <pre className="font-mono text-[11px] sm:text-xs text-cyan-400/90 leading-tight whitespace-pre overflow-x-auto text-center relative z-10 flex flex-col items-center">
 {`┌──────────────────────────────────────┐
 │             Crash Report             │
 │  (Stack Trace + Actions + Device)    │
@@ -74,7 +75,7 @@ export const Architecture: React.FC = () => {
 │  • Suggested Fix Code                │
 │  • Regression Test Code              │
 └──────────────────────────────────────┘`}
-          </div>
+          </pre>
         </div>
 
         {/* Interface Definition Snippet */}
