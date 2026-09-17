@@ -273,17 +273,17 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
 
       {/* Main Crash Trigger Bar */}
       <div className="px-4 py-2.5 bg-rose-950/20 border-b border-rose-900/30 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs text-rose-300">
+        <div className="flex items-center gap-2 text-xs text-rose-300 min-w-0">
           <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
-          <span className="font-medium hidden sm:inline">Deliberate Crash Trigger:</span>
-          <span className="text-[11px] text-rose-400/80">Plays out the steps for {selectedScenario}</span>
+          <span className="font-medium hidden sm:inline shrink-0">Deliberate Crash Trigger:</span>
+          <span className="text-[11px] text-rose-400/80 truncate">Plays out the steps for {selectedScenario}</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={playCrashSequence}
             disabled={isPlayingCrash}
-            className={`px-3 py-1 text-xs font-semibold rounded-md shadow-lg shadow-rose-900/40 flex items-center gap-1.5 transition-all ${
+            className={`px-3 py-1 text-xs font-semibold rounded-md shadow-lg shadow-rose-900/40 flex items-center gap-1.5 transition-all shrink-0 whitespace-nowrap ${
               isPlayingCrash 
                 ? 'bg-rose-900 text-rose-300 opacity-50 cursor-not-allowed' 
                 : 'bg-rose-600 hover:bg-rose-500 text-white hover:scale-105'
@@ -291,12 +291,12 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
           >
             {isPlayingCrash ? (
               <>
-                <span className="animate-spin w-3 h-3 border-2 border-white/20 border-t-white rounded-full" />
+                <span className="animate-spin w-3 h-3 border-2 border-white/20 border-t-white rounded-full shrink-0" />
                 <span>Simulating Action Flow...</span>
               </>
             ) : (
               <>
-                <span>💥</span>
+                <span className="shrink-0">💥</span>
                 <span>Play Crash Sequence</span>
               </>
             )}
