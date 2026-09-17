@@ -3,6 +3,7 @@ import { TEST_CASES } from '../data/testCases';
 import { SimulatedApp } from '../components/SimulatedApp';
 import { crashSimulator } from '../services/crashSimulator';
 import { actionTracker } from '../services/actionTracker';
+import { SimulatedAppErrorBoundary } from '../components/SimulatedAppErrorBoundary';
 import { ArrowLeft, Loader2, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { useInvestigation } from '../context/InvestigationContext';
 
@@ -32,7 +33,7 @@ export const TestRunner: React.FC<TestRunnerProps> = ({ testId, onExit, onNaviga
     setLogs(prev => [...prev, `[${new Date().toISOString().split('T')[1].slice(0, -1)}] ${log}`]);
   };
 
-  const handleCrash = (scenarioKey?: string, screen?: string) => {
+  const handleCrash = (scenarioKey?: string, screen?: string, errorObj?: Error) => {
     setIsRunning(false);
     
     // Determine which crash scenario to use based on the test case
@@ -53,14 +54,23 @@ export const TestRunner: React.FC<TestRunnerProps> = ({ testId, onExit, onNaviga
       addLog('Capturing telemetry, state, and screenshot...');
       
       setTimeout(() => {
-        // We know crashSimulator.simulateCrash returns a report and logs it
-        const report = crashSimulator.simulateCrash(actualTemplate as any, screen);
+        let report;
+        if (errorObj) {
+            // Generate report from real error
+            report = crashSimulator.simulateCrash('APP_FREEZE', screen);
+            report.errorType = errorObj.name;
+            report.message = errorObj.message;
+            report.stackTrace = errorObj.stack || 'No stack trace available';
+        } else {
+            // We know crashSimulator.simulateCrash returns a report and logs it
+            report = crashSimulator.simulateCrash(actualTemplate as any, screen);
+        }
         // Start investigation context
         startInvestigation(report, actionTracker.getRecentActions());
         addLog('Crash Report Generated. Navigating to analysis...');
         
         setTimeout(() => {
-          onNavigate('crash', report.id);
+          onNavigate('crash-summary', report.id);
         }, 1500);
       }, 1000);
     }
@@ -83,12 +93,14 @@ export const TestRunner: React.FC<TestRunnerProps> = ({ testId, onExit, onNaviga
         </button>
         
         <div className="flex-1 relative">
-          <SimulatedApp 
-            autoPlay={true}
-            selectedScenario={testCase.scenario}
-            onTriggerCrash={handleCrash}
-            onScreenChange={(screen) => addLog(`Navigated to ${screen}`)}
-          />
+          <SimulatedAppErrorBoundary onCrash={(e) => handleCrash(testCase.scenario, 'Unknown', e)}>
+            <SimulatedApp 
+              autoPlay={true}
+              selectedScenario={testCase.scenario}
+              onTriggerCrash={handleCrash}
+              onScreenChange={(screen) => addLog(`Navigated to ${screen}`)}
+            />
+          </SimulatedAppErrorBoundary>
           {/* Overlay to prevent manual clicking during auto test */}
           {isRunning && <div className="absolute inset-0 z-10 cursor-not-allowed bg-transparent" />}
         </div>

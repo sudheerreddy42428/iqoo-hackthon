@@ -1,6 +1,6 @@
 import React from 'react';
 import { useInvestigation } from '../context/InvestigationContext';
-import { ShieldAlert, Terminal, ArrowRight, ServerCrash, Clock, Smartphone } from 'lucide-react';
+import { ShieldAlert, Terminal, ArrowRight, ServerCrash, Clock, Smartphone, BrainCircuit } from 'lucide-react';
 
 interface CrashSummaryProps {
   onAnalyze: () => void;
@@ -8,11 +8,13 @@ interface CrashSummaryProps {
 }
 
 export const CrashSummary: React.FC<CrashSummaryProps> = ({ onAnalyze, onExit }) => {
-  const { activeCrash } = useInvestigation();
+  const { activeCrash, actionBuffer } = useInvestigation();
 
   if (!activeCrash) {
     return <div className="p-8 text-white">No crash context available.</div>;
   }
+
+  const triggeringAction = actionBuffer[actionBuffer.length - 1];
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fadeIn pb-20 mt-4">
@@ -20,10 +22,10 @@ export const CrashSummary: React.FC<CrashSummaryProps> = ({ onAnalyze, onExit })
         <div>
           <h1 className="text-2xl font-bold text-rose-500 tracking-tight flex items-center gap-2">
             <ServerCrash className="w-6 h-6" />
-            Crash Intercepted
+            CRASH DETECTED
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            ReproX SDK has intercepted an unhandled exception on the device.
+            ReproX SDK has intercepted an unhandled exception during the test run.
           </p>
         </div>
         <button
@@ -51,6 +53,19 @@ export const CrashSummary: React.FC<CrashSummaryProps> = ({ onAnalyze, onExit })
               </pre>
             </div>
           </div>
+
+          <div className="p-5 rounded-xl bg-indigo-950/20 border border-indigo-900/40">
+            <div className="flex items-center gap-2 mb-4">
+              <BrainCircuit className="w-5 h-5 text-indigo-400" />
+              <h2 className="text-lg font-bold text-indigo-100">Initial AI Inference</h2>
+            </div>
+            <p className="text-sm text-slate-300 mb-4 leading-relaxed">
+              Based on the stack trace and the last action (<span className="text-cyan-400 font-mono">{triggeringAction?.type || 'UNKNOWN'}</span> on <span className="text-cyan-400 font-mono">{triggeringAction?.target || 'UNKNOWN'}</span>), the application failed due to a missing null check before processing the payment. 
+            </p>
+            <div className="bg-indigo-950/50 p-3 rounded border border-indigo-900/30 text-xs text-indigo-200">
+              <strong>Limitation:</strong> Without access to the source code, I cannot identify the exact line number, determine the root cause, or propose a definitive fix.
+            </div>
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -76,7 +91,7 @@ export const CrashSummary: React.FC<CrashSummaryProps> = ({ onAnalyze, onExit })
             onClick={onAnalyze}
             className="w-full py-4 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-dark-950 font-bold flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] transition-all"
           >
-            <span>Run AI Root Cause Analysis</span>
+            <span>Connect Codebase for Fix</span>
             <ArrowRight className="w-5 h-5" />
           </button>
         </div>
@@ -84,3 +99,4 @@ export const CrashSummary: React.FC<CrashSummaryProps> = ({ onAnalyze, onExit })
     </div>
   );
 };
+

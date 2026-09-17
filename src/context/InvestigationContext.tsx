@@ -5,12 +5,22 @@ export type InvestigationStatePhase =
   | 'IDLE' 
   | 'CRASH_DETECTED' 
   | 'ANALYZING' 
+  | 'CODE_ACCESS_REQUESTED'
+  | 'CHECKPOINT_SAVED'
   | 'WAITING_APPROVAL' 
   | 'DEBUGGING' 
   | 'REPORT_GENERATED' 
   | 'REJECTED'
   | 'ROLLED_BACK'
   | 'RESOLVED';
+
+export type CodePermissionState = 
+  | 'NOT_CONNECTED'
+  | 'READ_ACCESS_REQUESTED'
+  | 'READ_ACCESS_GRANTED'
+  | 'PATCH_ACCESS_REQUESTED'
+  | 'PATCH_ACCESS_GRANTED'
+  | 'DENIED';
 
 interface InvestigationState {
   investigationId: string | null;
@@ -20,6 +30,7 @@ interface InvestigationState {
   actionBuffer: UserAction[];
   isDemoRunning: boolean;
   investigationState: InvestigationStatePhase;
+  codePermissionState: CodePermissionState;
   debugAttempts: number;
 }
 
@@ -31,7 +42,9 @@ interface InvestigationContextType extends InvestigationState {
   updateActionBuffer: (actions: UserAction[]) => void;
   setDemoRunning: (isRunning: boolean) => void;
   setInvestigationState: (state: InvestigationStatePhase) => void;
+  setCodePermissionState: (state: CodePermissionState) => void;
   incrementDebugAttempts: () => void;
+  saveCheckpoint: () => void;
   rollback: () => void;
   resetDemo: () => void;
 }
@@ -60,6 +73,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
   const [actionBuffer, setActionBuffer] = useState<UserAction[]>(() => loadInitialState('actionBuffer', []));
   const [isDemoRunning, setIsDemoRunning] = useState(false);
   const [investigationState, setInvestigationState] = useState<InvestigationStatePhase>(() => loadInitialState('investigationState', 'IDLE'));
+  const [codePermissionState, setCodePermissionState] = useState<CodePermissionState>(() => loadInitialState('codePermissionState', 'NOT_CONNECTED'));
   const [debugAttempts, setDebugAttempts] = useState<number>(() => loadInitialState('debugAttempts', 0));
 
   // Persist state changes
@@ -70,11 +84,12 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
       sessionStorage.setItem('reprox_analysis', JSON.stringify(analysis));
       sessionStorage.setItem('reprox_actionBuffer', JSON.stringify(actionBuffer));
       sessionStorage.setItem('reprox_investigationState', JSON.stringify(investigationState));
+      sessionStorage.setItem('reprox_codePermissionState', JSON.stringify(codePermissionState));
       sessionStorage.setItem('reprox_debugAttempts', JSON.stringify(debugAttempts));
     } catch (e) {
       console.warn("Failed to write to sessionStorage", e);
     }
-  }, [investigationId, activeCrash, analysis, actionBuffer, investigationState, debugAttempts]);
+  }, [investigationId, activeCrash, analysis, actionBuffer, investigationState, codePermissionState, debugAttempts]);
 
   const startInvestigation = (crash: CrashReport, actions: UserAction[]) => {
     const newInvId = generateId();
@@ -89,6 +104,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
     setAnalysis(null);
     setDebugAttempts(0);
     setInvestigationState('CRASH_DETECTED');
+    setCodePermissionState('NOT_CONNECTED');
   };
 
   const setAnalysisResult = (result: AnalysisResult | null) => {
@@ -130,10 +146,17 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
     setDebugAttempts(prev => prev + 1);
   };
   
+  const saveCheckpoint = () => {
+    // In a real IDE bridge, this would execute `git commit` or snapshot file states
+    console.log(`[Checkpoint] Saved state for investigation ${investigationId}`);
+    setInvestigationState('CHECKPOINT_SAVED');
+  };
+
   const rollback = () => {
+    console.log(`[Rollback] Reverting files to checkpoint for investigation ${investigationId}`);
     setInvestigationState('ROLLED_BACK');
     setTimeout(() => {
-        setInvestigationState('WAITING_APPROVAL');
+        setInvestigationState('REPORT_GENERATED');
     }, 1500); // Visual delay for rollback simulation
   };
 
@@ -153,6 +176,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
     setActionBuffer([]);
     setIsDemoRunning(false);
     setInvestigationState('IDLE');
+    setCodePermissionState('NOT_CONNECTED');
   };
 
   return (
@@ -165,6 +189,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
         actionBuffer,
         isDemoRunning,
         investigationState,
+        codePermissionState,
         debugAttempts,
         startInvestigation,
         setAnalysisResult,
@@ -173,7 +198,9 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
         updateActionBuffer,
         setDemoRunning,
         setInvestigationState,
+        setCodePermissionState,
         incrementDebugAttempts,
+        saveCheckpoint,
         rollback,
         resetDemo
       }}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useInvestigation } from '../context/InvestigationContext';
 import { localAIAnalyzer } from '../services/analyzer';
-import { Brain, AlertTriangle, FileCode2, MapPin, CheckCircle, ArrowRight, X } from 'lucide-react';
+import { Brain, FileCode2, MapPin, CheckCircle, ArrowRight, X, GitCommit } from 'lucide-react';
 
 interface AIAnalysisViewProps {
   onApprovalRequest: () => void;
@@ -17,8 +17,8 @@ export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ onApprovalReques
       const runAnalysis = async () => {
         setIsAnalyzing(true);
         setInvestigationState('ANALYZING');
-        // Simulate network delay for effect
-        await new Promise(r => setTimeout(r, 2000));
+        // Simulate local IDE workspace analysis
+        await new Promise(r => setTimeout(r, 2500));
         const result = await localAIAnalyzer.analyze(activeCrash);
         setAnalysisResult(result);
         setInvestigationState('WAITING_APPROVAL');
@@ -36,12 +36,12 @@ export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ onApprovalReques
     return (
       <div className="max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[50vh] space-y-6">
         <div className="relative">
-          <Brain className="w-16 h-16 text-cyan-500 animate-pulse" />
-          <div className="absolute inset-0 w-16 h-16 border-t-2 border-cyan-400 rounded-full animate-spin" />
+          <Brain className="w-16 h-16 text-emerald-500 animate-pulse" />
+          <div className="absolute inset-0 w-16 h-16 border-t-2 border-emerald-400 rounded-full animate-spin" />
         </div>
         <div className="text-center space-y-2">
-          <h2 className="text-xl font-bold text-white">AI Engine Analyzing Crash...</h2>
-          <p className="text-sm text-slate-400 font-mono">Correlating stack trace with interaction timeline</p>
+          <h2 className="text-xl font-bold text-white">AI Engine Analyzing Source Code...</h2>
+          <p className="text-sm text-slate-400 font-mono">Parsing syntax tree and tracing data flow in {activeCrash.screen}...</p>
         </div>
       </div>
     );
@@ -51,13 +51,13 @@ export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ onApprovalReques
     <div className="max-w-5xl mx-auto space-y-6 animate-fadeIn pb-20 mt-4">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-purple-500/20 border border-purple-500/30">
-            <Brain className="w-6 h-6 text-purple-400" />
+          <div className="p-2.5 rounded-lg bg-emerald-500/20 border border-emerald-500/30">
+            <FileCode2 className="w-6 h-6 text-emerald-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">AI Root Cause & Risk Analysis</h1>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Source Analysis & Proposed Change</h1>
             <p className="text-sm text-slate-400 mt-1">
-              ReproX has identified the exact cause and location of the error.
+              ReproX has identified the exact root cause in the source code and generated a patch.
             </p>
           </div>
         </div>
@@ -67,26 +67,12 @@ export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ onApprovalReques
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Left Column: Root Cause */}
+        {/* Left Column: Root Cause & Location */}
         <div className="space-y-6">
-          <div className="p-5 rounded-xl bg-[#0a0a0c] border border-slate-800 space-y-4">
-            <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
-              Root Cause
-            </h3>
-            <p className="text-sm text-slate-300 leading-relaxed">
-              {analysis.whyItHappened}
-            </p>
-            <div className="p-4 rounded-lg bg-dark-900 border border-slate-800 space-y-2">
-              <span className="text-xs text-slate-500 uppercase font-semibold">What Should Have Happened</span>
-              <p className="text-sm text-slate-300">{analysis.whatShouldHaveHappened}</p>
-            </div>
-          </div>
-
           <div className="p-5 rounded-xl bg-dark-900 border border-slate-800">
             <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider mb-4 flex items-center gap-2">
               <MapPin className="w-4 h-4 text-cyan-500" />
-              Exact Location
+              Exact Location Found
             </h3>
             {analysis.changeLocation ? (
               <div className="space-y-4">
@@ -99,24 +85,37 @@ export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ onApprovalReques
                     Line {analysis.changeLocation.line}
                   </span>
                 </div>
+                <p className="text-sm text-slate-300 leading-relaxed">
+                  {analysis.whyItHappened}
+                </p>
                 <div className="bg-[#0a0a0c] p-4 rounded-lg border border-slate-800 overflow-x-auto">
                   <pre className="text-xs font-mono text-rose-300">
                     <code>{analysis.changeLocation.snippet}</code>
                   </pre>
                 </div>
-                {analysis.changeLocation.isConfirmed ? (
-                  <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-400/10 p-2 rounded">
-                    <CheckCircle className="w-3.5 h-3.5" /> Exact match found in compiled stack trace.
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-400/10 p-2 rounded">
-                    <AlertTriangle className="w-3.5 h-3.5" /> Inferred via AST analysis. (Hallucination Guard Active)
-                  </div>
-                )}
               </div>
             ) : (
               <p className="text-sm text-slate-400">Could not determine exact file location.</p>
             )}
+          </div>
+
+          <div className="p-5 rounded-xl bg-[#0a0a0c] border border-slate-800 space-y-4">
+            <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <GitCommit className="w-4 h-4 text-emerald-500" />
+              Proposed Patch
+            </h3>
+            <p className="text-sm text-slate-300">
+              {analysis.suggestedFix.explanation}
+            </p>
+            <div className="bg-dark-900 p-4 rounded-lg border border-slate-800 overflow-x-auto">
+              <pre className="text-xs font-mono">
+                {analysis.suggestedFix.diffSnippet?.split('\n').map((line, i) => (
+                  <div key={i} className={line.startsWith('+') ? 'text-emerald-400 bg-emerald-400/10' : line.startsWith('-') ? 'text-rose-400 bg-rose-400/10' : 'text-slate-400'}>
+                    {line}
+                  </div>
+                ))}
+              </pre>
+            </div>
           </div>
         </div>
 
@@ -166,10 +165,10 @@ export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ onApprovalReques
           {/* Action Button */}
           <div className="p-5 rounded-xl bg-dark-950 border border-purple-500/30 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-[50px]" />
-            <h3 className="text-sm font-bold text-white mb-2">Ready for Decision</h3>
+            <h3 className="text-sm font-bold text-white mb-2">Request Permission</h3>
             <p className="text-xs text-slate-400 mb-4">
               {analysis.autoDebugEligible 
-                ? 'ReproX AI has formulated a patch. It requires your approval to proceed to the autonomous testing loop.'
+                ? 'ReproX AI has formulated a patch. It requires write permission to modify the source code and enter the autonomous testing loop.'
                 : 'This crash requires architectural changes. Generate a comprehensive developer report for the engineering team.'}
             </p>
             <button
