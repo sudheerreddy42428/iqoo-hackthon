@@ -133,7 +133,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-dark-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
+    <div className="min-h-screen bg-dark-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
       {/* 1. PWA Install CTA Banner for Mobile Phone Home Screen */}
       <InstallPromptBanner />
 
@@ -142,7 +142,7 @@ export const App: React.FC = () => {
         onOpenAuditModal={() => setShowAuditModal(true)}
       />
 
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
+      <div className="flex-1 flex flex-col md:flex-row">
         {/* Sidebar (Mobile Header + Desktop Sidebar) */}
         <Sidebar
           currentTab={currentTab}
@@ -155,10 +155,10 @@ export const App: React.FC = () => {
           isDemoRunning={isDemoRunning}
         />
 
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <div className="flex-1 flex flex-col min-w-0">
           {/* Floating Demo Mode Controller Banner */}
           {isDemoRunning && (
-            <div className="sticky top-11 z-20 bg-gradient-to-r from-purple-950 via-dark-900 to-indigo-950 border-b border-purple-500/30 px-4 py-2.5 shadow-xl animate-slideUp">
+            <div className="sticky top-16 md:top-0 z-20 bg-gradient-to-r from-purple-950 via-dark-900 to-indigo-950 border-b border-purple-500/30 px-4 py-2.5 shadow-xl animate-slideUp">
               <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" />
@@ -188,7 +188,7 @@ export const App: React.FC = () => {
           )}
 
           {/* Main Content Area */}
-          <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8 overflow-y-auto">
+          <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6 md:py-8">
             {currentTab === 'home' && (
               <Home
                 onSelectTab={(tab) => {
