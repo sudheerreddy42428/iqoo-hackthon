@@ -6,6 +6,7 @@ import { actionTracker } from '../services/actionTracker';
 import { SimulatedAppErrorBoundary } from '../components/SimulatedAppErrorBoundary';
 import { ArrowLeft, Loader2, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { useInvestigation } from '../context/InvestigationContext';
+import { localAIAnalyzer } from '../services/analyzer';
 
 interface TestRunnerProps {
   testId: string;
@@ -15,7 +16,7 @@ interface TestRunnerProps {
 
 export const TestRunner: React.FC<TestRunnerProps> = ({ testId, onExit, onNavigate }) => {
   const testCase = TEST_CASES.find(t => t.id === testId);
-  const { startInvestigation } = useInvestigation();
+  const { startInvestigation, setAnalysisResult } = useInvestigation();
   const [logs, setLogs] = useState<string[]>(['Initializing Test Environment...']);
   const [isRunning, setIsRunning] = useState(true);
 
@@ -68,6 +69,9 @@ export const TestRunner: React.FC<TestRunnerProps> = ({ testId, onExit, onNaviga
         // Start investigation context
         startInvestigation(report, actionTracker.getRecentActions());
         addLog('Crash Report Generated. Navigating to analysis...');
+        
+        // Generate AI Analysis in the background so it's ready for CodeAccessView
+        localAIAnalyzer.analyze(report).then(result => setAnalysisResult(result));
         
         setTimeout(() => {
           onNavigate('crash-summary', report.id);
