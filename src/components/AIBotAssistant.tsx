@@ -4,23 +4,11 @@ import { useInvestigation } from '../context/InvestigationContext';
 import { DeveloperReportModal } from './DeveloperReportModal';
 import { onDeviceLLMAnalyzer } from '../services/analyzer';
 
-interface ChatMessage {
-  id: string;
-  sender: 'ai' | 'user';
-  text: string;
-  type?: 'auto-fix' | 'complex-report' | 'normal';
-  timestamp: Date;
-}
+import { ChatMessage } from '../types/reprox';
 
 export const AIBotAssistant: React.FC = () => {
-  const { activeCrash, analysis, investigationState } = useInvestigation();
+  const { activeCrash, analysis, investigationState, chatMessages: messages, setChatMessages: setMessages } = useInvestigation();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([{
-    id: 'welcome',
-    sender: 'ai',
-    text: 'Hello! I am your ReproX AI Assistant. I will automatically monitor for crashes and help you resolve them.',
-    timestamp: new Date()
-  }]);
   const [showReport, setShowReport] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);

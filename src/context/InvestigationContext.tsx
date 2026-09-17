@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { CrashReport, AnalysisResult, CrashScreenshot, UserAction } from '../types/reprox';
+import { CrashReport, AnalysisResult, CrashScreenshot, UserAction, ChatMessage } from '../types/reprox';
 
 export type TestStatus = 'IDLE' | 'RUNNING' | 'PASSED' | 'FAILED' | 'CRASHED' | 'STOPPED';
 export type AIAnalysisStatus = 'IDLE' | 'ANALYZING' | 'READY' | 'FAILED';
@@ -37,6 +37,7 @@ interface InvestigationState {
   analysis: AnalysisResult | null;
   screenshots: CrashScreenshot[];
   actionBuffer: UserAction[];
+  chatMessages: ChatMessage[];
   isDemoRunning: boolean;
   
   // New States
@@ -60,6 +61,7 @@ interface InvestigationContextType extends InvestigationState {
   addScreenshot: (screenshot: CrashScreenshot) => void;
   removeScreenshot: (screenshotId: string) => void;
   updateActionBuffer: (actions: UserAction[]) => void;
+  setChatMessages: (messages: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => void;
   setDemoRunning: (isRunning: boolean) => void;
   
   // New Setters
@@ -100,6 +102,13 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(() => loadInitialState('analysis', null));
   const [screenshots, setScreenshots] = useState<CrashScreenshot[]>([]);
   const [actionBuffer, setActionBuffer] = useState<UserAction[]>(() => loadInitialState('actionBuffer', []));
+  const defaultChatMessages: ChatMessage[] = [{
+    id: 'welcome',
+    sender: 'ai',
+    text: 'Hello! I am your ReproX AI Assistant. I will automatically monitor for crashes and help you resolve them.',
+    timestamp: new Date()
+  }];
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => loadInitialState('chatMessages', defaultChatMessages));
   const [isDemoRunning, setIsDemoRunning] = useState(false);
   const [debugAttempts, setDebugAttempts] = useState<number>(() => loadInitialState('debugAttempts', 0));
 
@@ -121,6 +130,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
       sessionStorage.setItem('reprox_activeCrash', JSON.stringify(activeCrash));
       sessionStorage.setItem('reprox_analysis', JSON.stringify(analysis));
       sessionStorage.setItem('reprox_actionBuffer', JSON.stringify(actionBuffer));
+      sessionStorage.setItem('reprox_chatMessages', JSON.stringify(chatMessages));
       sessionStorage.setItem('reprox_investigationState', JSON.stringify(investigationState));
       sessionStorage.setItem('reprox_codePermissionState', JSON.stringify(codePermissionState));
       sessionStorage.setItem('reprox_debugAttempts', JSON.stringify(debugAttempts));
@@ -135,7 +145,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
       console.warn("Failed to write to sessionStorage", e);
     }
   }, [
-    investigationId, activeCrash, analysis, actionBuffer, 
+    investigationId, activeCrash, analysis, actionBuffer, chatMessages,
     investigationState, codePermissionState, debugAttempts,
     testStatus, aiAnalysisStatus, approvalStatus, codeAccessStatus, patchStatus, verificationStatus
   ]);
@@ -150,6 +160,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
     setInvestigationId(newInvId);
     setActiveCrash(crashWithScreenshots);
     setActionBuffer(actions);
+    setChatMessages(defaultChatMessages);
     setAnalysis(null);
     setDebugAttempts(0);
     
@@ -232,6 +243,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
     setAnalysis(null);
     setScreenshots([]);
     setActionBuffer([]);
+    setChatMessages(defaultChatMessages);
     setDebugAttempts(0);
     setInvestigationState('IDLE');
     setCodePermissionState('NOT_CONNECTED');
@@ -251,6 +263,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
       analysis,
       screenshots,
       actionBuffer,
+      chatMessages,
       isDemoRunning,
       investigationState,
       codePermissionState,
@@ -266,6 +279,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
       addScreenshot,
       removeScreenshot,
       updateActionBuffer,
+      setChatMessages,
       setDemoRunning,
       setInvestigationState,
       setCodePermissionState,

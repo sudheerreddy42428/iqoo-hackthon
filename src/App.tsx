@@ -278,7 +278,7 @@ export const App: React.FC = () => {
       )}
 
       {/* Persistent AI Bot Assistant */}
-      <AIBotAssistant />
+      {currentTab !== 'home' && <AIBotAssistant />}
     </div>
   );
 };

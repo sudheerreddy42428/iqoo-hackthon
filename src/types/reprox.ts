@@ -13,8 +13,15 @@ export type UploadStatus =
   | 'uploading'
   | 'uploaded'
   | 'processing'
-  | 'analyzed'
   | 'error';
+
+export interface ChatMessage {
+  id: string;
+  sender: 'ai' | 'user';
+  text: string;
+  type?: 'auto-fix' | 'complex-report' | 'normal';
+  timestamp: Date;
+}
 
 export interface CrashScreenshot {
   id: string;
