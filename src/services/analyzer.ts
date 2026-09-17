@@ -301,18 +301,15 @@ PaymentService.processPayment(paymentMethod)`,
   }
 }
 
-// import { CreateMLCEngine, MLCEngine } from "@mlc-ai/web-llm";
+import { CreateMLCEngine, MLCEngine } from "@mlc-ai/web-llm";
 
-/*
 let enginePromise: Promise<MLCEngine> | null = null;
-*/
 
 export class LocalModelProvider implements AIProvider, AIAnalyzer {
   public name = 'On-Device Local AI (Phi-3-mini)';
   public description = 'Quantized in-browser neural reasoning running locally via WebGPU (WebLLM) with 0 external network calls';
   public isLocal = true;
 
-/*
   private async getEngine(): Promise<MLCEngine> {
     if (!enginePromise) {
       enginePromise = CreateMLCEngine(
@@ -320,13 +317,14 @@ export class LocalModelProvider implements AIProvider, AIAnalyzer {
         {
           initProgressCallback: (info) => {
             console.log("[WebLLM Progress]", info.text);
+            // We could dispatch a custom event here so the UI can show progress
+            window.dispatchEvent(new CustomEvent('webllm-progress', { detail: info.text }));
           }
         }
       );
     }
     return enginePromise;
   }
-*/
 
   public async analyzeCrash(report: CrashReport): Promise<AnalysisResult> {
     const ruleEngine = new RuleBasedProvider();
@@ -337,8 +335,12 @@ export class LocalModelProvider implements AIProvider, AIAnalyzer {
         throw new Error("WebGPU is not supported in this browser.");
       }
       
-      // Skip WebLLM for performance in the playground
-      throw new Error("Skipping WebLLM download to keep the UI fast.");
+      // Load WebLLM in the background
+      this.getEngine().catch(console.error);
+      return {
+        ...base,
+        analyzerName: 'On-Device Quantized Model (WebLLM loaded in background)'
+      };
     } catch (e) {
       console.warn('[LocalModelProvider] Fallback to deterministic local engine due to WebLLM/WebGPU error:', e);
       return {
@@ -362,18 +364,19 @@ export class LocalModelProvider implements AIProvider, AIAnalyzer {
       // 1. Try Chrome's built-in window.ai (Gemini Nano)
       if ((window as any).ai && (window as any).ai.languageModel) {
         const session = await (window as any).ai.languageModel.create();
-        const response = await session.prompt(lastUserMessage);
+        const promptText = messages.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n') + '\nAssistant: ';
+        const response = await session.prompt(promptText);
         return `[Native AI] ${response}`;
       }
 
-      // 2. Try WebLLM if WebGPU is supported (Disabled for speed)
-      // if ((navigator as any).gpu) {
-      //   const engine = await this.getEngine();
-      //   const reply = await engine.chat.completions.create({ messages });
-      //   return reply.choices[0].message.content || "I couldn't generate a response.";
-      // }
+      // 2. Try WebLLM if WebGPU is supported
+      if ((navigator as any).gpu) {
+        const engine = await this.getEngine();
+        const reply = await engine.chat.completions.create({ messages });
+        return reply.choices[0].message.content || "I couldn't generate a response.";
+      }
       
-      throw new Error("Skipping WebLLM to keep chat bot fast.");
+      throw new Error("No native AI or WebGPU available for fast processing.");
     } catch (e) {
       console.warn('[LocalModelProvider] Fallback for chat:', e);
       
