@@ -16,6 +16,7 @@ import { AnalysisPanel } from '../components/AnalysisPanel';
 import { RegressionTestPanel } from '../components/RegressionTestPanel';
 import { EducationalBadge } from '../components/EducationalBadge';
 import { DeveloperReportModal } from '../components/DeveloperReportModal';
+import { ApprovalPanel } from '../components/ApprovalPanel';
 import { FileText } from 'lucide-react';
 
 interface DashboardProps {
@@ -190,10 +191,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-mono font-bold text-rose-400 truncate max-w-[200px]">
-                        {c.errorType}
-                      </span>
-                      <span className="text-[10px] font-mono text-slate-500">{c.timestamp}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-bold text-rose-400 truncate max-w-[150px]">
+                          {c.errorType}
+                        </span>
+                        {c.deviceContext?.isSimulated ? (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase">Simulated</span>
+                        ) : (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">Live</span>
+                        )}
+                      </div>
+                      <span className="text-[10px] font-mono text-slate-500">{new Date(c.epochTime).toLocaleTimeString()}</span>
                     </div>
 
                     <p className="text-xs text-slate-300 font-mono line-clamp-1 mb-2">
@@ -257,6 +265,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
                       });
                     }}
                     isAnalyzing={isAnalyzing}
+                  />
+
+                  <ApprovalPanel
+                    report={selectedCrash}
+                    analysis={analysis}
+                    onApprove={() => console.log('Fix Approved')}
+                    onReject={() => setShowDeveloperReport(true)}
                   />
 
                   <RegressionTestPanel

@@ -53,12 +53,16 @@ export const AIBotAssistant: React.FC = () => {
   }, []);
 
   const toggleListening = () => {
+    if (!recognitionRef.current) {
+      addMessage({ sender: 'ai', text: 'Voice dictation is not supported on this browser.' });
+      return;
+    }
     if (isListening) {
-      recognitionRef.current?.stop();
+      recognitionRef.current.stop();
       setIsListening(false);
     } else {
       setChatInput('');
-      recognitionRef.current?.start();
+      recognitionRef.current.start();
       setIsListening(true);
     }
   };
@@ -187,12 +191,28 @@ export const AIBotAssistant: React.FC = () => {
               </div>
             </div>
           </div>
-          <button 
-            onClick={() => setIsOpen(false)}
-            className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-          >
-            <ChevronDown className="w-5 h-5" />
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => {
+                setMessages([{
+                  id: 'welcome',
+                  sender: 'ai',
+                  text: 'Hello! I am your ReproX AI Assistant. I will automatically monitor for crashes and help you resolve them.',
+                  timestamp: new Date()
+                }]);
+              }}
+              className="px-2 py-1 text-xs rounded border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 transition-colors"
+              title="Reset Chat"
+            >
+              Reset
+            </button>
+            <button 
+              onClick={() => setIsOpen(false)}
+              className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+            >
+              <ChevronDown className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Chat Area */}

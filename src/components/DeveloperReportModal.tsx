@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Download, Copy, Check, FileText } from 'lucide-react';
+import { X, Download, Copy, Check, FileText, Share2 } from 'lucide-react';
 import { AnalysisResult, CrashReport } from '../types/reprox';
 
 interface DeveloperReportModalProps {
@@ -176,6 +176,22 @@ fun testCrashPrevention() {
     document.body.removeChild(element);
   };
 
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `ReproX Crash Report: ${report.id}`,
+          text: markdownContent,
+        });
+      } else {
+        handleCopy();
+        alert('Native sharing is not supported on this browser. Report copied to clipboard instead!');
+      }
+    } catch (error) {
+      console.log('Error sharing:', error);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
       <div 
@@ -208,13 +224,21 @@ fun testCrashPrevention() {
           </pre>
         </div>
 
-        <div className="px-5 py-4 border-t border-slate-700 bg-dark-950 flex justify-end gap-3 shrink-0">
+        <div className="px-5 py-4 border-t border-slate-700 bg-dark-950 flex flex-wrap justify-end gap-3 shrink-0">
+          <button
+            onClick={handleShare}
+            className="px-4 py-2 rounded-lg font-bold text-xs bg-purple-600 hover:bg-purple-500 text-white flex items-center gap-2 transition-colors shadow-lg shadow-purple-900/20"
+          >
+            <Share2 className="w-4 h-4" />
+            Share Report
+          </button>
+          
           <button
             onClick={handleCopy}
             className="px-4 py-2 rounded-lg font-bold text-xs bg-slate-800 hover:bg-slate-700 text-white flex items-center gap-2 transition-colors border border-slate-700"
           >
             {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-            {copied ? 'Copied to Clipboard' : 'Copy Markdown'}
+            {copied ? 'Copied' : 'Copy'}
           </button>
           
           <button
@@ -222,7 +246,7 @@ fun testCrashPrevention() {
             className="px-4 py-2 rounded-lg font-bold text-xs bg-cyan-500 hover:bg-cyan-400 text-dark-950 flex items-center gap-2 transition-colors shadow-lg shadow-cyan-500/20"
           >
             <Download className="w-4 h-4" />
-            Download .md
+            Download
           </button>
         </div>
       </div>

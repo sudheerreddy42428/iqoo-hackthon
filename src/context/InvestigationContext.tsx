@@ -108,7 +108,19 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
     text: 'Hello! I am your ReproX AI Assistant. I will automatically monitor for crashes and help you resolve them.',
     timestamp: new Date()
   }];
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => loadInitialState('chatMessages', defaultChatMessages));
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(defaultChatMessages);
+  
+  useEffect(() => {
+    if (investigationId) {
+      import('../services/chatService').then(({ chatService }) => {
+        chatService.getMessages(investigationId).then(messages => {
+          if (messages && messages.length > 0) {
+            setChatMessages(messages);
+          }
+        });
+      });
+    }
+  }, [investigationId]);
   const [isDemoRunning, setIsDemoRunning] = useState(false);
   const [debugAttempts, setDebugAttempts] = useState<number>(() => loadInitialState('debugAttempts', 0));
 
@@ -130,7 +142,6 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
       sessionStorage.setItem('reprox_activeCrash', JSON.stringify(activeCrash));
       sessionStorage.setItem('reprox_analysis', JSON.stringify(analysis));
       sessionStorage.setItem('reprox_actionBuffer', JSON.stringify(actionBuffer));
-      sessionStorage.setItem('reprox_chatMessages', JSON.stringify(chatMessages));
       sessionStorage.setItem('reprox_investigationState', JSON.stringify(investigationState));
       sessionStorage.setItem('reprox_codePermissionState', JSON.stringify(codePermissionState));
       sessionStorage.setItem('reprox_debugAttempts', JSON.stringify(debugAttempts));
@@ -141,6 +152,11 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
       sessionStorage.setItem('reprox_codeAccessStatus', JSON.stringify(codeAccessStatus));
       sessionStorage.setItem('reprox_patchStatus', JSON.stringify(patchStatus));
       sessionStorage.setItem('reprox_verificationStatus', JSON.stringify(verificationStatus));
+      
+      // Update backend
+      import('../services/chatService').then(({ chatService }) => {
+        if (investigationId) chatService.saveMessages(investigationId, chatMessages);
+      });
     } catch (e) {
       console.warn("Failed to write to sessionStorage", e);
     }
@@ -181,6 +197,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
     if (result) {
       result.investigationId = investigationId || undefined;
       setAiAnalysisStatus('READY');
+      setInvestigationState('WAITING_APPROVAL');
       
       // Auto-set risk based state logic
       if (result.severity === 'HIGH' || result.severity === 'CRITICAL') {
