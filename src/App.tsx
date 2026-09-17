@@ -9,7 +9,6 @@ import { Documentation } from './pages/Documentation';
 import { Architecture } from './pages/Architecture';
 import { InstallPromptBanner } from './components/InstallPromptBanner';
 import { OfflineStatusBar } from './components/OfflineStatusBar';
-import { VoiceCrashInput } from './components/VoiceCrashInput';
 import { CameraCrashScanner } from './components/CameraCrashScanner';
 import { AirplaneModeVerifier } from './components/AirplaneModeVerifier';
 import { AIBotAssistant } from './components/AIBotAssistant';
@@ -26,7 +25,6 @@ export const App: React.FC = () => {
   const demoAbortRef = useRef<boolean>(false);
 
   // Modals for quick offline utilities
-  const [showVoiceModal, setShowVoiceModal] = useState<boolean>(false);
   const [showCameraModal, setShowCameraModal] = useState<boolean>(false);
   const [showAuditModal, setShowAuditModal] = useState<boolean>(false);
 
@@ -36,21 +34,16 @@ export const App: React.FC = () => {
     setDemoStepName('');
     setDemoProgress(0);
   };
-
   const handleCrashCaptured = (_report: CrashReport) => {
-    setShowVoiceModal(false);
     setShowCameraModal(false);
     setCurrentTab('dashboard');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
   const runFullDemo = async () => {
     if (isDemoRunning) return;
     setIsDemoRunning(true);
     demoAbortRef.current = false;
-
     setCurrentTab('playground');
-
     const sleep = (ms: number) => {
       return new Promise((resolve) => setTimeout(resolve, ms));
     };
@@ -154,7 +147,6 @@ export const App: React.FC = () => {
 
       {/* 2. Top Persistent Affirmative Offline Status Confirmation for Judges */}
       <OfflineStatusBar
-        onOpenVoiceModal={() => setShowVoiceModal(true)}
         onOpenCameraModal={() => setShowCameraModal(true)}
         onOpenAuditModal={() => setShowAuditModal(true)}
       />
@@ -216,9 +208,7 @@ export const App: React.FC = () => {
               />
             )}
             {currentTab === 'playground' && (
-              <Playground 
-                onOpenVoiceModal={() => setShowVoiceModal(true)}
-              />
+              <Playground />
             )}
             {currentTab === 'dashboard' && (
               <Dashboard
@@ -233,11 +223,6 @@ export const App: React.FC = () => {
             )}
 
             {/* Dedicated Tab Views for Phone-First Features */}
-            {currentTab === 'voice' && (
-              <div className="max-w-3xl mx-auto space-y-6 animate-fadeIn">
-                <VoiceCrashInput onCrashGenerated={handleCrashCaptured} />
-              </div>
-            )}
 
             {currentTab === 'camera' && (
               <div className="max-w-3xl mx-auto space-y-6 animate-fadeIn">
@@ -265,17 +250,7 @@ export const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Floating Modals for Voice, Camera, and Offline Audit when launched from top bar */}
-      {showVoiceModal && (
-        <div className="fixed inset-0 z-50 bg-dark-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="max-w-xl w-full">
-            <VoiceCrashInput
-              onCrashGenerated={handleCrashCaptured}
-              onClose={() => setShowVoiceModal(false)}
-            />
-          </div>
-        </div>
-      )}
+
 
       {showCameraModal && (
         <div className="fixed inset-0 z-50 bg-dark-950/80 backdrop-blur-md flex items-center justify-center p-4">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, MessageSquare, FileText, Lightbulb, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { Bot, MessageSquare, FileText, Lightbulb, ChevronDown, CheckCircle2, Mic, MicOff } from 'lucide-react';
 import { useInvestigation } from '../context/InvestigationContext';
 import { DeveloperReportModal } from './DeveloperReportModal';
 import { onDeviceLLMAnalyzer } from '../services/analyzer';
@@ -24,8 +24,54 @@ export const AIBotAssistant: React.FC = () => {
   const [showReport, setShowReport] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = true;
+      
+      recognitionRef.current.onresult = (event: any) => {
+        let finalTranscript = '';
+        let interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        if (finalTranscript) {
+          setChatInput(prev => (prev ? prev + ' ' : '') + finalTranscript);
+        }
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    } else {
+      setChatInput('');
+      recognitionRef.current?.start();
+      setIsListening(true);
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -107,7 +153,7 @@ export const AIBotAssistant: React.FC = () => {
     return (
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 left-4 md:bottom-6 md:left-6 w-14 h-14 rounded-full bg-purple-600 hover:bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.4)] flex items-center justify-center text-white transition-transform hover:scale-110 z-50 animate-bounce"
+        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 w-14 h-14 rounded-full bg-purple-600 hover:bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.4)] flex items-center justify-center text-white transition-transform hover:scale-110 z-50 animate-bounce"
       >
         <Bot className="w-6 h-6" />
       </button>
@@ -118,7 +164,7 @@ export const AIBotAssistant: React.FC = () => {
     return (
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 left-4 md:bottom-6 md:left-6 px-4 py-3 rounded-full bg-dark-900 border border-purple-500/30 shadow-2xl flex items-center gap-3 text-white transition-all hover:scale-105 z-50 hover:bg-dark-800"
+        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 px-4 py-3 rounded-full bg-dark-900 border border-purple-500/30 shadow-2xl flex items-center gap-3 text-white transition-all hover:scale-105 z-50 hover:bg-dark-800"
       >
         <div className="relative">
           <Bot className="w-5 h-5 text-purple-400" />
@@ -131,7 +177,7 @@ export const AIBotAssistant: React.FC = () => {
 
   return (
     <>
-      <div className="fixed bottom-4 left-4 md:bottom-6 md:left-6 w-[340px] md:w-[380px] max-h-[600px] flex flex-col bg-dark-950 border border-purple-500/30 rounded-2xl shadow-2xl z-50 overflow-hidden animate-fadeIn">
+      <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 w-[340px] md:w-[380px] max-h-[600px] flex flex-col bg-dark-950 border border-purple-500/30 rounded-2xl shadow-2xl z-50 overflow-hidden animate-fadeIn">
         {/* Header */}
         <div className="px-4 py-3 bg-gradient-to-r from-purple-900/60 to-dark-900 border-b border-purple-500/20 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -239,16 +285,29 @@ export const AIBotAssistant: React.FC = () => {
               onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isTyping}
-              placeholder={isTyping ? "AI is thinking..." : "Ask a question about this crash..."} 
-              className="w-full bg-dark-900 border border-slate-800 rounded-lg py-2.5 pl-4 pr-10 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-purple-500/50 transition-colors disabled:opacity-50"
+              placeholder={isTyping ? "AI is thinking..." : isListening ? "Listening..." : "Ask a question about this crash..."} 
+              className={`w-full bg-dark-900 border border-slate-800 rounded-lg py-2.5 pl-4 pr-20 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-purple-500/50 transition-colors disabled:opacity-50 ${isListening ? 'border-purple-500 bg-purple-950/20 shadow-[0_0_15px_rgba(168,85,247,0.2)]' : ''}`}
             />
-            <button 
-              onClick={handleSendMessage}
-              disabled={!chatInput.trim() || isTyping}
-              className="absolute right-2 top-2 p-1 rounded-md text-purple-400 hover:bg-purple-500/20 disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
-            >
-              <MessageSquare className="w-4 h-4" />
-            </button>
+            <div className="absolute right-2 top-1.5 flex items-center gap-1">
+              <button 
+                onClick={toggleListening}
+                className={`p-1.5 rounded-md transition-colors ${
+                  isListening 
+                    ? 'text-white bg-rose-500 hover:bg-rose-600 animate-pulse' 
+                    : 'text-slate-400 hover:text-purple-400 hover:bg-purple-500/20'
+                }`}
+                title={isListening ? "Stop listening" : "Speak to AI"}
+              >
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </button>
+              <button 
+                onClick={handleSendMessage}
+                disabled={!chatInput.trim() || isTyping}
+                className="p-1.5 rounded-md text-purple-400 hover:bg-purple-500/20 disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
+              >
+                <MessageSquare className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>

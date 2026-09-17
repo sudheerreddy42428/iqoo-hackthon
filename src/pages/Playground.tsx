@@ -15,11 +15,7 @@ import { CodeAccessView } from './CodeAccessView';
 import { useInvestigation } from '../context/InvestigationContext';
 import { FileText } from 'lucide-react';
 
-interface PlaygroundProps {
-  onOpenVoiceModal?: () => void;
-}
-
-export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
+export const Playground: React.FC = () => {
   const {
     activeCrash, 
     analysis, 
@@ -149,15 +145,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ onOpenVoiceModal }) => {
             </select>
           </div>
 
-          {onOpenVoiceModal && (
-            <button
-              onClick={onOpenVoiceModal}
-              className="px-3.5 py-2 rounded-lg bg-cyan-600/20 hover:bg-cyan-500/30 text-cyan-400 font-semibold text-xs flex items-center gap-1.5 border border-cyan-500/40 transition-all hover:scale-105"
-            >
-              <span>🎙️</span>
-              <span>Speak Crash</span>
-            </button>
-          )}
+
 
           <button
             onClick={() => handleTriggerCrash(selectedScenario)}
