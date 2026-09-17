@@ -145,7 +145,7 @@ export const AirplaneModeVerifier: React.FC = () => {
               <span className="text-white font-semibold">Launch ReproX:</span> Open the app from your home screen. Notice it opens instantly with no browser URL bar and no connection error.
             </li>
             <li>
-              <span className="text-white font-semibold">Test Voice / Camera / AI:</span> Speak a crash description using the microphone, or photograph an error screen using the camera scanner, or click "Simulate Crash".
+              <span className="text-white font-semibold">Test Voice / Camera / AI:</span> Speak a crash description or photograph an error screen using the AI Assistant, or click "Simulate Crash" in the Playground.
             </li>
             <li>
               <span className="text-white font-semibold">Observe Diagnostics:</span> The on-device engine instantly diagnoses the root cause, maps reproduction steps, and writes Kotlin Espresso tests with <span className="text-emerald-400 font-bold">0 network requests</span>.

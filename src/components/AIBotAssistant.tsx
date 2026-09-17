@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, MessageSquare, FileText, Lightbulb, ChevronDown, CheckCircle2, Mic, MicOff } from 'lucide-react';
+import { Bot, MessageSquare, FileText, Lightbulb, ChevronDown, CheckCircle2, Mic, MicOff, Camera } from 'lucide-react';
 import { useInvestigation } from '../context/InvestigationContext';
 import { DeveloperReportModal } from './DeveloperReportModal';
 import { onDeviceLLMAnalyzer } from '../services/analyzer';
+import { CameraCrashScanner } from './CameraCrashScanner';
 
 import { ChatMessage } from '../types/reprox';
 
@@ -13,6 +14,7 @@ export const AIBotAssistant: React.FC = () => {
   const [chatInput, setChatInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [showCameraModal, setShowCameraModal] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -102,6 +104,11 @@ export const AIBotAssistant: React.FC = () => {
       
       return [...prev, { ...msg, id: Math.random().toString(36).substring(7), timestamp: new Date() }];
     });
+  };
+
+  const handleTextExtracted = (text: string) => {
+    setChatInput(prev => (prev ? prev + '\n\n' : '') + `I am seeing this error:\n${text}`);
+    setShowCameraModal(false);
   };
 
   const handleSendMessage = async () => {
@@ -278,6 +285,13 @@ export const AIBotAssistant: React.FC = () => {
             />
             <div className="absolute right-2 top-1.5 flex items-center gap-1">
               <button 
+                onClick={() => setShowCameraModal(true)}
+                className="p-1.5 rounded-md text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/20 transition-colors"
+                title="Camera & File Upload"
+              >
+                <Camera className="w-4 h-4" />
+              </button>
+              <button 
                 onClick={toggleListening}
                 className={`p-1.5 rounded-md transition-colors ${
                   isListening 
@@ -306,6 +320,17 @@ export const AIBotAssistant: React.FC = () => {
           analysis={analysis}
           onClose={() => setShowReport(false)}
         />
+      )}
+
+      {showCameraModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-dark-950/80 backdrop-blur-sm animate-fadeIn">
+          <div className="max-w-md w-full">
+            <CameraCrashScanner 
+              onTextExtracted={handleTextExtracted} 
+              onClose={() => setShowCameraModal(false)} 
+            />
+          </div>
+        </div>
       )}
     </>
   );

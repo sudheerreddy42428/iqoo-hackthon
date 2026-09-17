@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, WifiOff, Cpu, Camera, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, WifiOff, Cpu, CheckCircle2 } from 'lucide-react';
 import { networkMonitor } from '../services/networkMonitor';
 
 interface OfflineStatusBarProps {
-  onOpenCameraModal?: () => void;
   onOpenAuditModal?: () => void;
 }
 
 export const OfflineStatusBar: React.FC<OfflineStatusBarProps> = ({
-  onOpenCameraModal,
   onOpenAuditModal,
 }) => {
   const [isOnline, setIsOnline] = useState<boolean>(
@@ -65,17 +63,6 @@ export const OfflineStatusBar: React.FC<OfflineStatusBarProps> = ({
 
       {/* Quick Action Badges / Trigger Modals */}
       <div className="flex items-center gap-2 font-mono text-[11px]">
-
-        {onOpenCameraModal && (
-          <button
-            onClick={onOpenCameraModal}
-            className="px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-cyan-500/40 flex items-center gap-1.5 transition-colors"
-            title="Scan Error Screen with Camera (OCR)"
-          >
-            <Camera className="w-3 h-3 text-purple-400" />
-            <span className="hidden xs:inline">Camera OCR</span>
-          </button>
-        )}
 
         {onOpenAuditModal && (
           <button

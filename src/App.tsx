@@ -9,12 +9,10 @@ import { Documentation } from './pages/Documentation';
 import { Architecture } from './pages/Architecture';
 import { InstallPromptBanner } from './components/InstallPromptBanner';
 import { OfflineStatusBar } from './components/OfflineStatusBar';
-import { CameraCrashScanner } from './components/CameraCrashScanner';
 import { AirplaneModeVerifier } from './components/AirplaneModeVerifier';
 import { AIBotAssistant } from './components/AIBotAssistant';
 import { actionTracker } from './services/actionTracker';
 import { crashSimulator } from './services/crashSimulator';
-import { CrashReport } from './types/reprox';
 import { X } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -25,7 +23,6 @@ export const App: React.FC = () => {
   const demoAbortRef = useRef<boolean>(false);
 
   // Modals for quick offline utilities
-  const [showCameraModal, setShowCameraModal] = useState<boolean>(false);
   const [showAuditModal, setShowAuditModal] = useState<boolean>(false);
 
   const stopDemo = () => {
@@ -33,11 +30,6 @@ export const App: React.FC = () => {
     setIsDemoRunning(false);
     setDemoStepName('');
     setDemoProgress(0);
-  };
-  const handleCrashCaptured = (_report: CrashReport) => {
-    setShowCameraModal(false);
-    setCurrentTab('dashboard');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const runFullDemo = async () => {
     if (isDemoRunning) return;
@@ -147,7 +139,6 @@ export const App: React.FC = () => {
 
       {/* 2. Top Persistent Affirmative Offline Status Confirmation for Judges */}
       <OfflineStatusBar
-        onOpenCameraModal={() => setShowCameraModal(true)}
         onOpenAuditModal={() => setShowAuditModal(true)}
       />
 
@@ -224,12 +215,6 @@ export const App: React.FC = () => {
 
             {/* Dedicated Tab Views for Phone-First Features */}
 
-            {currentTab === 'camera' && (
-              <div className="max-w-3xl mx-auto space-y-6 animate-fadeIn">
-                <CameraCrashScanner onCrashScanned={handleCrashCaptured} />
-              </div>
-            )}
-
             {currentTab === 'audit' && (
               <div className="max-w-4xl mx-auto space-y-6 animate-fadeIn">
                 <AirplaneModeVerifier />
@@ -249,19 +234,6 @@ export const App: React.FC = () => {
           </main>
         </div>
       </div>
-
-
-
-      {showCameraModal && (
-        <div className="fixed inset-0 z-50 bg-dark-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="max-w-xl w-full">
-            <CameraCrashScanner
-              onCrashScanned={handleCrashCaptured}
-              onClose={() => setShowCameraModal(false)}
-            />
-          </div>
-        </div>
-      )}
 
       {showAuditModal && (
         <div className="fixed inset-0 z-50 bg-dark-950/80 backdrop-blur-md flex items-center justify-center p-4">

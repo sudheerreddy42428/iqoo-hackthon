@@ -1,16 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Tesseract from 'tesseract.js';
 import { Camera, RefreshCw, Upload, Sparkles, Check, Scan } from 'lucide-react';
-import { CrashReport } from '../types/reprox';
-import { crashSimulator } from '../services/crashSimulator';
 
 interface CameraCrashScannerProps {
-  onCrashScanned?: (report: CrashReport) => void;
+  onTextExtracted?: (text: string) => void;
   onClose?: () => void;
 }
 
 export const CameraCrashScanner: React.FC<CameraCrashScannerProps> = ({
-  onCrashScanned,
+  onTextExtracted,
   onClose,
 }) => {
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -131,26 +129,11 @@ export const CameraCrashScanner: React.FC<CameraCrashScannerProps> = ({
     }
   };
 
-  const handleApplyExtractedCrash = () => {
+  const handleAcceptText = () => {
     if (!extractedText) return;
 
-    let templateKey: 'NULL_POINTER_CHECKOUT' | 'INDEX_OUT_OF_BOUNDS_CART' | 'NETWORK_TIMEOUT_API' = 'NULL_POINTER_CHECKOUT';
-    let screen = 'Checkout';
-
-    if (extractedText.includes('IndexOutOfBounds')) {
-      templateKey = 'INDEX_OUT_OF_BOUNDS_CART';
-      screen = 'Cart';
-    } else if (extractedText.includes('Timeout')) {
-      templateKey = 'NETWORK_TIMEOUT_API';
-      screen = 'Payment';
-    }
-
-    const report = crashSimulator.simulateCrash(templateKey, screen);
-    report.stackTrace = extractedText;
-    report.message = 'Crash extracted from camera photo via on-device OCR';
-
-    if (onCrashScanned) {
-      onCrashScanned(report);
+    if (onTextExtracted) {
+      onTextExtracted(extractedText);
     }
     if (onClose) {
       onClose();
@@ -338,11 +321,11 @@ export const CameraCrashScanner: React.FC<CameraCrashScannerProps> = ({
           {(!extractedText.startsWith('No text') && !extractedText.startsWith('Failed')) && (
             <div className="pt-2 flex justify-end">
               <button
-                onClick={handleApplyExtractedCrash}
+                onClick={handleAcceptText}
                 className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:brightness-110 text-dark-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-cyan-950"
               >
                 <Sparkles className="w-4 h-4" />
-                <span>Analyze Extracted Error in ReproX</span>
+                <span>Use Extracted Text</span>
               </button>
             </div>
           )}
