@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, MessageSquare, FileText, Lightbulb, ChevronDown, CheckCircle2, Mic, MicOff, Menu, Plus, Trash2, Search, X, MessageCircle, Image as ImageIcon } from 'lucide-react';
+import { Bot, MessageSquare, FileText, Lightbulb, ChevronDown, Mic, MicOff, Menu, Plus, Trash2, Search, X, MessageCircle, Image as ImageIcon } from 'lucide-react';
 import { useInvestigation } from '../context/InvestigationContext';
 import { DeveloperReportModal } from './DeveloperReportModal';
 import { FormattedChatMessage } from './FormattedChatMessage';
@@ -244,12 +244,18 @@ export const AIBotAssistant: React.FC = () => {
       const errorMsg: Omit<PersistentChatMessage, 'id' | 'timestamp'> = {
         conversationId: currentConversationId,
         role: 'assistant',
+        type: 'error',
         content: err instanceof Error && err.message !== 'API Error' 
           ? `Error: ${err.message}` 
-          : "I'm sorry, I encountered a network error while connecting to the Gemini Chat server."
+          : "I'm sorry, I encountered a network error while connecting to the AI service."
       };
       const savedErrorMsg = conversationStore.saveMessage(errorMsg);
       setMessages(prev => [...prev, savedErrorMsg]);
+      
+      // Restore user input if they typed it directly
+      if (!textOverride) {
+        setChatInput(userText);
+      }
     } finally {
       setIsTyping(false);
     }
@@ -444,25 +450,16 @@ export const AIBotAssistant: React.FC = () => {
                         <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                       </>
                     ) : (
-                      <FormattedChatMessage content={msg.content} />
+                      <div className={msg.type === 'error' ? 'text-rose-400 font-medium' : ''}>
+                        <FormattedChatMessage content={msg.content} />
+                        {msg.type === 'error' && (
+                          <div className="mt-2 text-xs text-rose-500/80 italic">
+                            Your message has been restored to the input box.
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
-
-                  {/* ReproX Specific Components */}
-                  {msg.type === 'auto-fix' && (
-                    <div className="bg-emerald-950/20 border border-emerald-500/30 rounded-xl p-3 space-y-2">
-                      <div className="flex items-center gap-2 text-emerald-400">
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span className="text-xs font-bold uppercase tracking-wider">Auto-Fix Deployed</span>
-                      </div>
-                      <button 
-                        onClick={() => setShowReport(true)}
-                        className="w-full py-1.5 px-3 bg-dark-900 hover:bg-dark-800 border border-emerald-500/20 rounded-lg text-xs text-slate-300 flex items-center justify-center gap-2 transition-colors"
-                      >
-                        <FileText className="w-3 h-3" /> View Developer Report
-                      </button>
-                    </div>
-                  )}
 
                   {msg.type === 'complex-report' && analysis && (
                     <div className="space-y-2">

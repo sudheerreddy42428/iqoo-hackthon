@@ -269,3 +269,16 @@ ReproX.track("Opened Checkout")
 > - **Browser-Only Execution**: The crash is simulated inside React; no actual native Android process is terminated.
 > - **Rule-Based Engine**: The diagnostic analysis uses heuristic pattern matching rather than live production cloud telemetry.
 > - **No Remote Telemetry**: All data is stored locally in `localStorage` in your browser. No personal data or credentials leave your machine.
+
+---
+
+## 12. Super AI Chatbot Modes
+
+ReproX includes an AI Assistant that operates in two distinct modes:
+
+1. **General AI Mode**: A general-purpose assistant that helps with programming, mathematics, technical concepts, and everyday questions. It behaves as a standard AI chatbot.
+2. **ReproX Diagnostic Mode**: Activated when viewing a crash report. In this mode, the AI strictly focuses on analyzing the application crash, reviewing the telemetry, identifying root causes, and proposing fixes.
+
+### Security and Fix Workflow
+- **CORS Protection**: The AI API endpoint (`/api/chat`) enforces strict CORS policies. Use the `ALLOWED_ORIGINS` environment variable to configure trusted domains.
+- **Authorized Fixes Only**: The AI will *never* claim to have automatically deployed or verified a code fix unless explicitly authorized through the developer dashboard workflow. Fake "Auto-Fix Deployed" messages have been strictly prohibited to prevent misleading assumptions.

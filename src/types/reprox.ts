@@ -19,7 +19,7 @@ export interface ChatMessage {
   id: string;
   sender: 'ai' | 'user';
   text: string;
-  type?: 'auto-fix' | 'complex-report' | 'normal';
+  type?: 'auto-fix' | 'complex-report' | 'normal' | 'error';
   timestamp: Date;
 }
 
@@ -39,7 +39,7 @@ export interface PersistentChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: string;
-  type?: 'auto-fix' | 'complex-report' | 'normal';
+  type?: 'auto-fix' | 'complex-report' | 'normal' | 'error';
   imageUrl?: string;
 }
 

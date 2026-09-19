@@ -15,6 +15,7 @@ import { AIBotAssistant } from './components/AIBotAssistant';
 import { actionTracker } from './services/actionTracker';
 import { crashSimulator } from './services/crashSimulator';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { X } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -139,7 +140,8 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="h-screen bg-dark-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200 overflow-hidden">
+    <ErrorBoundary>
+      <div className="h-screen bg-dark-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200 overflow-hidden">
       {/* 1. PWA Install CTA Banner for Mobile Phone Home Screen */}
       <InstallPromptBanner />
 
@@ -255,5 +257,6 @@ export const App: React.FC = () => {
       {/* Persistent AI Bot Assistant */}
       <AIBotAssistant />
     </div>
+    </ErrorBoundary>
   );
 };
