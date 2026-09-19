@@ -491,6 +491,6 @@ export const ruleBasedProvider = new RuleBasedProvider();
 export const localModelProvider = new LocalModelProvider();
 export const remoteLLMProvider = new RemoteLLMProvider();
 
-export const localAIAnalyzer = localModelProvider;
-export const onDeviceLLMAnalyzer = localModelProvider;
-export const cloudAIAnalyzer = localModelProvider;
+export const localAIAnalyzer = ruleBasedProvider;
+export const onDeviceLLMAnalyzer = ruleBasedProvider;
+export const cloudAIAnalyzer = remoteLLMProvider;
