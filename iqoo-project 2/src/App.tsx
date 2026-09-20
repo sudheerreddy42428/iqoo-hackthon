@@ -15,7 +15,6 @@ import { AIBotAssistant } from './components/AIBotAssistant';
 import { actionTracker } from './services/actionTracker';
 import { crashSimulator } from './services/crashSimulator';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { ErrorBoundary } from './components/ErrorBoundary';
 import { X } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -140,8 +139,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <ErrorBoundary>
-      <div className="h-screen w-full bg-dark-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200 overflow-hidden">
+    <div className="h-screen bg-dark-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200 overflow-hidden">
       {/* 1. PWA Install CTA Banner for Mobile Phone Home Screen */}
       <InstallPromptBanner />
 
@@ -162,7 +160,7 @@ export const App: React.FC = () => {
           />
         )}
 
-        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto overflow-x-hidden">
+        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
           {/* Floating Demo Mode Controller Banner */}
           {isDemoRunning && (
             <div className="sticky top-16 md:top-0 z-20 bg-gradient-to-r from-purple-950 via-dark-900 to-indigo-950 border-b border-purple-500/30 px-4 py-2.5 shadow-xl animate-slideUp">
@@ -257,6 +255,5 @@ export const App: React.FC = () => {
       {/* Persistent AI Bot Assistant */}
       <AIBotAssistant />
     </div>
-    </ErrorBoundary>
   );
 };

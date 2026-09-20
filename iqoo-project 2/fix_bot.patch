@@ -1,0 +1,17 @@
+--- src/components/AIBotAssistant.tsx
++++ src/components/AIBotAssistant.tsx
+@@ -103,10 +103,11 @@
+   const addMessage = (msg: Omit<ChatMessage, 'id' | 'timestamp'>) => {
+     setMessages(prev => {
+-      // Prevent duplicate automated messages
+-      const isDuplicate = prev.some(m => m.text === msg.text && m.type === msg.type);
+-      if (isDuplicate) return prev;
++      // Prevent duplicate automated messages (which have a specific type)
++      if (msg.type) {
++        const isDuplicate = prev.some(m => m.text === msg.text && m.type === msg.type);
++        if (isDuplicate) return prev;
++      }
+       
+       return [...prev, { ...msg, id: Math.random().toString(36).substring(7), timestamp: new Date() }];
+     });
+   };

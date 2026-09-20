@@ -1,0 +1,54 @@
+{
+  "name": "ReproX – On-Device Crash Diagnostic",
+  "short_name": "ReproX",
+  "description": "On-device mobile crash reproduction and telemetry analyzer running 100% offline with local AI.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#030712",
+  "theme_color": "#030712",
+  "categories": ["developer-tools", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Simulate Crash",
+      "short_name": "Crash Lab",
+      "description": "Open the interactive crash simulation playground",
+      "url": "/?tab=playground",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Crash Dashboard",
+      "short_name": "Telemetry",
+      "description": "View historical crashes and tests",
+      "url": "/?tab=dashboard",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+    }
+  ]
+}

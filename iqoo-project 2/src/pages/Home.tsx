@@ -53,7 +53,7 @@ const HeroSection = ({ onLaunch }: { onLaunch: () => void }) => (
         </span>
       </div>
 
-      <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter text-white leading-[1.05]">
+      <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tighter text-white leading-[1.05]">
         See what happened <br />
         <span className="bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent drop-shadow-sm">
           before the crash.
