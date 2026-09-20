@@ -74,7 +74,7 @@ export const HeroMockup: React.FC = () => {
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span className="uppercase tracking-widest text-[9px]">Synthesized Espresso Test</span>
             </div>
-            <pre className="text-slate-300">
+            <pre className="text-slate-300 overflow-x-auto">
 <span className="text-purple-400">@Test</span>
 <span className="text-purple-400">fun</span> <span className="text-blue-400">reproduceCheckoutCrash</span>() {'{'}
   <span className="text-slate-500">// Action 1: Navigated to CheckoutScreen</span>
