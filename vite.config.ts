@@ -20,11 +20,11 @@ function apiChatDevPlugin(): Plugin {
         req.on('end', async () => {
           try {
             const parsed = JSON.parse(body || '{}');
-            const { messages = [], mode = 'general', crashContext, model = 'gemini-2.5-flash' } = parsed;
+            const { messages = [], mode = 'general', crashContext, model = 'gemini-3.6-flash' } = parsed;
             const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 
             if (apiKey) {
-              const apiModel = model === 'gemini-2.0-flash' ? 'gemini-2.0-flash' : 'gemini-2.5-flash';
+              const apiModel = model === 'gemini-3.6-pro' ? 'gemini-3.6-pro' : 'gemini-3.6-flash';
               const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${apiModel}:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

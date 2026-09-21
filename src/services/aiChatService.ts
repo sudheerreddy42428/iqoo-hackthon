@@ -1,6 +1,6 @@
 import { CrashReport, AnalysisResult, PersistentChatMessage, ChatMode } from '../types/reprox';
 
-export type AIModelId = 'gemini-2.5-flash' | 'gemini-2.0-flash' | 'gemini-2.5-flash-lite' | 'reprox-local';
+export type AIModelId = 'gemini-3.6-flash' | 'gemini-3.6-pro' | 'reprox-local';
 
 export interface ChatRequestOptions {
   messages: PersistentChatMessage[];
@@ -52,11 +52,11 @@ class AIChatService {
   getSelectedModel(): AIModelId {
     try {
       const stored = localStorage.getItem(STORAGE_SELECTED_MODEL) as AIModelId | null;
-      if (stored && ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite', 'reprox-local'].includes(stored)) {
+      if (stored && ['gemini-3.6-flash', 'gemini-3.6-pro', 'reprox-local'].includes(stored)) {
         return stored;
       }
     } catch (e) {}
-    return 'gemini-2.5-flash';
+    return 'gemini-3.6-flash';
   }
 
   setSelectedModel(modelId: AIModelId): void {
@@ -70,7 +70,7 @@ class AIChatService {
     if (!apiKey.trim()) {
       return { success: false, message: 'Please enter a valid Gemini API key.' };
     }
-    const testModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite'];
+    const testModels = ['gemini-3.6-flash', 'gemini-3.6-pro'];
     let lastError = '';
 
     for (const model of testModels) {
@@ -160,13 +160,11 @@ class AIChatService {
     analysis?: AnalysisResult | null,
     attachedImage?: string | null
   ): Promise<string> {
-    const selected = modelId === 'gemini-2.0-flash' 
-      ? 'gemini-2.0-flash' 
-      : modelId === 'gemini-2.5-flash-lite' 
-        ? 'gemini-2.5-flash-lite' 
-        : 'gemini-2.5-flash';
+    const selected = modelId === 'gemini-3.6-pro' 
+      ? 'gemini-3.6-pro' 
+      : 'gemini-3.6-flash';
 
-    const modelsToTry = Array.from(new Set([selected, 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite']));
+    const modelsToTry = Array.from(new Set([selected, 'gemini-3.6-flash', 'gemini-3.6-pro']));
 
     // Prepare system instruction & contextual prompt
     let systemPrompt = "You are ReproX Super AI, an expert mobile systems engineer, Kotlin developer, and crash diagnostics copilot. Provide clear, accurate, practical technical advice with formatted code blocks, step-by-step reasoning, and concise explanations.";

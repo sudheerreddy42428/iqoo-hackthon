@@ -801,9 +801,8 @@ export const AIBotAssistant: React.FC = () => {
                   onChange={(e) => setSelectedModel(e.target.value as AIModelId)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-purple-500"
                 >
-                  <option value="gemini-2.5-flash">🚀 Google Gemini 2.5 Flash (Recommended)</option>
-                  <option value="gemini-2.0-flash">✨ Google Gemini 2.0 Flash (Stable)</option>
-                  <option value="gemini-2.5-flash-lite">⚡ Google Gemini 2.5 Flash Lite (Low Latency)</option>
+                  <option value="gemini-3.6-flash">🚀 Google Gemini 3.6 Flash (Recommended)</option>
+                  <option value="gemini-3.6-pro">✨ Google Gemini 3.6 Pro (Advanced)</option>
                   <option value="reprox-local">🛡️ ReproX Smart Local Engine (100% Offline)</option>
                 </select>
               </div>
