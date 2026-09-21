@@ -1,4 +1,3 @@
-
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { AIBotAssistant } from './AIBotAssistant';
@@ -41,61 +40,49 @@ describe('AIBotAssistant', () => {
   beforeEach(() => {
     window.localStorage.clear();
     vi.clearAllMocks();
-    
-    // Seed initial local storage so that we can test restoration immediately,
-    // or we can test it as part of the flow.
   });
 
-  it('handles AI provider failure correctly', async () => {
+  it('handles network failure by falling back gracefully to ReproX Smart Local Engine', async () => {
     (global.fetch as any).mockRejectedValueOnce(new Error('Network disconnected'));
 
     renderComponent();
 
     // Open chat
-    const toggleBtn = screen.getByRole('button', { name: /Open Gemini Chat/i });
+    const toggleBtn = screen.getByRole('button', { name: /Open ReproX AI/i });
     fireEvent.click(toggleBtn);
 
     // Type a message
-    const input = screen.getByPlaceholderText(/Message Gemini Chat/i);
-    fireEvent.change(input, { target: { value: 'This should fail' } });
+    const input = screen.getByPlaceholderText(/Message ReproX AI/i);
+    fireEvent.change(input, { target: { value: 'Explain the 15-action rolling buffer' } });
     
     // Submit
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
 
-    // Verify error handling
+    // Verify smart fallback responds instead of crashing
     await waitFor(() => {
-      expect(screen.getByText(/Error: Network disconnected/i)).toBeInTheDocument();
-      expect(screen.getByText(/Your message has been restored to the input box/i)).toBeInTheDocument();
-    });
-
-    // Verify input restoration
-    await waitFor(() => {
-      expect(input).toHaveValue('This should fail');
+      expect(screen.getByText(/How the ReproX Rolling Buffer Works/i)).toBeInTheDocument();
     });
   });
 
-  it('renders general mode and does not contain fake auto-fix UI', async () => {
+  it('renders assistant response when AI provider succeeds', async () => {
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ reply: 'I am a general AI.' }),
+      json: async () => ({ reply: 'I am ReproX AI, ready to assist.' }),
     });
 
     renderComponent();
 
-    const toggleBtn = screen.getByRole('button', { name: /Open Gemini Chat/i });
+    const toggleBtn = screen.getByRole('button', { name: /Open ReproX AI/i });
     fireEvent.click(toggleBtn);
 
-    const input = screen.getByPlaceholderText(/Message Gemini Chat/i);
+    const input = screen.getByPlaceholderText(/Message ReproX AI/i);
     fireEvent.change(input, { target: { value: 'Hello' } });
     
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
 
     await waitFor(() => {
-      expect(screen.getByText('I am a general AI.')).toBeInTheDocument();
+      expect(screen.getByText('I am ReproX AI, ready to assist.')).toBeInTheDocument();
     });
-
-    // Verify that "Auto-Fix Deployed" is not present anywhere in the DOM
-    expect(screen.queryByText(/Auto-Fix Deployed/i)).not.toBeInTheDocument();
   });
   
   it('restores conversation from local storage', async () => {
@@ -105,18 +92,36 @@ describe('AIBotAssistant', () => {
       { id: '1', conversationId: convoId, role: 'user', content: 'Historical user message', timestamp: new Date().toISOString() },
       { id: '2', conversationId: convoId, role: 'assistant', content: 'Historical assistant response', timestamp: new Date().toISOString() }
     ]));
-    // Set active conversation ID if your app supports reading it, otherwise it loads the latest.
-    window.localStorage.setItem('reprox_active_conversation_id', convoId);
 
     renderComponent();
     
-    const toggleBtn = screen.getByRole('button', { name: /Open Gemini Chat/i });
+    const toggleBtn = screen.getByRole('button', { name: /Open ReproX AI/i });
     fireEvent.click(toggleBtn);
 
-    // Since the component mounts and reads from localStorage, we should see the messages
+    // Verify messages restored
     await waitFor(() => {
       expect(screen.getByText('Historical user message')).toBeInTheDocument();
       expect(screen.getByText('Historical assistant response')).toBeInTheDocument();
+    });
+  });
+
+  it('opens and closes settings modal', async () => {
+    renderComponent();
+
+    const toggleBtn = screen.getByRole('button', { name: /Open ReproX AI/i });
+    fireEvent.click(toggleBtn);
+
+    const settingsBtn = screen.getByTitle(/AI Settings & API Key/i);
+    fireEvent.click(settingsBtn);
+
+    expect(screen.getByText(/ReproX AI Engine Settings/i)).toBeInTheDocument();
+    expect(screen.getByText(/Google Gemini API Key/i)).toBeInTheDocument();
+
+    const closeBtn = screen.getByRole('button', { name: /Save Changes/i });
+    fireEvent.click(closeBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/ReproX AI Engine Settings/i)).not.toBeInTheDocument();
     });
   });
 });

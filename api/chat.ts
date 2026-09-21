@@ -33,7 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid or oversized message history' });
     }
 
-    const apiKey = process.env.XAI_API_KEY || process.env.GROQ_API_KEY || process.env.AI_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.XAI_API_KEY || process.env.GROQ_API_KEY || process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
 
     // Prepare system instruction based on mode
     let systemPrompt = "You are ReproX Super AI, a helpful general-purpose AI assistant. Answer questions accurately, clearly, and safely. Support programming, mathematics, technical concepts, general knowledge, learning, writing, and everyday questions. Explain your reasoning when useful, provide examples, and ask for clarification when the user's request is ambiguous. Do not claim to have executed code, accessed files, changed code, deployed an application, or verified a result unless that action actually occurred.";
@@ -196,13 +196,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Fallback response if offline/unreachable
-    return res.status(503).json({ 
-      success: false,
-      error: {
-        code: 'AI_SERVICE_UNAVAILABLE',
-        message: 'The AI service is temporarily unavailable. Please try again.'
-      }
+    // Graceful fallback response if offline/unreachable
+    return res.status(200).json({ 
+      reply: null,
+      fallback: true,
+      message: 'Server AI service unavailable or unconfigured. Delegating to client local AI engine.'
     });
   } catch (error: any) {
     console.error('Server chat endpoint error:', error);

@@ -1,10 +1,72 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
+import { defineConfig, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+function apiChatDevPlugin(): Plugin {
+  return {
+    name: 'api-chat-dev-plugin',
+    configureServer(server) {
+      server.middlewares.use('/api/chat', async (req, res, next) => {
+        if (req.method !== 'POST') {
+          return next();
+        }
+
+        let body = '';
+        req.on('data', chunk => {
+          body += chunk;
+        });
+
+        req.on('end', async () => {
+          try {
+            const parsed = JSON.parse(body || '{}');
+            const { messages = [], mode = 'general', crashContext, model = 'gemini-1.5-flash' } = parsed;
+            const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+
+            if (apiKey) {
+              const apiModel = model === 'gemini-1.5-pro' ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
+              const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${apiModel}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents: messages.map((m: any) => ({
+                    role: m.role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: m.content }]
+                  }))
+                })
+              });
+
+              if (geminiRes.ok) {
+                const data: any = await geminiRes.json();
+                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (reply) {
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ reply, provider: `Google Gemini (${apiModel})` }));
+                  return;
+                }
+              }
+            }
+
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({
+              reply: null,
+              fallback: true,
+              message: 'No server GEMINI_API_KEY configured. Delegating to client AI engine.'
+            }));
+          } catch (e: any) {
+            res.setHeader('Content-Type', 'application/json');
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: e.message || 'Error processing chat request' }));
+          }
+        });
+      });
+    }
+  };
+}
+
 export default defineConfig({
   plugins: [
+    apiChatDevPlugin(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',
