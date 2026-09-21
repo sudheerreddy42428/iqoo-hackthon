@@ -65,7 +65,7 @@ describe('AIBotAssistant', () => {
   });
 
   it('renders assistant response when AI provider succeeds', async () => {
-    (global.fetch as any).mockResolvedValueOnce({
+    (global.fetch as any).mockResolvedValue({
       ok: true,
       json: async () => ({ reply: 'I am ReproX AI, ready to assist.' }),
     });
