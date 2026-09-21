@@ -6,6 +6,13 @@ export type ActionType =
   | 'API_CALL' 
   | 'CRASH_TRIGGER';
 
+export type TestStatus = 'IDLE' | 'RUNNING' | 'PASSED' | 'FAILED' | 'CRASHED' | 'STOPPED';
+export type AIAnalysisStatus = 'IDLE' | 'ANALYZING' | 'READY' | 'FAILED';
+export type ApprovalStatus = 'NOT_REQUIRED' | 'PENDING' | 'APPROVED' | 'REJECTED';
+export type CodeAccessStatus = 'NOT_REQUESTED' | 'REQUESTED' | 'GRANTED' | 'DENIED';
+export type PatchStatus = 'NONE' | 'PROPOSED' | 'APPROVED' | 'APPLYING' | 'APPLIED' | 'ROLLED_BACK' | 'FAILED';
+export type VerificationStatus = 'NOT_STARTED' | 'RUNNING' | 'PASSED' | 'FAILED';
+
 export type UploadStatus =
   | 'idle'
   | 'selected'

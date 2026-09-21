@@ -10,6 +10,7 @@ import { localAIAnalyzer } from '../services/analyzer';
 
 import { DeveloperReportModal } from '../components/DeveloperReportModal';
 import { ApprovalPanel } from '../components/ApprovalPanel';
+import { AutoFixPanel } from '../components/AutoFixPanel';
 import { CodeAccessView } from './CodeAccessView';
 import { useInvestigation } from '../context/InvestigationContext';
 import { FileText, History, Smartphone, Maximize2, Minimize2, Check, Copy } from 'lucide-react';
@@ -20,13 +21,13 @@ export const Playground: React.FC = () => {
     analysis, 
     startInvestigation, 
     setAnalysisResult,
-    approvalStatus,
     setApprovalStatus,
     patchStatus,
     setPatchStatus,
     codeAccessStatus,
     setCodeAccessStatus,
-    testStatus,
+    verificationStatus,
+    setVerificationStatus,
     resetDemo 
   } = useInvestigation();
   
@@ -48,13 +49,11 @@ export const Playground: React.FC = () => {
     return () => window.removeEventListener('webllm-progress', handleProgress);
   }, []);
 
-  // Note: We don't auto-load recent crashes anymore to keep the demo clean for judges
-
   const handleTriggerCrash = async (templateKey: string = selectedScenario, screen?: string) => {
-    // Check if we already applied a fix for the currently selected scenario
+    // Check if we already applied and verified a fix for the currently selected scenario
     const template = CRASH_TEMPLATES[templateKey as keyof typeof CRASH_TEMPLATES] || { errorType: 'NullPointerException' };
-    if (patchStatus === 'APPLIED' && activeCrash && activeCrash.errorType === template.errorType) {
-      alert("✅ Crash prevented! The Auto-Fix engine has safely patched this code.");
+    if (patchStatus === 'APPLIED' && verificationStatus === 'PASSED' && activeCrash && activeCrash.errorType === template.errorType) {
+      alert("✅ Crash prevented! The Auto-Fix patch has been applied and verified against regression.");
       return;
     }
 
@@ -70,10 +69,18 @@ export const Playground: React.FC = () => {
       const result = await localAIAnalyzer.analyze(report);
       setAnalysisResult(result);
       
+      // Reset patch lifecycle
+      setPatchStatus('PROPOSED');
+      setVerificationStatus('NOT_STARTED');
+
       if (result.riskLevel === 'LOW') {
-        setPatchStatus('APPLIED');
+        // Safe auto-fix candidate: auto-grant code access, no manual approval required
+        setCodeAccessStatus('GRANTED');
+        setApprovalStatus('NOT_REQUIRED');
       } else {
+        // High/Critical risk: requires code access request and developer approval
         setCodeAccessStatus('REQUESTED');
+        setApprovalStatus('PENDING');
       }
     } finally {
       setIsAnalyzing(false);
@@ -88,15 +95,13 @@ export const Playground: React.FC = () => {
     }
   };
 
-
-
   return (
-    <div className="space-y-8 animate-fadeIn pb-24">
+    <div className="space-y-6 sm:space-y-8 animate-fadeIn pb-24 max-w-full">
       {/* Playground Header Bar */}
       <div className="glass-panel p-4 sm:p-5 rounded-t-2xl border-x border-t border-slate-800 flex flex-wrap items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+        <div className="space-y-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white tracking-tight">
               ReproX Playground
             </h1>
             <EducationalBadge type="PROTOTYPE" size="sm" />
@@ -107,7 +112,7 @@ export const Playground: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Scenario quick selector */}
           <div className="flex items-center gap-2 bg-dark-950 p-1.5 rounded-lg border border-slate-800 text-xs">
             <span className="text-slate-400 font-mono text-[11px] hidden sm:inline">Scenario:</span>
@@ -122,11 +127,9 @@ export const Playground: React.FC = () => {
             </select>
           </div>
 
-
-
           <button
             onClick={() => handleTriggerCrash(selectedScenario)}
-            className="px-3.5 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-rose-950 transition-all hover:scale-105"
+            className="px-3 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-rose-950 transition-all hover:scale-105"
           >
             <span>💥</span>
             <span>Simulate Crash</span>
@@ -134,7 +137,7 @@ export const Playground: React.FC = () => {
           
           <button
             onClick={() => { resetDemo(); setActiveTab('simulation'); }}
-            className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs flex items-center gap-1.5 border border-slate-700 transition-all"
+            className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs flex items-center gap-1.5 border border-slate-700 transition-all"
           >
             <span>🔄</span>
             <span>Reset Demo</span>
@@ -143,7 +146,7 @@ export const Playground: React.FC = () => {
           {analysis && (
             <button
               onClick={() => setShowDeveloperReport(true)}
-              className="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-indigo-950/50 transition-all hover:scale-105"
+              className="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-indigo-950/50 transition-all hover:scale-105"
             >
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">Developer Report</span>
@@ -153,7 +156,7 @@ export const Playground: React.FC = () => {
       </div>
 
       {/* Workspace Tabs */}
-      <div className="flex items-center border-x border-b border-slate-800 bg-dark-900/40 px-4 sm:px-6 overflow-x-auto custom-scrollbar">
+      <div className="flex items-center border-x border-b border-slate-800 bg-dark-900/40 px-3 sm:px-6 overflow-x-auto custom-scrollbar max-w-full">
         <WorkspaceTab 
           active={activeTab === 'simulation'} 
           onClick={() => setActiveTab('simulation')} 
@@ -191,13 +194,13 @@ export const Playground: React.FC = () => {
         />
       </div>
 
-      <div className="p-4 sm:p-6 lg:p-8 min-h-[500px] bg-dark-950/50 border-x border-b border-slate-800 rounded-b-2xl">
+      <div className="p-3 sm:p-6 lg:p-8 min-h-[500px] bg-dark-950/50 border-x border-b border-slate-800 rounded-b-2xl max-w-full">
         
         {/* SIMULATION TAB */}
         {activeTab === 'simulation' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left Column: Interactive Simulated Coffee Shop App */}
-            <div className="lg:col-span-5 h-[580px] lg:h-auto relative z-10">
+            <div className="lg:col-span-5 h-[580px] lg:h-auto relative z-10 w-full max-w-full">
               <SimulatedApp
                 onTriggerCrash={handleTriggerCrash}
                 activeScreen={currentScreen}
@@ -206,7 +209,7 @@ export const Playground: React.FC = () => {
               />
             </div>
             {/* Right Column: Timeline */}
-            <div className="lg:col-span-7 space-y-6">
+            <div className="lg:col-span-7 space-y-6 w-full max-w-full">
               <ActionTimeline />
             </div>
           </div>
@@ -317,7 +320,7 @@ export const Playground: React.FC = () => {
                   </button>
                 </div>
               </div>
-              <pre className={`p-4 rounded-xl bg-[#0d1117] border border-slate-800 text-[11px] sm:text-xs font-mono text-rose-300/90 overflow-x-auto leading-relaxed shadow-inner ${expandedTrace ? 'max-h-none' : 'max-h-[300px]'}`}>
+              <pre className={`p-4 rounded-xl bg-[#0d1117] border border-slate-800 text-[11px] sm:text-xs font-mono text-rose-300/90 overflow-x-auto leading-relaxed shadow-inner max-w-full ${expandedTrace ? 'max-h-none' : 'max-h-[300px]'}`}>
                 {activeCrash.stackTrace}
               </pre>
             </div>
@@ -331,6 +334,8 @@ export const Playground: React.FC = () => {
               <AnalysisPanel
                 analysis={analysis}
                 report={activeCrash}
+                onProceedToFix={() => setActiveTab('fix')}
+                onViewDeveloperReport={() => setShowDeveloperReport(true)}
               />
             ) : isAnalyzing ? (
               <div className="glass-panel p-12 rounded-[2rem] border border-slate-800 text-center space-y-6 flex flex-col items-center justify-center min-h-[400px]">
@@ -356,6 +361,7 @@ export const Playground: React.FC = () => {
         {/* SUGGESTED FIX TAB */}
         {activeTab === 'fix' && analysis && activeCrash && (
           <div className="animate-fadeIn max-w-4xl mx-auto space-y-6">
+            {/* If codebase access is requested, show CodeAccessView first */}
             {codeAccessStatus === 'REQUESTED' && (
               <CodeAccessView
                 onAccessGranted={() => {
@@ -371,24 +377,50 @@ export const Playground: React.FC = () => {
               />
             )}
 
-            {(approvalStatus === 'PENDING' || testStatus === 'RUNNING' || (patchStatus === 'APPLIED' && analysis.riskLevel !== 'LOW')) && (
-              <ApprovalPanel
-                report={activeCrash}
-                analysis={analysis}
-                onApprove={() => {
-                  setPatchStatus('APPLIED');
-                }}
-                onReject={() => {
-                  setApprovalStatus('REJECTED');
-                }}
-              />
+            {/* If code access is granted, render panel based on risk tier */}
+            {codeAccessStatus === 'GRANTED' && (
+              analysis.riskLevel === 'LOW' ? (
+                /* LOW RISK: Streamlined Auto-Fix flow */
+                <AutoFixPanel
+                  report={activeCrash}
+                  analysis={analysis}
+                  onFixed={() => {}}
+                  onRollback={() => {}}
+                />
+              ) : (
+                /* HIGH / CRITICAL / MEDIUM RISK: Human-in-the-loop Approval panel */
+                <ApprovalPanel
+                  report={activeCrash}
+                  analysis={analysis}
+                  onApprove={() => {}}
+                  onReject={() => {
+                    setApprovalStatus('REJECTED');
+                  }}
+                />
+              )
             )}
             
-            {/* If no code access requested and no pending approval and no patch, show something */}
-            {codeAccessStatus !== 'REQUESTED' && approvalStatus !== 'PENDING' && patchStatus !== 'APPLIED' && testStatus !== 'RUNNING' && approvalStatus !== 'REJECTED' && patchStatus !== 'ROLLED_BACK' && (
-               <div className="glass-panel p-8 rounded-2xl border border-slate-800 text-center space-y-4">
-                 <p className="text-slate-400">No fix requested or available.</p>
-               </div>
+            {/* If code access was denied */}
+            {codeAccessStatus === 'DENIED' && (
+              <div className="glass-panel p-8 rounded-2xl border border-rose-500/30 text-center space-y-4">
+                <p className="text-rose-300 font-bold">Codebase access was denied by developer.</p>
+                <p className="text-xs text-slate-400 max-w-md mx-auto">
+                  ReproX cannot propose or apply a patch without read access to the relevant source file.
+                </p>
+                <button
+                  onClick={() => setCodeAccessStatus('REQUESTED')}
+                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-all"
+                >
+                  Request Codebase Access Again
+                </button>
+              </div>
+            )}
+
+            {/* If no code access requested and no fix available */}
+            {codeAccessStatus !== 'REQUESTED' && codeAccessStatus !== 'GRANTED' && codeAccessStatus !== 'DENIED' && (
+              <div className="glass-panel p-8 rounded-2xl border border-slate-800 text-center space-y-4">
+                <p className="text-slate-400">No patch requested yet. Run an analysis from the simulation or crash summary.</p>
+              </div>
             )}
           </div>
         )}
@@ -420,7 +452,7 @@ const WorkspaceTab = ({ active, onClick, label, disabled = false }: { active: bo
   <button
     onClick={onClick}
     disabled={disabled}
-    className={`px-4 sm:px-6 py-4 text-sm font-semibold whitespace-nowrap transition-all border-b-2 ${
+    className={`px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold whitespace-nowrap transition-all border-b-2 ${
       active 
         ? 'border-cyan-400 text-cyan-400 bg-dark-900/50' 
         : disabled 

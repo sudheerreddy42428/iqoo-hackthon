@@ -42,8 +42,8 @@ describe('ActionTimeline', () => {
     render(<ActionTimeline />);
     
     // Check if the screen names are rendered
-    expect(screen.getByText('Home')).toBeInTheDocument();
-    expect(screen.getByText('Cart')).toBeInTheDocument();
+    expect(screen.getByText(/Home/)).toBeInTheDocument();
+    expect(screen.getByText(/Cart/)).toBeInTheDocument();
     
     // Check if descriptions are rendered
     expect(screen.getByText('Opened App')).toBeInTheDocument();

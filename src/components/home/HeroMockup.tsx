@@ -3,25 +3,25 @@ import { Terminal, PlayCircle, Smartphone, AlertOctagon, CheckCircle2 } from 'lu
 
 export const HeroMockup: React.FC = () => {
   return (
-    <div className="relative w-full max-w-lg mx-auto md:max-w-none md:w-[500px] lg:w-[600px]">
+    <div className="relative w-full max-w-full sm:max-w-lg mx-auto md:max-w-none md:w-[500px] lg:w-[600px]">
       {/* Background glow for mockup */}
       <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 via-purple-500/20 to-indigo-500/20 blur-3xl rounded-full -z-10" />
 
       {/* Main Mockup Window */}
-      <div className="relative glass-panel rounded-2xl border border-slate-700/60 shadow-2xl shadow-cyan-900/20 overflow-hidden flex flex-col bg-dark-950/80 backdrop-blur-xl">
+      <div className="relative glass-panel rounded-2xl border border-slate-700/60 shadow-2xl shadow-cyan-900/20 overflow-hidden flex flex-col bg-dark-950/80 backdrop-blur-xl max-w-full">
         
         {/* Mockup Header */}
-        <div className="h-10 border-b border-slate-800/80 bg-slate-900/60 flex items-center px-4 justify-between shrink-0">
-          <div className="flex gap-2">
-            <div className="w-3 h-3 rounded-full bg-rose-500/80" />
-            <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-            <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
+        <div className="h-10 border-b border-slate-800/80 bg-slate-900/60 flex items-center px-3 sm:px-4 justify-between shrink-0 gap-2">
+          <div className="flex gap-1.5 sm:gap-2 shrink-0">
+            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-rose-500/80" />
+            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-500/80" />
+            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500/80" />
           </div>
-          <div className="text-[10px] font-mono text-slate-500 flex items-center gap-2">
-            <Terminal className="w-3 h-3" />
-            ReproX Engine - Active Session
+          <div className="text-[10px] font-mono text-slate-400 flex items-center gap-1.5 truncate">
+            <Terminal className="w-3 h-3 text-cyan-400 shrink-0" />
+            <span className="truncate">ReproX Engine - Active Session</span>
           </div>
-          <div className="w-10" /> {/* Spacer for centering */}
+          <div className="w-4 sm:w-8 shrink-0" /> {/* Spacer for centering */}
         </div>
 
         {/* Mockup Body - Split into two sections vertically */}

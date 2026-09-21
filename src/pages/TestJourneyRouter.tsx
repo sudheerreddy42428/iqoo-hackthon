@@ -77,7 +77,7 @@ export const TestJourneyRouter: React.FC = () => {
 
       {currentStep === 'crash-summary' && (
         <CrashSummary
-          onAnalyze={() => setCurrentStep('ai-analysis')}
+          onAnalyze={() => setCurrentStep('code-access')}
           onExit={handleExit}
         />
       )}

@@ -6,7 +6,7 @@ export type TestStatus = 'IDLE' | 'RUNNING' | 'PASSED' | 'FAILED' | 'CRASHED' | 
 export type AIAnalysisStatus = 'IDLE' | 'ANALYZING' | 'READY' | 'FAILED';
 export type ApprovalStatus = 'NOT_REQUIRED' | 'PENDING' | 'APPROVED' | 'REJECTED';
 export type CodeAccessStatus = 'NOT_REQUESTED' | 'REQUESTED' | 'GRANTED' | 'DENIED';
-export type PatchStatus = 'NONE' | 'PROPOSED' | 'APPROVED' | 'APPLIED' | 'ROLLED_BACK' | 'FAILED';
+export type PatchStatus = 'NONE' | 'PROPOSED' | 'APPROVED' | 'APPLYING' | 'APPLIED' | 'ROLLED_BACK' | 'FAILED';
 export type VerificationStatus = 'NOT_STARTED' | 'RUNNING' | 'PASSED' | 'FAILED';
 
 export interface InvestigationState {
@@ -84,20 +84,29 @@ function investigationReducer(state: InvestigationState, action: InvestigationAc
         debugAttempts: 0,
         testStatus: 'CRASHED',
         aiAnalysisStatus: 'IDLE',
-        approvalStatus: 'PENDING',
+        approvalStatus: 'NOT_REQUIRED',
         codeAccessStatus: 'NOT_REQUESTED',
         patchStatus: 'NONE',
         verificationStatus: 'NOT_STARTED',
       };
-    case 'SET_ANALYSIS_RESULT':
+    case 'SET_ANALYSIS_RESULT': {
       if (action.result) action.result.investigationId = state.investigationId || undefined;
+      const isHighRisk = action.result ? (
+        action.result.riskLevel === 'HIGH' || 
+        action.result.riskLevel === 'CRITICAL' || 
+        action.result.severity === 'HIGH' || 
+        action.result.severity === 'CRITICAL' ||
+        action.result.approvalRequired
+      ) : false;
       return {
         ...state,
         analysis: action.result,
         aiAnalysisStatus: action.result ? 'READY' : state.aiAnalysisStatus,
-        approvalStatus: action.result && (action.result.severity === 'HIGH' || action.result.severity === 'CRITICAL') 
-          ? 'PENDING' : state.approvalStatus,
+        approvalStatus: isHighRisk ? 'PENDING' : 'NOT_REQUIRED',
+        codeAccessStatus: isHighRisk ? 'REQUESTED' : 'GRANTED',
+        patchStatus: action.result ? 'PROPOSED' : state.patchStatus,
       };
+    }
     case 'ADD_SCREENSHOT': {
       const newScreenshots = [...state.screenshots, action.screenshot];
       return {
@@ -123,9 +132,15 @@ function investigationReducer(state: InvestigationState, action: InvestigationAc
     case 'INCREMENT_DEBUG_ATTEMPTS':
       return { ...state, debugAttempts: state.debugAttempts + 1 };
     case 'SAVE_CHECKPOINT':
-      return { ...state }; // Previously modified investigationState, but that's gone.
+      return { ...state };
     case 'ROLLBACK':
-      return { ...state, patchStatus: 'ROLLED_BACK' }; // Removed setInvestigationState timeout here.
+      return { 
+        ...state, 
+        patchStatus: 'ROLLED_BACK',
+        verificationStatus: 'NOT_STARTED',
+        testStatus: 'CRASHED',
+        approvalStatus: state.analysis?.riskLevel === 'LOW' ? 'NOT_REQUIRED' : 'PENDING'
+      };
     case 'RESET_DEMO':
       return {
         ...initialState,
@@ -140,6 +155,12 @@ function investigationReducer(state: InvestigationState, action: InvestigationAc
     default:
       return state;
   }
+}
+
+export interface PatchExecutionOptions {
+  onProgress?: (stepName: string, progress: number) => void;
+  simulateFailure?: boolean;
+  stepDelayMs?: number;
 }
 
 interface InvestigationContextType extends InvestigationState {
@@ -162,6 +183,7 @@ interface InvestigationContextType extends InvestigationState {
   saveCheckpoint: () => void;
   rollback: () => void;
   resetDemo: () => void;
+  executePatchPipeline: (options?: PatchExecutionOptions) => Promise<{ success: boolean; error?: string }>;
 }
 
 const InvestigationContext = createContext<InvestigationContextType | undefined>(undefined);
@@ -180,6 +202,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
   };
 
   const [state, dispatch] = useReducer(investigationReducer, null, loadInitialState);
+  const isExecutingRef = React.useRef<boolean>(false);
 
   // Sync to sessionStorage
   useEffect(() => {
@@ -203,6 +226,60 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
       });
     }
   }, [state.investigationId]);
+
+  const executePatchPipeline = async (options?: PatchExecutionOptions): Promise<{ success: boolean; error?: string }> => {
+    // Guard: Prevent double-execution or parallel runs
+    if (isExecutingRef.current) {
+      return { success: false, error: 'Execution already in progress' };
+    }
+    if (state.patchStatus === 'APPLYING') {
+      return { success: false, error: 'Patch is currently applying' };
+    }
+    if (state.patchStatus === 'APPLIED') {
+      return { success: false, error: 'Patch already applied' };
+    }
+
+    isExecutingRef.current = true;
+    dispatch({ type: 'SET_APPROVAL_STATUS', status: 'APPROVED' });
+    dispatch({ type: 'SET_PATCH_STATUS', status: 'APPLYING' });
+    dispatch({ type: 'SET_TEST_STATUS', status: 'RUNNING' });
+    dispatch({ type: 'SET_VERIFICATION_STATUS', status: 'RUNNING' });
+    dispatch({ type: 'SAVE_CHECKPOINT' });
+    dispatch({ type: 'INCREMENT_DEBUG_ATTEMPTS' });
+
+    try {
+      const baseDelay = options?.stepDelayMs ?? (process.env.NODE_ENV === 'test' ? 10 : 350);
+      const steps = [
+        { name: 'Connecting to Local IDE Agent (localhost:8080)...', percent: 15, delay: baseDelay },
+        { name: 'Resolving project AST & creating Git checkpoint...', percent: 45, delay: baseDelay },
+        { name: 'Applying syntax-safe patch candidate to workspace...', percent: 70, delay: baseDelay },
+        { name: 'Running Kotlin / TypeScript compiler & linter...', percent: 85, delay: baseDelay },
+        { name: 'Synthesizing & executing regression test suite...', percent: 100, delay: baseDelay },
+      ];
+
+      for (const step of steps) {
+        options?.onProgress?.(step.name, step.percent);
+        await new Promise((resolve) => setTimeout(resolve, step.delay));
+      }
+
+      if (options?.simulateFailure) {
+        throw new Error('Typechecker reported 1 error after patch application.');
+      }
+
+      dispatch({ type: 'SET_PATCH_STATUS', status: 'APPLIED' });
+      dispatch({ type: 'SET_VERIFICATION_STATUS', status: 'PASSED' });
+      dispatch({ type: 'SET_TEST_STATUS', status: 'PASSED' });
+      return { success: true };
+    } catch (err: any) {
+      console.error('[ReproX] Patch pipeline failed:', err);
+      dispatch({ type: 'SET_PATCH_STATUS', status: 'FAILED' });
+      dispatch({ type: 'SET_VERIFICATION_STATUS', status: 'FAILED' });
+      dispatch({ type: 'SET_TEST_STATUS', status: 'FAILED' });
+      return { success: false, error: err?.message || 'Pipeline execution failed' };
+    } finally {
+      isExecutingRef.current = false;
+    }
+  };
 
   const api: InvestigationContextType = {
     ...state,
@@ -229,6 +306,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
     saveCheckpoint: () => dispatch({ type: 'SAVE_CHECKPOINT' }),
     rollback: () => dispatch({ type: 'ROLLBACK' }),
     resetDemo: () => dispatch({ type: 'RESET_DEMO', defaultChatMessages }),
+    executePatchPipeline,
   };
 
   return (

@@ -141,7 +141,7 @@ export const App: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div className="h-screen w-screen max-w-[100vw] bg-dark-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200 overflow-x-hidden">
+      <div className="h-screen w-full max-w-full bg-dark-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200 overflow-x-hidden">
       {/* 1. PWA Install CTA Banner for Mobile Phone Home Screen */}
       <InstallPromptBanner />
 

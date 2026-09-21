@@ -87,5 +87,6 @@ export default defineConfig({
     setupFiles: './src/setupTests.ts',
     css: false,
     pool: 'threads',
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
   },
 });
