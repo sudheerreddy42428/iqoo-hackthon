@@ -1,6 +1,6 @@
 import { CrashReport, AnalysisResult, PersistentChatMessage, ChatMode } from '../types/reprox';
 
-export type AIModelId = 'gemini-2.5-flash' | 'gemini-1.5-flash' | 'gemini-1.5-pro' | 'reprox-local';
+export type AIModelId = 'gemini-2.5-flash' | 'gemini-2.0-flash' | 'gemini-2.5-flash-lite' | 'reprox-local';
 
 export interface ChatRequestOptions {
   messages: PersistentChatMessage[];
@@ -52,11 +52,11 @@ class AIChatService {
   getSelectedModel(): AIModelId {
     try {
       const stored = localStorage.getItem(STORAGE_SELECTED_MODEL) as AIModelId | null;
-      if (stored && ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'reprox-local'].includes(stored)) {
+      if (stored && ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite', 'reprox-local'].includes(stored)) {
         return stored;
       }
     } catch (e) {}
-    return 'gemini-1.5-flash';
+    return 'gemini-2.5-flash';
   }
 
   setSelectedModel(modelId: AIModelId): void {
@@ -70,26 +70,32 @@ class AIChatService {
     if (!apiKey.trim()) {
       return { success: false, message: 'Please enter a valid Gemini API key.' };
     }
-    try {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`;
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: 'Ping. Respond with "Pong".' }] }]
-        })
-      });
+    const testModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite'];
+    let lastError = '';
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const msg = errorData?.error?.message || `HTTP ${response.status}: Invalid key or quota limit.`;
-        return { success: false, message: msg };
+    for (const model of testModels) {
+      try {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: 'Ping' }] }]
+          })
+        });
+
+        if (response.ok) {
+          return { success: true, message: `Successfully connected to Google Gemini (${model})!` };
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          lastError = errorData?.error?.message || `HTTP ${response.status}: Invalid key or quota limit.`;
+        }
+      } catch (err: any) {
+        lastError = err.message || 'Connection failed. Check network or CORS.';
       }
-
-      return { success: true, message: 'Successfully connected to Google Gemini API!' };
-    } catch (err: any) {
-      return { success: false, message: err.message || 'Connection failed. Check network or CORS.' };
     }
+
+    return { success: false, message: lastError || 'Connection failed. Check network or key.' };
   }
 
   // Main chat completion method with multi-tiered fallback
@@ -154,9 +160,13 @@ class AIChatService {
     analysis?: AnalysisResult | null,
     attachedImage?: string | null
   ): Promise<string> {
-    // Map to supported Gemini model ID
-    const apiModel = modelId === 'gemini-1.5-pro' ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${apiModel}:generateContent?key=${apiKey}`;
+    const selected = modelId === 'gemini-2.0-flash' 
+      ? 'gemini-2.0-flash' 
+      : modelId === 'gemini-2.5-flash-lite' 
+        ? 'gemini-2.5-flash-lite' 
+        : 'gemini-2.5-flash';
+
+    const modelsToTry = Array.from(new Set([selected, 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite']));
 
     // Prepare system instruction & contextual prompt
     let systemPrompt = "You are ReproX Super AI, an expert mobile systems engineer, Kotlin developer, and crash diagnostics copilot. Provide clear, accurate, practical technical advice with formatted code blocks, step-by-step reasoning, and concise explanations.";
@@ -217,27 +227,48 @@ class AIChatService {
       }
     };
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
+    let lastError: any = null;
+    for (const currentModel of modelsToTry) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
 
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      signal: controller.signal
-    });
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
 
-    clearTimeout(timeoutId);
-
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData?.error?.message || `Gemini API returned status ${res.status}`);
+        if (res.ok) {
+          const data = await res.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) return text;
+        } else {
+          const errorData = await res.json().catch(() => ({}));
+          lastError = new Error(errorData?.error?.message || `Gemini API (${currentModel}) returned status ${res.status}`);
+          // If model not found or not supported, continue to next model
+          if (res.status === 404 || errorData?.error?.message?.includes('not found') || errorData?.error?.message?.includes('not supported')) {
+            console.warn(`Model ${currentModel} not available, trying next...`);
+            continue;
+          } else {
+            // Other error (e.g. invalid key or quota)
+            throw lastError;
+          }
+        }
+      } catch (err: any) {
+        clearTimeout(timeoutId);
+        lastError = err;
+        if (err.name === 'AbortError') {
+          continue;
+        }
+        throw err;
+      }
     }
 
-    const data = await res.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error('No candidate content returned by Gemini API');
-    return text;
+    throw lastError || new Error('No supported Gemini model succeeded');
   }
 
   // Call /api/chat endpoint

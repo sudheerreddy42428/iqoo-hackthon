@@ -54,7 +54,7 @@ export const AIBotAssistant: React.FC = () => {
   
   // Settings State
   const [apiKeyInput, setApiKeyInput] = useState('');
-  const [selectedModel, setSelectedModel] = useState<AIModelId>('gemini-1.5-flash');
+  const [selectedModel, setSelectedModel] = useState<AIModelId>('gemini-2.5-flash');
   const [testStatus, setTestStatus] = useState<{ testing: boolean; message: string; success?: boolean } | null>(null);
 
   // History State
@@ -801,10 +801,10 @@ export const AIBotAssistant: React.FC = () => {
                   onChange={(e) => setSelectedModel(e.target.value as AIModelId)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-purple-500"
                 >
-                  <option value="gemini-1.5-flash">✨ Google Gemini 1.5 Flash (Fast Reasoning)</option>
-                  <option value="gemini-2.5-flash">🚀 Google Gemini 2.5 Flash (Ultra Fast)</option>
-                  <option value="gemini-1.5-pro">🧠 Google Gemini 1.5 Pro (Deep Diagnostic)</option>
-                  <option value="reprox-local">⚡ ReproX Smart Local Engine (100% Offline)</option>
+                  <option value="gemini-2.5-flash">🚀 Google Gemini 2.5 Flash (Recommended)</option>
+                  <option value="gemini-2.0-flash">✨ Google Gemini 2.0 Flash (Stable)</option>
+                  <option value="gemini-2.5-flash-lite">⚡ Google Gemini 2.5 Flash Lite (Low Latency)</option>
+                  <option value="reprox-local">🛡️ ReproX Smart Local Engine (100% Offline)</option>
                 </select>
               </div>
 
