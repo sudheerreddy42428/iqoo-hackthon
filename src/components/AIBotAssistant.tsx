@@ -462,7 +462,7 @@ export const AIBotAssistant: React.FC = () => {
       <div className="fixed inset-x-0 bottom-0 md:inset-auto md:bottom-6 md:right-6 w-full md:w-[440px] h-[92dvh] md:h-[680px] flex bg-slate-950/95 md:border border-purple-500/30 rounded-t-2xl md:rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.7)] z-50 overflow-hidden animate-fadeIn backdrop-blur-2xl transition-all duration-300">
         
         {/* History Drawer Sidebar */}
-        <div className={`${isDrawerOpen ? 'w-64 border-r border-slate-800/80' : 'w-0'} flex-shrink-0 bg-slate-900/90 transition-all duration-300 overflow-hidden flex flex-col`}>
+        <div className={`absolute left-0 top-0 bottom-0 z-20 ${isDrawerOpen ? 'w-full md:w-80 border-r border-slate-800/80' : 'w-0'} flex-shrink-0 bg-slate-900/95 transition-all duration-300 overflow-hidden flex flex-col shadow-2xl`}>
           <div className="p-3 border-b border-slate-800 flex items-center justify-between">
             <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
               <MessageSquare className="w-3.5 h-3.5 text-purple-400" /> Chat History
