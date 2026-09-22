@@ -14,47 +14,6 @@ export interface CrashTemplate {
 }
 
 export const CRASH_TEMPLATES: Record<string, CrashTemplate> = {
-  NULL_POINTER_CHECKOUT: {
-    errorType: 'NullPointerException',
-    message: 'Attempted to invoke virtual method on null paymentMethod reference.',
-    screen: 'Checkout',
-    method: 'PaymentService.processPayment()',
-    severity: 'High',
-    triggerDescription: 'Triggered Pay before selecting a payment method',
-    stackTrace: `java.lang.NullPointerException: Attempt to invoke virtual method 'void com.reprox.coffee.service.PaymentService.processPayment(com.reprox.coffee.model.PaymentMethod)' on a null object reference
-    at com.reprox.coffee.service.PaymentService.processPayment(PaymentService.kt:89)
-    at com.reprox.coffee.ui.CheckoutViewModel.pay(CheckoutViewModel.kt:54)
-    at com.reprox.coffee.ui.CheckoutScreen.onPayClicked(CheckoutScreen.kt:142)
-    at com.reprox.coffee.ui.CheckoutScreenKt$CheckoutScreen$4$1.invoke(CheckoutScreen.kt:142)
-    at androidx.compose.material3.ButtonKt$Button$2.invoke(Button.kt:124)
-    at androidx.compose.ui.platform.AndroidComposeView.dispatchTouchEvent(AndroidComposeView.android.kt:856)`,
-  },
-  INDEX_OUT_OF_BOUNDS_CART: {
-    errorType: 'IndexOutOfBoundsException',
-    message: 'Index 4 out of bounds for length 3 in cart item list',
-    screen: 'Cart',
-    method: 'CartAdapter.onBindViewHolder()',
-    severity: 'High',
-    triggerDescription: 'Rapid item removal race condition in cart adapter',
-    stackTrace: `java.lang.IndexOutOfBoundsException: Index 4 out of bounds for length 3
-    at java.util.ArrayList.get(ArrayList.java:435)
-    at com.reprox.coffee.ui.CartAdapter.onBindViewHolder(CartAdapter.kt:64)
-    at com.reprox.coffee.ui.CartAdapter.onBindViewHolder(CartAdapter.kt:22)
-    at androidx.recyclerview.widget.RecyclerView$Adapter.bindViewHolder(RecyclerView.java:7337)
-    at androidx.recyclerview.widget.RecyclerView$Recycler.getViewForPosition(RecyclerView.java:6118)`,
-  },
-  NETWORK_TIMEOUT_API: {
-    errorType: 'SocketTimeoutException',
-    message: 'failed to connect to api.reproxcoffee.internal/v2/orders after 10000ms',
-    screen: 'Payment',
-    method: 'PaymentClient.submitOrder()',
-    severity: 'High',
-    triggerDescription: 'Simulated network timeout during payment gateway authorization',
-    stackTrace: `java.net.SocketTimeoutException: failed to connect to api.reproxcoffee.internal/v2/orders after 10000ms
-    at okhttp3.internal.connection.RealCall.callStart(RealCall.kt:148)
-    at com.reprox.coffee.network.PaymentClient.submitOrder(PaymentClient.kt:89)
-    at com.reprox.coffee.viewmodel.PaymentViewModel$process$1.invokeSuspend(PaymentViewModel.kt:73)`,
-  },
   REMOTE_PAYMENT_GATEWAY_505: {
     errorType: 'PaymentGatewayException',
     message: 'Remote payment gateway failed with HTTP 505: Protocol/Version not supported by upstream gateway',
@@ -66,6 +25,78 @@ export const CRASH_TEMPLATES: Record<string, CrashTemplate> = {
     at com.reprox.coffee.service.PaymentGatewayService.executeTransaction(PaymentGatewayService.kt:114)
     at com.reprox.coffee.ui.CheckoutViewModel.processPayment(CheckoutViewModel.kt:82)
     at com.reprox.coffee.ui.CheckoutScreen.onPayClicked(CheckoutScreen.kt:156)`,
+  },
+  CONCURRENT_CART_REMOVE: {
+    errorType: 'ConcurrentModificationException',
+    message: 'Concurrent modification during remove item from cart',
+    screen: 'Cart',
+    method: 'CartViewModel.removeItem()',
+    severity: 'High',
+    triggerDescription: 'Remove all items from cart concurrently',
+    stackTrace: `java.util.ConcurrentModificationException: Concurrent modification during remove item from cart
+    at java.util.ArrayList$Itr.checkForComodification(ArrayList.java:1043)
+    at java.util.ArrayList$Itr.next(ArrayList.java:997)
+    at com.reprox.coffee.ui.CartViewModel.removeItem(CartViewModel.kt:45)
+    at com.reprox.coffee.ui.CartScreen.onRemoveClicked(CartScreen.kt:112)`,
+  },
+  LOCATION_SERVICE_DENIED: {
+    errorType: 'SecurityException',
+    message: 'Location permission denied by user',
+    screen: 'StoreLocator',
+    method: 'LocationManager.getLastKnownLocation()',
+    severity: 'High',
+    triggerDescription: 'Location service denied during nearby store lookup',
+    stackTrace: `java.lang.SecurityException: Location permission denied by user
+    at android.app.ContextImpl.enforceCallingOrSelfPermission(ContextImpl.java:2296)
+    at android.location.LocationManager.getLastKnownLocation(LocationManager.java:3239)
+    at com.reprox.coffee.location.StoreLocatorManager.findNearby(StoreLocatorManager.kt:55)`,
+  },
+  RAPID_PAYMENT_SWITCH: {
+    errorType: 'IllegalStateException',
+    message: 'Payment method state corrupted by rapid switching',
+    screen: 'Checkout',
+    method: 'PaymentMethodSelector.commitSelection()',
+    severity: 'High',
+    triggerDescription: 'Switch payment methods rapidly causing state corruption',
+    stackTrace: `java.lang.IllegalStateException: Payment method state corrupted by rapid switching
+    at com.reprox.coffee.ui.PaymentMethodSelector.commitSelection(PaymentMethodSelector.kt:88)
+    at com.reprox.coffee.ui.CheckoutViewModel.updatePaymentMethod(CheckoutViewModel.kt:62)`,
+  },
+  BACKGROUND_DURING_PAYMENT: {
+    errorType: 'LifecycleException',
+    message: 'App sent to background during active payment transaction',
+    screen: 'Checkout',
+    method: 'PaymentTransactionActivity.onPause()',
+    severity: 'High',
+    triggerDescription: 'Background app during payment',
+    stackTrace: `com.reprox.coffee.lifecycle.LifecycleException: App sent to background during active payment transaction
+    at com.reprox.coffee.ui.PaymentTransactionActivity.onPause(PaymentTransactionActivity.kt:105)
+    at android.app.Activity.performPause(Activity.java:8253)
+    at android.app.Instrumentation.callActivityOnPause(Instrumentation.java:1504)`,
+  },
+  MEMORY_LEAK_OOM: {
+    errorType: 'OutOfMemoryError',
+    message: 'Failed to allocate 16MB for bitmap cache in payment screen',
+    screen: 'Payment',
+    method: 'BitmapFactory.nativeDecodeAsset()',
+    severity: 'High',
+    triggerDescription: 'Memory leak check during payment processing',
+    stackTrace: `java.lang.OutOfMemoryError: Failed to allocate 16777216 bytes
+    at android.graphics.BitmapFactory.nativeDecodeAsset(Native Method)
+    at android.graphics.BitmapFactory.decodeStream(BitmapFactory.java:773)
+    at com.reprox.coffee.ui.PaymentScreen.loadPaymentAssets(PaymentScreen.kt:205)`,
+  },
+  EXPIRED_JWT_TOKEN: {
+    errorType: 'AuthenticationException',
+    message: 'JWT Token Expired during checkout validation',
+    screen: 'Checkout',
+    method: 'AuthInterceptor.intercept()',
+    severity: 'High',
+    triggerDescription: 'Expired jwt token during checkout',
+    stackTrace: `com.reprox.coffee.auth.AuthenticationException: JWT Token Expired during checkout validation
+    at com.reprox.coffee.auth.AuthInterceptor.intercept(AuthInterceptor.kt:45)
+    at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:109)
+    at com.reprox.coffee.network.PaymentClient.validateSession(PaymentClient.kt:120)`,
   }
 };
 
@@ -190,15 +221,15 @@ class CrashSimulatorService {
         id: 'CRASH-8F42A1',
         timestamp: '10:42:17',
         epochTime: Date.now() - 1000 * 60 * 12,
-        errorType: 'NullPointerException',
-        message: 'Attempted to invoke virtual method on null paymentMethod reference.',
-        method: 'PaymentService.processPayment()',
-        screen: 'Checkout',
-        severity: 'High',
+        errorType: CRASH_TEMPLATES.REMOTE_PAYMENT_GATEWAY_505.errorType,
+        message: CRASH_TEMPLATES.REMOTE_PAYMENT_GATEWAY_505.message,
+        method: CRASH_TEMPLATES.REMOTE_PAYMENT_GATEWAY_505.method,
+        screen: CRASH_TEMPLATES.REMOTE_PAYMENT_GATEWAY_505.screen,
+        severity: CRASH_TEMPLATES.REMOTE_PAYMENT_GATEWAY_505.severity,
         status: 'New',
         occurrences: 48,
         lastSeen: '12m ago',
-        stackTrace: CRASH_TEMPLATES.NULL_POINTER_CHECKOUT.stackTrace,
+        stackTrace: CRASH_TEMPLATES.REMOTE_PAYMENT_GATEWAY_505.stackTrace,
         recentActions: [
           { id: 'act-01', timestamp: '10:42:01', epochTime: Date.now() - 25000, type: 'NAVIGATION', screen: 'Menu', description: 'Viewed Cappuccino', actionName: 'Navigate', target: 'Menu' },
           { id: 'act-02', timestamp: '10:42:05', epochTime: Date.now() - 21000, type: 'CLICK', screen: 'Menu', description: 'Added Cappuccino', actionName: 'Tap', target: 'Add to Cart' },
@@ -214,15 +245,15 @@ class CrashSimulatorService {
         id: 'CRASH-3B77C2',
         timestamp: '09:15:40',
         epochTime: Date.now() - 1000 * 60 * 180,
-        errorType: 'IndexOutOfBoundsException',
-        message: 'Index 4 out of bounds for length 3 in cart item list',
-        method: 'CartAdapter.onBindViewHolder()',
-        screen: 'Cart',
-        severity: 'High',
+        errorType: CRASH_TEMPLATES.CONCURRENT_CART_REMOVE.errorType,
+        message: CRASH_TEMPLATES.CONCURRENT_CART_REMOVE.message,
+        method: CRASH_TEMPLATES.CONCURRENT_CART_REMOVE.method,
+        screen: CRASH_TEMPLATES.CONCURRENT_CART_REMOVE.screen,
+        severity: CRASH_TEMPLATES.CONCURRENT_CART_REMOVE.severity,
         status: 'Reproduced',
         occurrences: 23,
         lastSeen: '3h ago',
-        stackTrace: CRASH_TEMPLATES.INDEX_OUT_OF_BOUNDS_CART.stackTrace,
+        stackTrace: CRASH_TEMPLATES.CONCURRENT_CART_REMOVE.stackTrace,
         recentActions: [
           { id: 'act-11', timestamp: '09:15:20', epochTime: Date.now() - 20000, type: 'CLICK', screen: 'Cart', description: 'Removed Espresso Classic', actionName: 'Tap', target: 'Delete' },
           { id: 'act-12', timestamp: '09:15:21', epochTime: Date.now() - 19000, type: 'CLICK', screen: 'Cart', description: 'Rapid delete tap on row 2', actionName: 'Tap', target: 'Delete' },
@@ -234,21 +265,20 @@ class CrashSimulatorService {
         id: 'CRASH-9E11D4',
         timestamp: 'Yesterday',
         epochTime: Date.now() - 1000 * 60 * 1440,
-        errorType: 'SocketTimeoutException',
-        message: 'failed to connect to api.reproxcoffee.internal/v2/orders after 10000ms',
-        method: 'PaymentClient.submitOrder()',
-        screen: 'Payment',
-        severity: 'High',
+        errorType: CRASH_TEMPLATES.LOCATION_SERVICE_DENIED.errorType,
+        message: CRASH_TEMPLATES.LOCATION_SERVICE_DENIED.message,
+        method: CRASH_TEMPLATES.LOCATION_SERVICE_DENIED.method,
+        screen: CRASH_TEMPLATES.LOCATION_SERVICE_DENIED.screen,
+        severity: CRASH_TEMPLATES.LOCATION_SERVICE_DENIED.severity,
         status: 'Fixed',
         occurrences: 87,
         lastSeen: '1d ago',
-        stackTrace: CRASH_TEMPLATES.NETWORK_TIMEOUT_API.stackTrace,
+        stackTrace: CRASH_TEMPLATES.LOCATION_SERVICE_DENIED.stackTrace,
         recentActions: [
-          { id: 'act-21', timestamp: '14:10:02', epochTime: Date.now() - 50000, type: 'INPUT', screen: 'Checkout', description: 'Entered Card Details', actionName: 'Input', target: 'CardForm', metadata: { cardNumber: '4111222233334444', cvv: '123' } },
-          { id: 'act-22', timestamp: '14:10:05', epochTime: Date.now() - 47000, type: 'CLICK', screen: 'Checkout', description: 'Dispatched order payment payload', actionName: 'Tap', target: 'Pay Now' },
+          { id: 'act-21', timestamp: '14:10:02', epochTime: Date.now() - 50000, type: 'CLICK', screen: 'StoreLocator', description: 'Tapped Find Nearby Store', actionName: 'Tap', target: 'Find Store' },
         ],
         deviceContext: dc,
-        tags: { environment: 'staging', category: 'network' },
+        tags: { environment: 'staging', category: 'location' },
       }
     ];
   }
@@ -261,8 +291,8 @@ class CrashSimulatorService {
     }
   }
 
-  public simulateCrash(templateKey: keyof typeof CRASH_TEMPLATES = 'NULL_POINTER_CHECKOUT', customScreen?: string): CrashReport {
-    const template = CRASH_TEMPLATES[templateKey] || CRASH_TEMPLATES.NULL_POINTER_CHECKOUT;
+  public simulateCrash(templateKey: keyof typeof CRASH_TEMPLATES = 'REMOTE_PAYMENT_GATEWAY_505', customScreen?: string): CrashReport {
+    const template = CRASH_TEMPLATES[templateKey] || CRASH_TEMPLATES.REMOTE_PAYMENT_GATEWAY_505;
     const currentScreen = customScreen || template.screen;
 
     // Log the crash event into the action buffer first
@@ -282,7 +312,7 @@ class CrashSimulatorService {
 
     // Deterministic format CRASH-8F42A1
     const randomHex = Math.random().toString(16).substring(2, 8).toUpperCase();
-    const crashId = templateKey === 'NULL_POINTER_CHECKOUT' ? 'CRASH-8F42A1' : `CRASH-${randomHex}`;
+    const crashId = templateKey === 'REMOTE_PAYMENT_GATEWAY_505' ? 'CRASH-8F42A1' : `CRASH-${randomHex}`;
 
     const crashReport: CrashReport = {
       id: crashId,

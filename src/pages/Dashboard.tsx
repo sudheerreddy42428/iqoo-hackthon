@@ -283,12 +283,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
                     </div>
 
                     {/* Message Box */}
-                    <div className={`relative z-10 w-full p-3 rounded-xl border transition-colors ${
+                    <div className={`relative z-10 w-full p-3 rounded-xl border transition-colors overflow-hidden ${
                        isSelected 
                          ? 'bg-indigo-950/60 border-indigo-500/30 shadow-inner' 
                          : 'bg-dark-950/90 border-slate-800/90 group-hover:border-slate-700/80 group-hover:bg-dark-950'
                     }`}>
-                      <p className="text-xs text-slate-200 font-mono leading-relaxed break-words [overflow-wrap:anywhere] break-all select-text">
+                      <p className={`text-xs text-slate-200 font-mono leading-relaxed break-words whitespace-pre-wrap ${isSelected ? '' : 'line-clamp-3'}`}>
                         {c.message}
                       </p>
                     </div>

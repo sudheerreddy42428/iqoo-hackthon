@@ -33,7 +33,7 @@ export const Playground: React.FC = () => {
   } = useInvestigation();
   
   const [currentScreen, setCurrentScreen] = useState<SimulatedScreen>('Home');
-  const [selectedScenario, setSelectedScenario] = useState<string>('NULL_POINTER_CHECKOUT');
+  const [selectedScenario, setSelectedScenario] = useState<string>('REMOTE_PAYMENT_GATEWAY_505');
 
   const [showDeveloperReport, setShowDeveloperReport] = useState(false);
   const [activeTab, setActiveTab] = useState<'simulation' | 'timeline' | 'details' | 'analysis' | 'fix' | 'test'>('simulation');
@@ -125,9 +125,13 @@ export const Playground: React.FC = () => {
               onChange={(e) => setSelectedScenario(e.target.value)}
               className="bg-transparent text-slate-200 text-xs font-mono focus:outline-none cursor-pointer"
             >
-              <option value="NULL_POINTER_CHECKOUT">NullPointer (Checkout)</option>
-              <option value="INDEX_OUT_OF_BOUNDS_CART">IndexOutOfBounds (Cart)</option>
-              <option value="NETWORK_TIMEOUT_API">SocketTimeout (Payment)</option>
+              <option value="REMOTE_PAYMENT_GATEWAY_505">HTTP 505 (Payment Gateway)</option>
+              <option value="CONCURRENT_CART_REMOVE">Concurrent Remove (Cart)</option>
+              <option value="LOCATION_SERVICE_DENIED">Location Denied (Store Locator)</option>
+              <option value="RAPID_PAYMENT_SWITCH">Rapid Switch (Payment Method)</option>
+              <option value="BACKGROUND_DURING_PAYMENT">Background (Payment)</option>
+              <option value="MEMORY_LEAK_OOM">Memory Leak OOM (Payment)</option>
+              <option value="EXPIRED_JWT_TOKEN">Expired JWT (Checkout)</option>
             </select>
           </div>
 

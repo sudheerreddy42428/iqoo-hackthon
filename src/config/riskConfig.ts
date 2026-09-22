@@ -27,4 +27,20 @@ export const SAFETY_OVERRIDE_RULES = [
     pattern: /(secret|key|encryption|crypto|cipher|password)/i,
     reason: "Modifies encryption or secrets management.",
   },
+  {
+    pattern: /(location|gps|coordinates|geofence)/i,
+    reason: "Modifies location or tracking services (Privacy/Security Risk).",
+  },
+  {
+    pattern: /(memory|oom|allocation|leak|bitmap)/i,
+    reason: "Modifies memory allocation or fixes OOM which requires manual verification.",
+  },
+  {
+    pattern: /(concurrent|race.*condition|multithread|synchronized)/i,
+    reason: "Concurrency bugs require manual review to ensure thread safety.",
+  },
+  {
+    pattern: /(background|lifecycle|onpause|onresume)/i,
+    reason: "App lifecycle changes can cause severe UX and background execution issues.",
+  }
 ];

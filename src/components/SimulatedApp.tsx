@@ -28,7 +28,7 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
   onTriggerCrash,
   activeScreen = 'Home',
   onScreenChange,
-  selectedScenario = 'NULL_POINTER_CHECKOUT',
+  selectedScenario = 'REMOTE_PAYMENT_GATEWAY_505',
   autoPlay = false,
 }) => {
   const [screen, setScreen] = useState<SimulatedScreen>(activeScreen);
@@ -219,17 +219,19 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
     resetSimulatedApp();
     await new Promise(r => setTimeout(r, 600));
 
-    if (selectedScenario === 'NULL_POINTER_CHECKOUT') {
+    if (selectedScenario === 'REMOTE_PAYMENT_GATEWAY_505') {
       navigateTo('Products');
       await new Promise(r => setTimeout(r, 800));
-      addToCart(COFFEE_PRODUCTS[1]);
+      addToCart(COFFEE_PRODUCTS[0]);
       await new Promise(r => setTimeout(r, 800));
       navigateTo('Cart');
       await new Promise(r => setTimeout(r, 800));
       navigateTo('Checkout');
+      await new Promise(r => setTimeout(r, 800));
+      selectPayment('CREDIT_CARD');
       await new Promise(r => setTimeout(r, 1200));
       onTriggerCrash(selectedScenario, 'Checkout');
-    } else if (selectedScenario === 'INDEX_OUT_OF_BOUNDS_CART') {
+    } else if (selectedScenario === 'CONCURRENT_CART_REMOVE') {
       navigateTo('Products');
       await new Promise(r => setTimeout(r, 800));
       addToCart(COFFEE_PRODUCTS[0]);
@@ -239,19 +241,49 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
       navigateTo('Cart');
       await new Promise(r => setTimeout(r, 1200));
       onTriggerCrash(selectedScenario, 'Cart');
-    } else if (selectedScenario === 'NETWORK_TIMEOUT_API') {
+    } else if (selectedScenario === 'LOCATION_SERVICE_DENIED') {
+      navigateTo('Home');
+      await new Promise(r => setTimeout(r, 1200));
+      onTriggerCrash(selectedScenario, 'StoreLocator');
+    } else if (selectedScenario === 'RAPID_PAYMENT_SWITCH') {
       navigateTo('Products');
       await new Promise(r => setTimeout(r, 800));
-      addToCart(COFFEE_PRODUCTS[2]);
+      addToCart(COFFEE_PRODUCTS[0]);
       await new Promise(r => setTimeout(r, 800));
       navigateTo('Cart');
       await new Promise(r => setTimeout(r, 800));
       navigateTo('Checkout');
       await new Promise(r => setTimeout(r, 800));
       selectPayment('UPI');
-      await new Promise(r => setTimeout(r, 1200));
+      await new Promise(r => setTimeout(r, 400));
+      selectPayment('CREDIT_CARD');
+      await new Promise(r => setTimeout(r, 200));
+      selectPayment('CASH');
+      await new Promise(r => setTimeout(r, 600));
       onTriggerCrash(selectedScenario, 'Checkout');
-    } else if (selectedScenario === 'REMOTE_PAYMENT_GATEWAY_505') {
+    } else if (selectedScenario === 'BACKGROUND_DURING_PAYMENT') {
+      navigateTo('Products');
+      await new Promise(r => setTimeout(r, 800));
+      addToCart(COFFEE_PRODUCTS[0]);
+      await new Promise(r => setTimeout(r, 800));
+      navigateTo('Cart');
+      await new Promise(r => setTimeout(r, 800));
+      navigateTo('Checkout');
+      await new Promise(r => setTimeout(r, 800));
+      selectPayment('CREDIT_CARD');
+      await new Promise(r => setTimeout(r, 800));
+      onTriggerCrash(selectedScenario, 'Checkout');
+    } else if (selectedScenario === 'MEMORY_LEAK_OOM') {
+      navigateTo('Products');
+      await new Promise(r => setTimeout(r, 800));
+      addToCart(COFFEE_PRODUCTS[0]);
+      await new Promise(r => setTimeout(r, 800));
+      navigateTo('Cart');
+      await new Promise(r => setTimeout(r, 800));
+      navigateTo('Checkout');
+      await new Promise(r => setTimeout(r, 1200));
+      onTriggerCrash(selectedScenario, 'Payment');
+    } else if (selectedScenario === 'EXPIRED_JWT_TOKEN') {
       navigateTo('Products');
       await new Promise(r => setTimeout(r, 800));
       addToCart(COFFEE_PRODUCTS[0]);
@@ -721,9 +753,7 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
               <div className="p-2 rounded bg-slate-900/80 border border-slate-800 text-[11px] text-slate-400 flex items-start gap-2">
                 <span className="text-amber-400 mt-0.5">💡</span>
                 <p>
-                  <strong>Bug Simulation Hint:</strong> If you leave the payment method unselected and click{' '}
-                  <span className="text-cyan-300 font-mono">"Pay Now"</span>, ReproX will simulate a real{' '}
-                  <code className="text-rose-400 font-mono">NullPointerException</code> in CheckoutScreen.kt:142!
+                  <strong>Bug Simulation Hint:</strong> Triggering a crash during payment will log the current order state. ReproX captures memory spikes and background state transitions automatically!
                 </p>
               </div>
             </div>
