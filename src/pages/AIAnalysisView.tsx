@@ -24,11 +24,11 @@ export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ onApprovalReques
         const result = await localAIAnalyzer.analyze(activeCrash);
         setAnalysisResult(result);
         
-        if (result.riskLevel === 'LOW' && result.confidenceScore >= 80) {
+        if (result.riskLevel === 'LOW') {
           setApprovalStatus('APPROVED');
           setTimeout(() => {
             if (onAutoFix) onAutoFix(); // Route directly to debug execution for auto-fix
-          }, 1500);
+          }, 2000);
         } else {
           setApprovalStatus('PENDING');
         }
@@ -156,22 +156,33 @@ export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ onApprovalReques
           {/* Action Button */}
           <div className="p-5 rounded-xl bg-dark-950 border border-purple-500/30 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-[50px]" />
-            <h3 className="text-sm font-bold text-white mb-2">Request Permission</h3>
+            <h3 className="text-sm font-bold text-white mb-2">
+              {analysis.riskLevel === 'LOW' ? 'Auto-Fix Initiated' : 'Request Permission'}
+            </h3>
             <p className="text-xs text-slate-400 mb-4">
-              {analysis.autoDebugEligible 
-                ? 'ReproX AI has formulated a patch. It requires write permission to modify the source code and enter the autonomous testing loop.'
-                : 'This crash requires architectural changes. Generate a comprehensive developer report for the engineering team.'}
+              {analysis.riskLevel === 'LOW'
+                ? 'Low risk issue detected. ReproX AI is directly solving it.'
+                : analysis.autoDebugEligible 
+                  ? 'ReproX AI has formulated a patch. It requires write permission to modify the source code and enter the autonomous testing loop.'
+                  : 'This crash requires architectural changes. Generate a comprehensive developer report for the engineering team.'}
             </p>
             <button
-              onClick={analysis.autoDebugEligible ? onApprovalRequest : onReject}
+              onClick={analysis.riskLevel === 'LOW' ? undefined : (analysis.autoDebugEligible ? onApprovalRequest : onReject)}
+              disabled={analysis.riskLevel === 'LOW'}
               className={`w-full py-3.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all text-white ${
-                analysis.autoDebugEligible 
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500'
-                  : 'bg-rose-600 hover:bg-rose-500 shadow-[0_0_20px_rgba(225,29,72,0.3)]'
+                analysis.riskLevel === 'LOW'
+                  ? 'bg-emerald-600/50 cursor-not-allowed border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.3)]'
+                  : analysis.autoDebugEligible 
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500'
+                    : 'bg-rose-600 hover:bg-rose-500 shadow-[0_0_20px_rgba(225,29,72,0.3)]'
               }`}
             >
-              <span>{analysis.autoDebugEligible ? 'Ask Developer for Approval' : 'Generate Developer Report'}</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>
+                {analysis.riskLevel === 'LOW'
+                  ? 'Solving directly...'
+                  : analysis.autoDebugEligible ? 'Ask Developer for Approval' : 'Generate Developer Report'}
+              </span>
+              {analysis.riskLevel !== 'LOW' && <ArrowRight className="w-4 h-4" />}
             </button>
           </div>
         </div>

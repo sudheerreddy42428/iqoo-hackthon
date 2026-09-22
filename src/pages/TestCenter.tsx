@@ -47,6 +47,13 @@ export const TestCenter: React.FC<TestCenterProps> = ({ onRunTest }) => {
                 <span className="font-mono text-xs font-bold text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded border border-cyan-400/20">
                   {tc.id}
                 </span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  tc.riskLevel === 'HIGH' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
+                  tc.riskLevel === 'MEDIUM' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                  'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                }`}>
+                  {tc.riskLevel} RISK
+                </span>
               </div>
               <div className="flex items-center gap-1.5 text-xs font-medium text-slate-300">
                 {getStatusIcon(tc.status)}
