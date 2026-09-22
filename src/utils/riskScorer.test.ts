@@ -89,7 +89,7 @@ describe('calculateRegressionRisk', () => {
     // Numeric score is low (15), but override should force HIGH
     expect(result.riskLevel).toBe('HIGH');
     expect(result.overrides).toHaveLength(1);
-    expect(result.overrides[0].ruleMatched).toBe('EVIDENCE_QUALITY_WEAK');
+    expect(result.overrides![0].ruleMatched).toBe('EVIDENCE_QUALITY_WEAK');
     expect(result.autoFixEligible).toBe(false);
   });
 
@@ -100,7 +100,7 @@ describe('calculateRegressionRisk', () => {
     const result = calculateRegressionRisk(evidence, dummyReport, fixWithAuth);
     
     expect(result.riskLevel).toBe('HIGH');
-    expect(result.overrides.length).toBeGreaterThan(0);
+    expect(result.overrides!.length).toBeGreaterThan(0);
     expect(result.autoFixEligible).toBe(false);
   });
 

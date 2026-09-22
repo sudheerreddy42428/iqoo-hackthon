@@ -332,7 +332,7 @@ class AIChatService {
   // High-intelligence offline / heuristic fallback engine
   generateSmartLocalReply(
     messages: PersistentChatMessage[],
-    mode: ChatMode,
+    _mode: ChatMode,
     activeCrash?: CrashReport | null,
     analysis?: AnalysisResult | null
   ): string {

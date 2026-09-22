@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { ApprovalPanel } from './ApprovalPanel';
 import { CrashSummary } from '../pages/CrashSummary';
 import { InvestigationProvider, useInvestigation } from '../context/InvestigationContext';
-import { CrashReport, AnalysisResult } from '../types/reprox';
+import { CrashReport } from '../types/reprox';
 
 const mockReport: CrashReport = {
   id: 'crash-high-404',
@@ -38,7 +38,7 @@ const mockReport: CrashReport = {
   ]
 };
 
-const mockHighAnalysis: AnalysisResult = {
+const mockHighAnalysis: any = {
   reportId: 'crash-high-404',
   investigationId: 'inv-high-404',
   analyzerName: 'Rule-based Deterministic Analyzer',

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import React from 'react';
 import { InvestigationProvider, useInvestigation } from './InvestigationContext';
-import { CrashReport, AnalysisResult } from '../types/reprox';
+import { CrashReport } from '../types/reprox';
 
 const mockReport: CrashReport = {
   id: 'test-crash-123',
@@ -36,7 +36,7 @@ const mockReport: CrashReport = {
   ]
 };
 
-const mockLowRiskAnalysis: AnalysisResult = {
+const mockLowRiskAnalysis: any = {
   reportId: 'test-crash-123',
   investigationId: 'inv-low',
   analyzerName: 'Rule-based Deterministic Analyzer',
@@ -69,7 +69,7 @@ const mockLowRiskAnalysis: AnalysisResult = {
   possibleSolutions: []
 };
 
-const mockHighRiskAnalysis: AnalysisResult = {
+const mockHighRiskAnalysis: any = {
   reportId: 'test-crash-123',
   investigationId: 'inv-high',
   analyzerName: 'Rule-based Deterministic Analyzer',
