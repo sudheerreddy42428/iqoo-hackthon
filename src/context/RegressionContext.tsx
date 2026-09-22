@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { TestCase, BASELINE_TEST_CASES } from '../data/testCases';
 import { crashSimulator } from '../services/crashSimulator';
 import { localAIAnalyzer } from '../services/analyzer';
-import { shouldAutoFix } from '../utils/riskScorer';
+
 
 interface RegressionContextType {
   testCases: TestCase[];
