@@ -65,6 +65,7 @@ const mockHighAnalysis: AnalysisResult = {
   triggeringAction: 'Delete Button Click',
   affectedComponent: 'CartScreen.kt',
   confidenceScore: 92,
+  confidenceReason: 'Test reason',
   riskLevel: 'HIGH',
   autoDebugEligible: false,
   approvalRequired: true,
@@ -114,7 +115,7 @@ describe('ApprovalPanel UI and Guards', () => {
     expect(screen.getByText(/Risk: HIGH/i)).toBeInTheDocument();
 
     // Verify Action Buttons
-    expect(screen.getByText(/Approve & Apply Fix/i)).toBeInTheDocument();
+    expect(screen.getByText(/APPROVE/i)).toBeInTheDocument();
     expect(screen.getByText(/Reject Fix/i)).toBeInTheDocument();
   });
 });

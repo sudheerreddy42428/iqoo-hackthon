@@ -31,8 +31,7 @@ export const TestCenter: React.FC<TestCenterProps> = ({ onRunTest }) => {
         return 'text-amber-400 bg-amber-400/10 border-amber-400/20';
       case 'HIGH':
         return 'text-rose-400 bg-rose-400/10 border-rose-400/20';
-      case 'CRITICAL':
-        return 'text-purple-400 bg-purple-400/10 border-purple-400/20';
+
       default:
         return 'text-slate-400 bg-slate-400/10 border-slate-400/20';
     }

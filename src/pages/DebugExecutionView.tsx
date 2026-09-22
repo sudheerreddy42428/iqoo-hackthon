@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useInvestigation } from '../context/InvestigationContext';
 import { CheckCircle2, Loader2, Play, Terminal, Undo2, XCircle } from 'lucide-react';
 
@@ -33,6 +33,12 @@ export const DebugExecutionView: React.FC<DebugExecutionViewProps> = ({
   const [isRolledBack, setIsRolledBack] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
+  const debugAttemptsRef = useRef(debugAttempts);
+  
+  useEffect(() => {
+    debugAttemptsRef.current = debugAttempts;
+  }, [debugAttempts]);
+
   useEffect(() => {
     saveCheckpoint();
     incrementDebugAttempts();
@@ -45,7 +51,7 @@ export const DebugExecutionView: React.FC<DebugExecutionViewProps> = ({
         setCurrentStepIndex(step);
         
         // Hardcode a failure scenario if debugAttempts is high (simulation)
-        if (step === 7 && debugAttempts > 2) {
+        if (step === 7 && debugAttemptsRef.current > 2) {
             clearInterval(interval);
             setIsFailed(true);
             setPatchStatus('FAILED');

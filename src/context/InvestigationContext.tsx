@@ -91,19 +91,13 @@ function investigationReducer(state: InvestigationState, action: InvestigationAc
       };
     case 'SET_ANALYSIS_RESULT': {
       if (action.result) action.result.investigationId = state.investigationId || undefined;
-      const isHighRisk = action.result ? (
-        action.result.riskLevel === 'HIGH' || 
-        action.result.riskLevel === 'CRITICAL' || 
-        action.result.severity === 'HIGH' || 
-        action.result.severity === 'CRITICAL' ||
-        action.result.approvalRequired
-      ) : false;
+      const requiresApproval = action.result ? action.result.approvalRequired : false;
       return {
         ...state,
         analysis: action.result,
         aiAnalysisStatus: action.result ? 'READY' : state.aiAnalysisStatus,
-        approvalStatus: isHighRisk ? 'PENDING' : 'NOT_REQUIRED',
-        codeAccessStatus: isHighRisk ? 'REQUESTED' : 'GRANTED',
+        approvalStatus: requiresApproval ? 'PENDING' : 'NOT_REQUIRED',
+        codeAccessStatus: requiresApproval ? 'REQUESTED' : 'GRANTED',
         patchStatus: action.result ? 'PROPOSED' : state.patchStatus,
       };
     }

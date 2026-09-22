@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useTimeout } from '../hooks/useTimeout';
 import { 
   History, 
   Trash2, 
@@ -47,12 +48,14 @@ export const ActionTimeline: React.FC = () => {
       setActions(currentActions);
       if (dropped) {
         setLastDropped(dropped);
-        const timer = setTimeout(() => setLastDropped(null), 3500);
-        return () => clearTimeout(timer);
       }
     });
     return () => unsubscribe();
   }, [isFrozen, activeCrash]);
+
+  useTimeout(() => {
+    setLastDropped(null);
+  }, lastDropped ? 3500 : null);
 
   const getActionStyles = (type: ActionType) => {
     switch (type) {

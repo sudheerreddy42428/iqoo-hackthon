@@ -1,5 +1,36 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+async function fallbackToPollinations(messages: any[], res: VercelResponse) {
+  try {
+    const pollinationsRes = await fetch('https://text.pollinations.ai/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'openai',
+        messages: messages.map((m) => {
+          return { role: m.role, content: m.content };
+        })
+      })
+    });
+
+    if (pollinationsRes.ok) {
+      const data = await pollinationsRes.json();
+      const text = data.choices?.[0]?.message?.content;
+      if (text) {
+        return res.status(200).json({ success: true, reply: text, provider: 'Free AI (Pollinations)' });
+      }
+    }
+  } catch (err) {
+    console.error('Pollinations fallback failed', err);
+  }
+  return res.status(500).json({ 
+    success: false,
+    error: 'AI service unavailable: All configured APIs and free fallbacks failed. Please check your API key.'
+  });
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Basic Security & CORS Validation
   const allowedOrigins = process.env.ALLOWED_ORIGINS 
@@ -33,14 +64,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid or oversized message history' });
     }
 
+    const lastUserMessage = messages.slice().reverse().find((m: any) => m.role === 'user')?.content || '';
+    const lowerMsg = String(lastUserMessage).toLowerCase();
+
+    const outOfScopeKeywords = [
+      'weather', 'poem', 'joke', 'president', 'movie', 'news', 'recipe',
+      'eat', 'vacation', 'travel', 'sports', 'game', 'play', 'song', 'music',
+      'teach me javascript', 'teach me react', 'teach me python',
+      'build a website', 'write an email', 'write an essay', 'tell me a story',
+      'explain object-oriented programming'
+    ];
+
+    for (const keyword of outOfScopeKeywords) {
+      if (lowerMsg.includes(keyword)) {
+        return res.status(200).json({
+          success: true,
+          reply: "I can only help with crash incidents, crash analysis, regression-test failures, debugging, and the developer tools related to investigating or fixing them. Please provide the crash, error, stack trace, regression failure, or relevant developer-tool issue.",
+          provider: 'Scope Filter'
+        });
+      }
+    }
+
     const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.XAI_API_KEY || process.env.GROQ_API_KEY || process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
 
     // Prepare system instruction based on mode
-    let systemPrompt = "You are ReproX Super AI, a helpful general-purpose AI assistant. Answer questions accurately, clearly, and safely. Support programming, mathematics, technical concepts, general knowledge, learning, writing, and everyday questions. Explain your reasoning when useful, provide examples, and ask for clarification when the user's request is ambiguous. Do not claim to have executed code, accessed files, changed code, deployed an application, or verified a result unless that action actually occurred.";
+    const SYSTEM_PROMPT = `You are ReproX Crash Investigation Assistant. 
+Your sole purpose is to help developers investigate software crashes, reproduction, and debugging.
+
+STRICT RULES:
+1. ONLY answer questions about software crashes or the provided crash data.
+2. If the user asks anything unrelated, respond EXACTLY: "I’m ReproX Crash Assistant. I can only help with crash investigation, crash reproduction, debugging, fixes, stack traces, logs, and regression testing."
+3. If riskLevel is HIGH, require developer review.
+4. If verificationStatus isn't 'PASSED', say: "The fix has not been verified yet."
+5. Never invent crash data.`;
+
+    let systemPrompt = SYSTEM_PROMPT;
 
     if (mode === 'reprox' || crashContext) {
-      systemPrompt = "You are ReproX Diagnostic AI, a specialized assistant for analyzing application crashes, risky changes, telemetry, reproduction steps, and debugging reports. Use the supplied ReproX context when available. Identify likely causes, distinguish evidence from hypotheses, explain the impact, suggest safe fixes, and generate reproducible testing steps. Do not claim that a fix was applied, deployed, or validated unless an authorized tool actually performed and verified the operation. If the evidence is insufficient, clearly state what additional information is needed.";
-      systemPrompt += `\n\nREPROX APPLICATION CONTEXT:\n${crashContext || 'ReproX Crash Diagnostic Engine Active'}`;
+      const incidentData = crashContext && typeof crashContext === 'object' ? `
+    <crash_context>
+    Error: ${crashContext.errorType}: ${crashContext.message}
+    Stack Trace: ${crashContext.stackTrace}
+    Recent Actions: ${JSON.stringify(crashContext.recentActions)}
+    Analysis: ${JSON.stringify(crashContext.analysis)}
+    Verification: ${crashContext.verificationStatus}
+    </crash_context>` : (crashContext || "No active crash loaded.");
+      
+      systemPrompt += `\n\nDATA:\n${incidentData}`;
     }
 
     const payloadMessages = [
@@ -57,7 +127,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Google Gemini API (Supports both legacy AIza and new AQ. auth key formats)
       if (apiKey.startsWith('AIza') || apiKey.startsWith('AQ.')) {
         // Google Gemini API
-        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+        const apiModel = model === 'gemini-1.5-pro' ? 'gemini-1.5-pro' : 'gemini-2.0-flash';
+        let geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${apiModel}:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -82,14 +153,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           })
         });
 
+        // Simple retry logic if overloaded (503)
+        if (geminiRes.status === 503) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${apiModel}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: payloadMessages.map(m => {
+                const parts: any[] = [{ text: m.content }];
+                if (m.imageUrl && m.imageUrl.startsWith('data:image/')) {
+                  const match = m.imageUrl.match(/^data:(image\/[a-zA-Z]+);base64,(.*)$/);
+                  if (match) { parts.push({ inlineData: { mimeType: match[1], data: match[2] } }); }
+                }
+                return { role: m.role === 'assistant' ? 'model' : 'user', parts };
+              })
+            })
+          });
+        }
+
         if (geminiRes.ok) {
           const data = await geminiRes.json();
           const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (text) {
-            return res.status(200).json({ reply: text, provider: 'Gemini 3.6 (Secure Server)' });
+            return res.status(200).json({ success: true, reply: text, provider: 'Gemini 2.0 (Secure Server)' });
+          } else {
+            return res.status(500).json({ success: false, error: 'Gemini API returned an unexpected response format.' });
           }
         } else {
-          return res.status(401).json({ error: 'The provided Gemini API key is invalid.' });
+          console.error('Gemini API request failed with status:', geminiRes.status);
+          return await fallbackToPollinations(payloadMessages, res);
         }
       } else if (apiKey.startsWith('xai-')) {
         // Grok (xAI) API
@@ -120,10 +213,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const data = await grokRes.json();
           const text = data.choices?.[0]?.message?.content;
           if (text) {
-            return res.status(200).json({ reply: text, provider: 'Grok (xAI)' });
+            return res.status(200).json({ success: true, reply: text, provider: 'Grok (xAI)' });
+          } else {
+            return res.status(500).json({ success: false, error: 'Grok API returned an unexpected response format.' });
           }
         } else {
-          return res.status(401).json({ error: 'The provided Grok (xAI) API key is invalid.' });
+          console.error('Grok API request failed with status:', grokRes.status);
+          return await fallbackToPollinations(payloadMessages, res);
         }
       } else {
         // OpenAI API
@@ -153,57 +249,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const data = await openaiRes.json();
           const text = data.choices?.[0]?.message?.content;
           if (text) {
-            return res.status(200).json({ reply: text, provider: 'OpenAI GPT-4o (Secure Server)' });
+            return res.status(200).json({ success: true, reply: text, provider: 'OpenAI GPT-4o (Secure Server)' });
+          } else {
+            return res.status(500).json({ success: false, error: 'OpenAI API returned an unexpected response format.' });
           }
         } else {
-          return res.status(401).json({ error: 'The provided API key is invalid or for an unknown service. Please check your .env file.' });
+          console.error('OpenAI API request failed with status:', openaiRes.status);
+          return await fallbackToPollinations(payloadMessages, res);
         }
       }
     }
 
-    // Secure Server-side fallback via Pollinations LLM gateway
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-    let targetModel = 'gemini';
-    if (model === 'chatgpt' || model === 'openai') targetModel = 'openai';
-    if (model === 'mistral' || model === 'claude') targetModel = 'mistral';
-
-    let gatewayRes;
-    try {
-      gatewayRes = await fetch('https://text.pollinations.ai/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: payloadMessages.map(m => ({
-            role: m.role,
-            content: m.imageUrl ? `${m.content}\n[User attached an image which cannot be viewed by this free AI tier]` : m.content
-          })),
-          model: targetModel,
-          seed: 42
-        }),
-        signal: controller.signal
-      });
-    } catch (err) {
-      console.log('Pollinations fallback failed:', err);
-    }
-    clearTimeout(timeoutId);
-
-    if (gatewayRes && gatewayRes.ok) {
-      const text = await gatewayRes.text();
-      if (text && text.trim().length > 0) {
-        return res.status(200).json({ reply: text.trim(), provider: `Super AI (${targetModel})` });
-      }
-    }
-
-    // Graceful fallback response if offline/unreachable
-    return res.status(200).json({ 
-      reply: null,
-      fallback: true,
-      message: 'Server AI service unavailable or unconfigured. Delegating to client local AI engine.'
-    });
+    // Fallback to Free Pollinations API if API Key is missing
+    return await fallbackToPollinations(payloadMessages, res);
   } catch (error: any) {
     console.error('Server chat endpoint error:', error);
-    return res.status(500).json({ error: error.message || 'Internal AI Server Error' });
+    return res.status(500).json({ success: false, error: error.message || 'Internal AI Server Error' });
   }
 }

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTimeout } from '../hooks/useTimeout';
 import { useInvestigation } from '../context/InvestigationContext';
 import { Download, Copy, Check, FileText } from 'lucide-react';
 
@@ -151,8 +152,11 @@ Review the patch and apply it manually.
   const handleCopy = () => {
     navigator.clipboard.writeText(markdownContent);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
+
+  useTimeout(() => {
+    setCopied(false);
+  }, copied ? 2000 : null);
 
   const handleDownload = () => {
     const element = document.createElement('a');

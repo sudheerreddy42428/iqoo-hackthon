@@ -42,7 +42,7 @@ describe('AIBotAssistant', () => {
     vi.clearAllMocks();
   });
 
-  it('handles network failure by falling back gracefully to ReproX Smart Local Engine', async () => {
+  it('handles network failure by displaying an explicit error bubble', async () => {
     (global.fetch as any).mockRejectedValueOnce(new Error('Network disconnected'));
 
     renderComponent();
@@ -53,21 +53,21 @@ describe('AIBotAssistant', () => {
 
     // Type a message
     const input = screen.getByPlaceholderText(/Message ReproX AI/i);
-    fireEvent.change(input, { target: { value: 'Explain the 15-action rolling buffer' } });
+    fireEvent.change(input, { target: { value: 'Explain this stack trace' } });
     
     // Submit
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
 
-    // Verify smart fallback responds instead of crashing
+    // Verify error is displayed
     await waitFor(() => {
-      expect(screen.getByText(/How the ReproX Rolling Buffer Works/i)).toBeInTheDocument();
+      expect(screen.getByText(/AI Service Error/i)).toBeInTheDocument();
     });
   });
 
   it('renders assistant response when AI provider succeeds', async () => {
     (global.fetch as any).mockResolvedValue({
       ok: true,
-      json: async () => ({ reply: 'I am ReproX AI, ready to assist.' }),
+      json: async () => ({ success: true, reply: 'I am ReproX AI, ready to assist.' }),
     });
 
     renderComponent();
@@ -76,7 +76,7 @@ describe('AIBotAssistant', () => {
     fireEvent.click(toggleBtn);
 
     const input = screen.getByPlaceholderText(/Message ReproX AI/i);
-    fireEvent.change(input, { target: { value: 'Hello' } });
+    fireEvent.change(input, { target: { value: 'Why did this crash?' } });
     
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
 

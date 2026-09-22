@@ -2,7 +2,7 @@ export interface TestCase {
   id: string;
   name: string;
   description: string;
-  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
   status: 'PENDING' | 'PASSED' | 'FAILED' | 'CRASHED' | 'AUTO_FIXED';
   scenario: string; // The crash scenario key from crashSimulator, or 'HAPPY_PATH'
 }
@@ -44,7 +44,7 @@ export const TEST_CASES: TestCase[] = [
     id: 'TC-005',
     name: 'Pay Without Payment Method',
     description: 'User attempts to checkout without selecting a payment method. Expected to crash if not validated.',
-    riskLevel: 'CRITICAL',
+    riskLevel: 'HIGH',
     status: 'PENDING',
     scenario: 'NULL_POINTER_CHECKOUT',
   },
@@ -116,7 +116,7 @@ export const TEST_CASES: TestCase[] = [
     id: 'TC-014',
     name: 'Memory Leak Check (Heavy Image Load)',
     description: 'Scroll through a list of 10,000 product images to check GC behavior.',
-    riskLevel: 'CRITICAL',
+    riskLevel: 'HIGH',
     status: 'PENDING',
     scenario: 'HAPPY_PATH',
   },

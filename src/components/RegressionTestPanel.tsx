@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { CrashReport, ReproductionStep } from '../types/reprox';
 import { generateEspressoTest, generateComposeTest } from '../services/testGenerator';
+import { useInvestigation } from '../context/InvestigationContext';
 
 interface RegressionTestPanelProps {
   report: CrashReport;
@@ -19,6 +20,7 @@ export const RegressionTestPanel: React.FC<RegressionTestPanelProps> = ({
   report,
   steps,
 }) => {
+  const { verificationStatus } = useInvestigation();
   const [activeFramework, setActiveFramework] = useState<'Espresso' | 'Compose UI'>('Espresso');
   const [copied, setCopied] = useState(false);
 
@@ -111,9 +113,19 @@ export const RegressionTestPanel: React.FC<RegressionTestPanelProps> = ({
             <li>• Assert the checkout screen remains stable</li>
           </ul>
         </div>
-        <span className="font-mono text-amber-500/80 text-[10px] bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 flex items-center gap-1 shrink-0 h-fit">
-          <AlertCircle className="w-3 h-3" /> GENERATED — NOT EXECUTED
-        </span>
+        {verificationStatus === 'PASSED' ? (
+          <span className="font-mono text-emerald-400 text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1 shrink-0 h-fit">
+            <Check className="w-3 h-3" /> EXECUTED — PASSED
+          </span>
+        ) : verificationStatus === 'FAILED' ? (
+          <span className="font-mono text-rose-400 text-[10px] bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/30 flex items-center gap-1 shrink-0 h-fit">
+            <AlertCircle className="w-3 h-3" /> EXECUTED — FAILED
+          </span>
+        ) : (
+          <span className="font-mono text-amber-500/80 text-[10px] bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 flex items-center gap-1 shrink-0 h-fit">
+            <AlertCircle className="w-3 h-3" /> GENERATED — NOT EXECUTED
+          </span>
+        )}
       </div>
 
       {/* Code Viewer */}

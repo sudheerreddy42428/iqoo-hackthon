@@ -8,6 +8,7 @@ import {
   RootCauseChainNode,
   SolutionOption
 } from '../types/reprox';
+import { calculateDeterministicRisk, StructuredAIEvidence } from '../utils/riskScorer';
 
 /**
  * Pluggable AI Provider Architecture
@@ -50,16 +51,46 @@ export class RuleBasedProvider implements AIProvider, AIAnalyzer {
       });
     }
 
-    // 2. Default analysis baseline
+    // 2. Default analysis baseline (NullPointerException - Payment)
     let likelyRootCause = 'Payment processing was triggered while paymentMethod was null.';
-    let confidenceScore = report.screenshots && report.screenshots.length > 0 ? 98 : 94;
+    // Deterministic pseudo-random variation based on report properties so it's not "always showing the same"
+    const lengthFactor = (report.message.length + report.errorType.length) % 5;
+    const actionFactor = Math.min(5, report.recentActions.length);
+    let confidenceScore = report.screenshots && report.screenshots.length > 0 ? 80 + lengthFactor : 65 + lengthFactor + actionFactor;
+    let confidenceReason = `The crash occurred after ${report.recentActions.length} user actions. The stack trace points to CheckoutScreen.kt, but the exact state of paymentMethod is somewhat inferred.`;
+    
     let affectedComponent = 'PaymentService.processPayment()';
-    let severity: AnalysisResult['severity'] = 'CRITICAL';
+    let severity: AnalysisResult['severity'] = 'HIGH';
+    
+    let structuredEvidence: StructuredAIEvidence = {
+      impactSeverityScore: 20,
+      impactSeverityReason: "Crash occurs during checkout payment submission, a critical flow.",
+      impactSeverityEvidence: "NullPointerException in PaymentService.processPayment",
+      
+      criticalityScore: 18,
+      criticalityReason: "Payment processing is the most critical business flow.",
+      criticalityEvidence: "Component: PaymentService",
+      
+      rootCauseStrengthScore: 18,
+      rootCauseStrengthReason: "Stack trace and user actions strongly correlate to missing payment method.",
+      rootCauseStrengthEvidence: "paymentMethod was not selected in recentActions before clicking Pay.",
+      
+      regressionImpactScore: 8,
+      regressionImpactReason: "Adding a null check prevents this specific action without breaking others.",
+      regressionImpactEvidence: "Localized fix in CheckoutScreen.kt.",
+      
+      changeScopeScore: 3,
+      changeScopeReason: "Modifies only a single file and a few lines of code.",
+      changeScopeEvidence: "1 file affected: CheckoutScreen.kt",
+      
+      reversibilityScore: 8,
+      reversibilityReason: "Easily reversible UI logic change.",
+      reversibilityEvidence: "No database or schema changes involved.",
+      
+      aiConfidence: confidenceScore
+    };
     
     // PRD Fields Defaults
-    let riskLevel: AnalysisResult['riskLevel'] = 'LOW';
-    let autoDebugEligible = true;
-    let approvalRequired = true;
     let changeLocation = {
       file: 'CheckoutScreen.kt',
       line: 142,
@@ -131,11 +162,32 @@ PaymentService.processPayment(paymentMethod)`,
 
     if (report.errorType.includes('IndexOutOfBounds')) {
       likelyRootCause = 'A rapid asynchronous item removal triggered a race condition between the adapter dataset and the UI RecyclerView layout manager.';
-      confidenceScore = report.screenshots && report.screenshots.length > 0 ? 96 : 91;
+      confidenceScore = report.screenshots && report.screenshots.length > 0 ? 92 + lengthFactor : 82 + lengthFactor + actionFactor;
+      confidenceReason = `Stack trace explicitly points to CartAdapter.onBindViewHolder. The sequence of ${report.recentActions.length} actions confirms rapid deletion clicks.`;
       affectedComponent = 'CartAdapter.onBindViewHolder()';
-      severity = 'HIGH';
-      riskLevel = 'MEDIUM';
-      autoDebugEligible = true;
+      severity = 'LOW';
+      structuredEvidence = {
+        impactSeverityScore: 5,
+        impactSeverityReason: "Crash affects only the shopping cart UI list rendering.",
+        impactSeverityEvidence: "IndexOutOfBounds in UI adapter.",
+        criticalityScore: 5,
+        criticalityReason: "Cart UI is important but the crash only happens on rapid tap edge cases.",
+        criticalityEvidence: "CartAdapter.kt",
+        rootCauseStrengthScore: 19,
+        rootCauseStrengthReason: "Stack trace exactly matches the array bounds failure during bind.",
+        rootCauseStrengthEvidence: "Index 4 out of bounds for length 3",
+        regressionImpactScore: 5,
+        regressionImpactReason: "Safe adapter change.",
+        regressionImpactEvidence: "DiffUtil is a standard safe approach.",
+        changeScopeScore: 2,
+        changeScopeReason: "Only one file changed.",
+        changeScopeEvidence: "CartAdapter.kt",
+        reversibilityScore: 9,
+        reversibilityReason: "Trivially reversible UI change.",
+        reversibilityEvidence: "Isolated to UI tier.",
+        aiConfidence: confidenceScore
+      };
+      
       recommendedApproach = 'Migrate from RecyclerView.Adapter to ListAdapter to automatically handle DiffUtil in background.';
       possibleSolutions = [
         {
@@ -194,11 +246,33 @@ PaymentService.processPayment(paymentMethod)`,
       };
     } else if (report.errorType.includes('Timeout') || report.errorType.includes('Socket')) {
       likelyRootCause = 'Network timeout occurred while contacting the order payment authorization gateway without fallback resilience.';
-      confidenceScore = report.screenshots && report.screenshots.length > 0 ? 93 : 88;
+      confidenceScore = report.screenshots && report.screenshots.length > 0 ? 89 + lengthFactor : 78 + lengthFactor + actionFactor;
+      confidenceReason = 'SocketTimeoutException is explicitly in the stack trace during a PaymentClient boundary call.';
       affectedComponent = 'PaymentClient.submitOrder()';
       severity = 'HIGH';
-      riskLevel = 'HIGH';
-      autoDebugEligible = false; // Complex network state requires manual developer input
+      
+      structuredEvidence = {
+        impactSeverityScore: 20,
+        impactSeverityReason: "Payment processing fails.",
+        impactSeverityEvidence: "SocketTimeoutException during payment.",
+        criticalityScore: 19,
+        criticalityReason: "Network operations for payment are highly critical.",
+        criticalityEvidence: "PaymentClient.submitOrder()",
+        rootCauseStrengthScore: 12,
+        rootCauseStrengthReason: "Timeout is clear, but exact network condition is unknown.",
+        rootCauseStrengthEvidence: "No exact stack frame match, simulated hallucination guard.",
+        regressionImpactScore: 12,
+        regressionImpactReason: "Changing network retries could cause duplicate orders.",
+        regressionImpactEvidence: "Retries need idempotency.",
+        changeScopeScore: 8,
+        changeScopeReason: "Modifies core network client.",
+        changeScopeEvidence: "PaymentClient.kt",
+        reversibilityScore: 5,
+        reversibilityReason: "Could leave pending transactions.",
+        reversibilityEvidence: "Network layer.",
+        aiConfidence: confidenceScore
+      };
+      
       recommendedApproach = 'Implement an exponential backoff retry mechanism.';
       possibleSolutions = [
         {
@@ -261,6 +335,8 @@ PaymentService.processPayment(paymentMethod)`,
       };
     }
 
+    const riskAssessment = calculateDeterministicRisk(structuredEvidence, report, suggestedFix);
+
     return {
       reportId: report.id,
       investigationId: report.investigationId,
@@ -275,16 +351,37 @@ PaymentService.processPayment(paymentMethod)`,
       reproductionSteps,
       suggestedFix,
       confidenceScore,
+      confidenceReason,
       affectedComponent,
       severity,
       timestamp: new Date().toLocaleTimeString(),
       correlationExplanation: 'ReproX derived this conclusion by correlating STACK TRACE + USER ACTIONS + APPLICATION STATE.',
-      riskLevel,
-      autoDebugEligible,
-      approvalRequired,
+      riskLevel: riskAssessment.riskLevel,
+      riskScore: riskAssessment.finalScore,
+      riskFactors: riskAssessment.factors,
+      safetyOverrides: riskAssessment.overrides,
+      evidenceQuality: riskAssessment.evidenceQuality,
+      autoDebugEligible: riskAssessment.isAutoFixEligible,
+      approvalRequired: !riskAssessment.isAutoFixEligible,
       possibleSolutions,
       recommendedApproach,
-      changeLocation
+      changeLocation,
+      structuredRootCause: {
+        description: likelyRootCause,
+        file: changeLocation.file,
+        line: changeLocation.line,
+        function: affectedComponent
+      },
+      validationPlan: [
+        'Re-run automated regression test suite',
+        'Verify component isolation',
+        'Check edge cases with empty state'
+      ],
+      rollbackPlan: [
+        'Revert the applied patch automatically via git',
+        'Restore previous stable UI state'
+      ],
+      status: 'ANALYZED'
     };
   }
 
@@ -351,7 +448,28 @@ export class LocalModelProvider implements AIProvider, AIAnalyzer {
   "likelyRootCause": "String describing root cause",
   "whyItHappened": "String describing why",
   "whatShouldHaveHappened": "String describing what should have happened",
-  "confidenceScore": Number between 0 and 100
+  "confidenceScore": Number between 0 and 100,
+  "confidenceReason": "String explaining the evidence for this confidence score",
+  "structuredEvidence": {
+    "impactSeverityScore": Number 0-25,
+    "impactSeverityReason": "String",
+    "impactSeverityEvidence": "String",
+    "criticalityScore": Number 0-20,
+    "criticalityReason": "String",
+    "criticalityEvidence": "String",
+    "rootCauseStrengthScore": Number 0-20,
+    "rootCauseStrengthReason": "String",
+    "rootCauseStrengthEvidence": "String",
+    "regressionImpactScore": Number 0-15,
+    "regressionImpactReason": "String",
+    "regressionImpactEvidence": "String",
+    "changeScopeScore": Number 0-10,
+    "changeScopeReason": "String",
+    "changeScopeEvidence": "String",
+    "reversibilityScore": Number 0-10,
+    "reversibilityReason": "String",
+    "reversibilityEvidence": "String"
+  }
 }
 Do not include markdown blocks, just return raw JSON.
 
@@ -366,10 +484,26 @@ Crash Details:
 
       const responseText = reply.choices[0].message.content || '{}';
       
-      // Strip markdown code fences if model included them
-      const cleanJsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-      
-      const parsed = JSON.parse(cleanJsonStr);
+      let parsed: any;
+      try {
+        const cleanJsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        parsed = JSON.parse(cleanJsonStr);
+      } catch (parseError) {
+        // Fallback: try to extract the first { ... } block
+        console.warn('[LocalModelProvider] JSON parse failed, attempting strict extraction', parseError);
+        const match = responseText.match(/\{[\s\S]*\}/);
+        if (match) {
+          parsed = JSON.parse(match[0]);
+        } else {
+          throw new Error('LLM did not return a valid JSON object string.');
+        }
+      }
+
+      let riskAssessment = undefined;
+      if (parsed.structuredEvidence) {
+        parsed.structuredEvidence.aiConfidence = parsed.confidenceScore || base.confidenceScore;
+        riskAssessment = calculateDeterministicRisk(parsed.structuredEvidence, report, base.suggestedFix);
+      }
 
       return {
         ...base,
@@ -378,6 +512,16 @@ Crash Details:
         whyItHappened: parsed.whyItHappened || base.whyItHappened,
         whatShouldHaveHappened: parsed.whatShouldHaveHappened || base.whatShouldHaveHappened,
         confidenceScore: parsed.confidenceScore || base.confidenceScore,
+        confidenceReason: parsed.confidenceReason || base.confidenceReason,
+        ...(riskAssessment ? {
+          riskLevel: riskAssessment.riskLevel,
+          riskScore: riskAssessment.finalScore,
+          riskFactors: riskAssessment.factors,
+          safetyOverrides: riskAssessment.overrides,
+          evidenceQuality: riskAssessment.evidenceQuality,
+          autoDebugEligible: riskAssessment.isAutoFixEligible,
+          approvalRequired: !riskAssessment.isAutoFixEligible
+        } : {})
       };
     } catch (e) {
       console.warn('[LocalModelProvider] Fallback to deterministic local engine due to WebLLM/WebGPU error:', e);
@@ -410,17 +554,21 @@ Crash Details:
         content: m.content
       }));
 
-      const res = await fetch('https://text.pollinations.ai/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: formattedMessages,
-          model: targetModel,
-          seed: 42
-        }),
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
+      let res: Response;
+      try {
+        res = await fetch('https://text.pollinations.ai/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: formattedMessages,
+            model: targetModel,
+            seed: 42
+          }),
+          signal: controller.signal
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (res.ok) {
         const text = await res.text();

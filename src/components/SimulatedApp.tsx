@@ -37,10 +37,69 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
     { product: COFFEE_PRODUCTS[0], quantity: 1 } // Start with Cold Coffee
   ]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [cvv, setCvv] = useState('');
+  
   const customerName = 'Alex Morgan';
   const tableNumber = 'Table 04';
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
+
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, '').slice(0, 16);
+    setCardNumber(val);
+  };
+
+  const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, '').slice(0, 3);
+    setCvv(val);
+  };
+
+  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/\D/g, '');
+    if (val.length > 4) val = val.slice(0, 4);
+    
+    if (val.length >= 2) {
+      let month = parseInt(val.slice(0, 2), 10);
+      if (month > 12) month = 12;
+      if (month === 0) month = 1;
+      
+      const monthStr = month.toString().padStart(2, '0');
+      if (val.length > 2) {
+        val = `${monthStr}/${val.slice(2)}`;
+      } else {
+        // If user is typing and just reached 2 chars, add the slash
+        // If user is deleting and just deleted the slash, we should handle it better,
+        // but a simple approach:
+        if (expiryDate.length === 3 && expiryDate.includes('/')) {
+           val = val.slice(0, 1);
+        } else {
+           val = `${monthStr}/`;
+        }
+      }
+    }
+    
+    // Validate year not passed
+    if (val.length === 5) {
+      const year = parseInt(val.slice(3, 5), 10);
+      const currentYear = parseInt(new Date().getFullYear().toString().slice(2, 4), 10);
+      const currentMonth = new Date().getMonth() + 1;
+      const month = parseInt(val.slice(0, 2), 10);
+      
+      // If year is past, or year is current but month is past, we can optionally clear or just prevent it.
+      // The requirement says "date should not paassed year". 
+      // We can just prevent year from being less than current year.
+      if (year < currentYear) {
+         val = `${val.slice(0, 3)}${currentYear}`;
+      } else if (year === currentYear && month < currentMonth) {
+         // Also handle month if it's the current year
+         val = `${currentMonth.toString().padStart(2, '0')}/${currentYear}`;
+      }
+    }
+    
+    setExpiryDate(val);
+  };
 
   const navigateTo = (newScreen: SimulatedScreen) => {
     setScreen(newScreen);
@@ -611,10 +670,31 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
               )}
               {selectedPaymentMethod === 'CREDIT_CARD' && (
                 <div className="p-3 bg-dark-900 border border-slate-800 rounded-lg space-y-3">
-                  <input type="text" placeholder="Card Number" className="w-full text-xs p-2.5 bg-dark-950 border border-slate-700 rounded-lg focus:border-cyan-500 focus:outline-none" />
+                  <input 
+                    type="password" 
+                    placeholder="Card Number" 
+                    value={cardNumber}
+                    onChange={handleCardNumberChange}
+                    maxLength={16}
+                    className="w-full text-xs p-2.5 bg-dark-950 border border-slate-700 rounded-lg focus:border-cyan-500 focus:outline-none" 
+                  />
                   <div className="flex gap-3">
-                    <input type="text" placeholder="MM/YY" className="w-1/2 text-xs p-2.5 bg-dark-950 border border-slate-700 rounded-lg focus:border-cyan-500 focus:outline-none" />
-                    <input type="text" placeholder="CVV" className="w-1/2 text-xs p-2.5 bg-dark-950 border border-slate-700 rounded-lg focus:border-cyan-500 focus:outline-none" />
+                    <input 
+                      type="text" 
+                      placeholder="MM/YY" 
+                      value={expiryDate}
+                      onChange={handleExpiryChange}
+                      maxLength={5}
+                      className="w-1/2 text-xs p-2.5 bg-dark-950 border border-slate-700 rounded-lg focus:border-cyan-500 focus:outline-none" 
+                    />
+                    <input 
+                      type="password" 
+                      placeholder="CVV" 
+                      value={cvv}
+                      onChange={handleCvvChange}
+                      maxLength={3}
+                      className="w-1/2 text-xs p-2.5 bg-dark-950 border border-slate-700 rounded-lg focus:border-cyan-500 focus:outline-none" 
+                    />
                   </div>
                 </div>
               )}

@@ -15,15 +15,16 @@ export const DevicePairingModal: React.FC<DevicePairingModalProps> = ({ onClose,
 
   useEffect(() => {
     // Start session
-    let timeoutId: any;
     
+    let connectionTimeout: any;
+
     realtimeSync.createPairingSession((code) => {
-      clearTimeout(timeoutId);
+      clearTimeout(connectionTimeout);
       setShortCode(code);
     });
 
     // If we don't get a short code within 10 seconds, assume the websocket server is unreachable
-    timeoutId = setTimeout(() => {
+    connectionTimeout = setTimeout(() => {
       if (!shortCode) {
         setStatus('failed');
       }
@@ -33,15 +34,17 @@ export const DevicePairingModal: React.FC<DevicePairingModalProps> = ({ onClose,
       setStatus('detected');
     });
 
+    let successTimeout: any;
     realtimeSync.onPairingSuccess((deviceInfo) => {
       setStatus('connected');
-      setTimeout(() => {
+      successTimeout = setTimeout(() => {
         onConnected(deviceInfo);
       }, 1500);
     });
 
     return () => {
-      // If we unmount before connecting, we should perhaps disconnect?
+      clearTimeout(connectionTimeout);
+      clearTimeout(successTimeout);
       // For now, let the backend handle disconnect if the dashboard socket drops.
     };
   }, [onConnected]);

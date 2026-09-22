@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTimeout } from '../hooks/useTimeout';
 import { SimulatedApp } from '../components/SimulatedApp';
 import { ActionTimeline } from '../components/ActionTimeline';
 import { AnalysisPanel } from '../components/AnalysisPanel';
@@ -91,9 +92,12 @@ export const Playground: React.FC = () => {
     if (activeCrash) {
       navigator.clipboard.writeText(activeCrash.stackTrace);
       setCopiedTrace(true);
-      setTimeout(() => setCopiedTrace(false), 2000);
     }
   };
+
+  useTimeout(() => {
+    setCopiedTrace(false);
+  }, copiedTrace ? 2000 : null);
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fadeIn pb-24 max-w-full">
@@ -388,7 +392,7 @@ export const Playground: React.FC = () => {
                   onRollback={() => {}}
                 />
               ) : (
-                /* HIGH / CRITICAL / MEDIUM RISK: Human-in-the-loop Approval panel */
+                /* HIGH / MEDIUM RISK: Human-in-the-loop Approval panel */
                 <ApprovalPanel
                   report={activeCrash}
                   analysis={analysis}

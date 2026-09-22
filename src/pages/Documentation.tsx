@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTimeout } from '../hooks/useTimeout';
 import { 
   Copy, 
   Check, 
@@ -13,8 +14,11 @@ export const Documentation: React.FC = () => {
   const copyToClipboard = (text: string, sectionId: string) => {
     navigator.clipboard.writeText(text);
     setCopiedSection(sectionId);
-    setTimeout(() => setCopiedSection(null), 2000);
   };
+
+  useTimeout(() => {
+    setCopiedSection(null);
+  }, copiedSection ? 2000 : null);
 
   return (
     <div className="space-y-12 max-w-4xl mx-auto py-6 animate-fadeIn">

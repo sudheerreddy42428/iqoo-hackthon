@@ -53,12 +53,11 @@ export const MobileConnect: React.FC = () => {
     realtimeSync.approveConnection(token, deviceInfo);
   };
 
-  const handleTriggerTestCrash = (severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL') => {
+  const handleTriggerTestCrash = (severity: 'LOW' | 'MEDIUM' | 'HIGH') => {
     const errorTypes = {
       'LOW': 'UI Rendering Warning',
       'MEDIUM': 'Network Timeout',
-      'HIGH': 'NullPointerException',
-      'CRITICAL': 'OutOfMemoryError'
+      'HIGH': 'NullPointerException'
     };
     
     const crash = {
@@ -209,13 +208,6 @@ export const MobileConnect: React.FC = () => {
                 >
                   <span className="w-2 h-2 rounded-full bg-orange-500"></span>
                   High (Null Ptr)
-                </button>
-                <button 
-                  onClick={() => handleTriggerTestCrash('CRITICAL')}
-                  className="py-3 px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold border border-red-500/30 transition-colors text-sm flex flex-col items-center gap-2"
-                >
-                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                  Critical (OOM)
                 </button>
               </div>
             </div>

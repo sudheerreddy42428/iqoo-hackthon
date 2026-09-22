@@ -61,7 +61,6 @@ export const ApprovalView: React.FC<ApprovalViewProps> = ({ onApprovalComplete, 
           </div>
 
           <span className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded border shrink-0 ${
-            analysis.riskLevel === 'CRITICAL' ? 'text-purple-400 border-purple-400/30 bg-purple-500/10' :
             analysis.riskLevel === 'HIGH' ? 'text-rose-400 border-rose-400/30 bg-rose-500/10' :
             'text-amber-400 border-amber-400/30 bg-amber-500/10'
           }`}>

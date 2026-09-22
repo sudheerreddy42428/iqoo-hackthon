@@ -24,7 +24,7 @@ export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ onApprovalReques
         const result = await localAIAnalyzer.analyze(activeCrash);
         setAnalysisResult(result);
         
-        if (result.riskLevel === 'LOW') {
+        if (result.riskLevel === 'LOW' && result.confidenceScore >= 80) {
           setApprovalStatus('APPROVED');
           setTimeout(() => {
             if (onAutoFix) onAutoFix(); // Route directly to debug execution for auto-fix
@@ -117,7 +117,6 @@ export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ onApprovalReques
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">Risk Analysis</h3>
               <span className={`text-xs font-bold px-2 py-1 rounded border ${
-                analysis.riskLevel === 'CRITICAL' ? 'text-purple-400 border-purple-400/20 bg-purple-400/10' :
                 analysis.riskLevel === 'HIGH' ? 'text-rose-400 border-rose-400/20 bg-rose-400/10' :
                 'text-amber-400 border-amber-400/20 bg-amber-400/10'
               }`}>

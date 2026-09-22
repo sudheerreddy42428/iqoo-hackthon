@@ -49,7 +49,7 @@ export const CrashSummary: React.FC<CrashSummaryProps> = ({ onAnalyze, onExit })
   }
 
   const triggeringAction = actionBuffer[actionBuffer.length - 1];
-  const isHighOrCritical = analysis?.riskLevel === 'HIGH' || analysis?.riskLevel === 'CRITICAL';
+  const isHighRisk = analysis?.riskLevel === 'HIGH';
   const confidenceScore = analysis?.confidenceScore ?? 92;
   const riskLevel = analysis?.riskLevel ?? (activeCrash.errorType.includes('Null') ? 'LOW' : 'HIGH');
 
@@ -107,7 +107,6 @@ export const CrashSummary: React.FC<CrashSummaryProps> = ({ onAnalyze, onExit })
                 </h2>
               </div>
               <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border shrink-0 ${
-                riskLevel === 'CRITICAL' ? 'text-purple-400 border-purple-400/30 bg-purple-500/10' :
                 riskLevel === 'HIGH' ? 'text-rose-400 border-rose-400/30 bg-rose-500/10' :
                 riskLevel === 'MEDIUM' ? 'text-amber-400 border-amber-400/30 bg-amber-500/10' :
                 'text-emerald-400 border-emerald-400/30 bg-emerald-500/10'
@@ -233,7 +232,7 @@ export const CrashSummary: React.FC<CrashSummaryProps> = ({ onAnalyze, onExit })
                 Developer Action
               </h3>
               <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
-                isHighOrCritical 
+                isHighRisk 
                   ? 'text-rose-400 border-rose-400/30 bg-rose-500/10'
                   : 'text-emerald-400 border-emerald-400/30 bg-emerald-500/10'
               }`}>
@@ -242,7 +241,7 @@ export const CrashSummary: React.FC<CrashSummaryProps> = ({ onAnalyze, onExit })
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              {isHighOrCritical ? (
+              {isHighRisk ? (
                 <>
                   <span className="text-rose-300 font-semibold">Source-code modification requires developer approval.</span>{' '}
                   Connecting your codebase grants <strong>read-only</strong> access for ReproX to inspect the target file and formulate a proposed patch for your review.

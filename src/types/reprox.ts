@@ -99,7 +99,7 @@ export interface CrashReport {
   stackTrace: string;
   screen: string;
   method?: string;
-  severity?: 'Critical' | 'High' | 'Medium' | 'Low';
+  severity?: 'High' | 'Medium' | 'Low';
   status?: CrashStatus;
   occurrences?: number;
   lastSeen?: string;
@@ -160,17 +160,62 @@ export interface AnalysisResult {
   suggestedFix: SuggestedFix;
   preventionRecommendation: string[];
   confidenceScore: number; // 0 to 100
+  confidenceReason: string;
   affectedComponent: string;
-  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  severity: 'HIGH' | 'MEDIUM' | 'LOW';
   timestamp: string;
   correlationExplanation?: string;
   // PRD New Fields
-  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'UNKNOWN';
   autoDebugEligible: boolean;
   approvalRequired: boolean;
   possibleSolutions?: SolutionOption[];
   recommendedApproach?: string;
   changeLocation?: ChangeLocation;
+
+  // New Evidence-Based Risk Fields
+  riskScore?: number; // 0-100
+  riskFactors?: RiskFactor[];
+  safetyOverrides?: SafetyOverride[];
+  evidenceQuality?: EvidenceQuality;
+
+  // Strict AI Output Required Fields
+  structuredRootCause?: {
+    description: string;
+    file?: string;
+    line?: number;
+    function?: string;
+  };
+  validationPlan?: string[];
+  rollbackPlan?: string[];
+  status?: 'ANALYZED' | 'AUTO_FIX_ELIGIBLE' | 'WAITING_FOR_APPROVAL' | 'FIXING' | 'FIXED' | 'FAILED' | 'NEEDS_MANUAL_REVIEW';
+}
+
+export type EvidenceQuality = 'STRONG' | 'MEDIUM' | 'WEAK' | 'INSUFFICIENT';
+
+export interface RiskFactor {
+  name: string;
+  score: number;
+  maxScore: number;
+  reason: string;
+  evidence: string;
+  evidenceSource?: string;
+  confidence: number;
+}
+
+export interface SafetyOverride {
+  reason: string;
+  ruleMatched: string;
+  elevatedRiskTo: 'HIGH';
+}
+
+export interface RiskAssessment {
+  finalScore: number;
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  factors: RiskFactor[];
+  overrides: SafetyOverride[];
+  evidenceQuality: EvidenceQuality;
+  isAutoFixEligible: boolean;
 }
 
 export type RegressionTestStatus = 'GENERATED' | 'NOT_EXECUTED' | 'EXECUTED' | 'PASSED' | 'FAILED';

@@ -8,7 +8,7 @@ export interface CrashTemplate {
   message: string;
   screen: string;
   method: string;
-  severity: 'Critical' | 'High' | 'Medium' | 'Low';
+  severity: 'High' | 'Medium' | 'Low';
   stackTrace: string;
   triggerDescription: string;
 }
@@ -19,7 +19,7 @@ export const CRASH_TEMPLATES: Record<string, CrashTemplate> = {
     message: 'Attempted to invoke virtual method on null paymentMethod reference.',
     screen: 'Checkout',
     method: 'PaymentService.processPayment()',
-    severity: 'Critical',
+    severity: 'High',
     triggerDescription: 'Triggered Pay before selecting a payment method',
     stackTrace: `java.lang.NullPointerException: Attempt to invoke virtual method 'void com.reprox.coffee.service.PaymentService.processPayment(com.reprox.coffee.model.PaymentMethod)' on a null object reference
     at com.reprox.coffee.service.PaymentService.processPayment(PaymentService.kt:89)
@@ -182,7 +182,7 @@ class CrashSimulatorService {
         message: 'Attempted to invoke virtual method on null paymentMethod reference.',
         method: 'PaymentService.processPayment()',
         screen: 'Checkout',
-        severity: 'Critical',
+        severity: 'High',
         status: 'New',
         occurrences: 48,
         lastSeen: '12m ago',

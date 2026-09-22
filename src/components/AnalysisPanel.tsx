@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
+import { useTimeout } from '../hooks/useTimeout';
 import { 
   Check,
   Copy,
   AlertTriangle,
   FileCode2,
   FileText,
-  ArrowRight
+  ArrowRight,
+  ShieldAlert
 } from 'lucide-react';
 import { AnalysisResult, CrashReport } from '../types/reprox';
 
@@ -28,14 +30,21 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   const handleCopyCode = () => {
     navigator.clipboard.writeText(analysis.suggestedFix.codeSnippet);
     setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2000);
   };
 
+  useTimeout(() => {
+    setCopiedCode(false);
+  }, copiedCode ? 2000 : null);
+
   const riskBadgeClass = 
-    analysis.riskLevel === 'CRITICAL' ? 'bg-purple-500/10 border-purple-500/30 text-purple-400' :
     analysis.riskLevel === 'HIGH' ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' :
     analysis.riskLevel === 'MEDIUM' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' :
     'bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
+
+  const evidenceQualityBadgeClass =
+    analysis.evidenceQuality === 'STRONG' ? 'bg-emerald-500/10 text-emerald-400' :
+    analysis.evidenceQuality === 'MEDIUM' ? 'bg-amber-500/10 text-amber-400' :
+    'bg-rose-500/10 text-rose-400';
 
   return (
     <div className="space-y-6 animate-fadeIn max-w-full">
@@ -145,8 +154,54 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
               </div>
             </div>
 
+            {/* NEW: RISK REPORT SECTION */}
+            {analysis.riskScore !== undefined && (
+              <div className="pt-4 border-t border-slate-800">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
+                    DETERMINISTIC RISK REPORT
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-slate-400">Score: <span className="text-white font-bold">{analysis.riskScore}/100</span></span>
+                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${evidenceQualityBadgeClass}`}>
+                      EVIDENCE: {analysis.evidenceQuality}
+                    </span>
+                  </div>
+                </div>
+
+                {analysis.safetyOverrides && analysis.safetyOverrides.length > 0 && (
+                  <div className="mb-4 bg-rose-500/10 border border-rose-500/30 rounded p-3">
+                    <div className="flex items-center gap-2 text-rose-400 mb-2">
+                      <ShieldAlert className="w-4 h-4" />
+                      <span className="text-xs font-bold uppercase">Safety Override Triggered</span>
+                    </div>
+                    <ul className="space-y-1 pl-6 list-disc">
+                      {analysis.safetyOverrides.map((override, i) => (
+                        <li key={i} className="text-xs text-rose-300 font-mono">{override.reason}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {analysis.riskFactors?.map((factor, i) => (
+                    <div key={i} className="bg-dark-900 border border-slate-800 rounded p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-slate-300">{factor.name}</span>
+                        <span className="text-[10px] font-mono text-slate-400">{factor.score}/{factor.maxScore}</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 leading-relaxed mb-1">{factor.reason}</p>
+                      <div className="text-[9px] font-mono text-slate-500 bg-dark-950 p-1.5 rounded">
+                        Evidence: {factor.evidence}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* 9. PREVENTION RECOMMENDATIONS */}
-            <div className="pt-4 border-t border-slate-800">
+            <div className="pt-4 border-t border-slate-800 mt-6">
                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 block mb-3">
                  PREVENTION RECOMMENDATIONS
                </span>

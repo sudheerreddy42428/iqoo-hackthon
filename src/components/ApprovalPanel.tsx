@@ -13,7 +13,8 @@ import {
   Terminal,
   Loader2,
   RefreshCw,
-  FileText
+  FileText,
+  Lightbulb
 } from 'lucide-react';
 import { AnalysisResult, CrashReport } from '../types/reprox';
 import { useInvestigation } from '../context/InvestigationContext';
@@ -75,7 +76,7 @@ export const ApprovalPanel: React.FC<ApprovalPanelProps> = ({
       case 'LOW': return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
       case 'MEDIUM': return 'text-amber-400 bg-amber-500/10 border-amber-500/30';
       case 'HIGH': return 'text-orange-400 bg-orange-500/10 border-orange-500/30';
-      case 'CRITICAL': return 'text-rose-400 bg-rose-500/10 border-rose-500/30';
+
       default: return 'text-slate-400 bg-slate-500/10 border-slate-500/30';
     }
   };
@@ -143,6 +144,7 @@ export const ApprovalPanel: React.FC<ApprovalPanelProps> = ({
   const isApplying = patchStatus === 'APPLYING';
   const isApplied = patchStatus === 'APPLIED' && verificationStatus === 'PASSED';
   const isFailed = patchStatus === 'FAILED';
+  const canApplyFix = analysis.autoDebugEligible || approvalStatus === 'APPROVED';
 
   return (
     <div className="glass-panel rounded-xl overflow-hidden border border-amber-500/30 shadow-2xl animate-fadeIn mt-6">
@@ -160,35 +162,64 @@ export const ApprovalPanel: React.FC<ApprovalPanelProps> = ({
               <span className={`text-[10px] font-mono px-2 py-0.5 rounded border flex items-center gap-1 ${getRiskColor(analysis.riskLevel)}`}>
                 <AlertTriangle className="w-3 h-3" /> Risk: {analysis.riskLevel}
               </span>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded border flex items-center gap-1 ${
+                analysis.confidenceScore >= 85 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' : 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+              }`}>
+                <ShieldCheck className="w-3 h-3" /> Confidence: {analysis.confidenceScore}%
+              </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
               {isApplied
                 ? 'The patch was successfully applied and regression verification passed.'
                 : 'Review the target change location and proposed code diff before approving execution.'}
             </p>
+            {analysis.confidenceReason && !isApplied && (
+              <p className="text-[11px] text-slate-500 mt-1 italic border-l-2 border-slate-700 pl-2">
+                "{analysis.confidenceReason}"
+              </p>
+            )}
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto shrink-0 pt-2 sm:pt-0">
           {!isApplied && !isApplying && (
-            <button
-              type="button"
-              onClick={() => {
-                setApprovalStatus('REJECTED');
-                onReject();
-              }}
-              className="w-full sm:w-auto px-4 py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 bg-dark-800 hover:bg-dark-700 text-slate-300 border border-slate-700 transition-all min-h-[44px] touch-target"
-            >
-              <XCircle className="w-4 h-4 text-rose-400" />
-              <span>REJECT FIX</span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setApprovalStatus('REJECTED');
+                  onReject();
+                }}
+                className="w-full sm:w-auto px-4 py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 bg-dark-800 hover:bg-dark-700 text-slate-300 border border-slate-700 transition-all min-h-[44px] touch-target"
+              >
+                <XCircle className="w-4 h-4 text-rose-400" />
+                <span>REJECT FIX</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  // Simulate requesting alternative approach
+                  if (onViewReport) onViewReport();
+                }}
+                className="w-full sm:w-auto px-4 py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 bg-dark-800 hover:bg-dark-700 text-amber-300 border border-amber-900/50 transition-all min-h-[44px] touch-target"
+              >
+                <Lightbulb className="w-4 h-4 text-amber-400" />
+                <span>Alternative Approach</span>
+              </button>
+            </>
           )}
 
           <button
             type="button"
-            onClick={handleRunAutoFix}
-            disabled={isApplying || isApplied || !analysis.autoDebugEligible}
+            onClick={() => {
+              if (!canApplyFix) {
+                setApprovalStatus('APPROVED');
+              } else {
+                handleRunAutoFix();
+              }
+            }}
+            disabled={isApplying || isApplied}
             className={`w-full sm:w-auto px-5 py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all min-h-[44px] touch-target ${
               isApplied
                 ? 'bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 cursor-default'
@@ -196,9 +227,9 @@ export const ApprovalPanel: React.FC<ApprovalPanelProps> = ({
                 ? 'bg-indigo-600 text-white cursor-wait'
                 : isFailed
                 ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-950/40'
-                : analysis.autoDebugEligible
+                : canApplyFix
                 ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-900/40 hover:scale-[1.02]'
-                : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-900/40 hover:scale-[1.02]'
             }`}
           >
             {isApplying ? (
@@ -216,10 +247,15 @@ export const ApprovalPanel: React.FC<ApprovalPanelProps> = ({
                 <RefreshCw className="w-4 h-4" />
                 <span>Retry Fix</span>
               </>
-            ) : (
+            ) : canApplyFix ? (
               <>
                 <Play className="w-4 h-4 fill-current" />
-                <span>APPROVE & APPLY FIX</span>
+                <span>APPLY FIX</span>
+              </>
+            ) : (
+              <>
+                <ShieldCheck className="w-4 h-4" />
+                <span>APPROVE</span>
               </>
             )}
           </button>
@@ -267,6 +303,28 @@ export const ApprovalPanel: React.FC<ApprovalPanelProps> = ({
         <p className="text-xs text-slate-300 leading-relaxed">
           {analysis.suggestedFix.explanation}
         </p>
+        
+        {analysis.validationPlan && analysis.validationPlan.length > 0 && (
+          <div className="mt-3">
+            <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider mb-1 block">Validation Plan:</span>
+            <ul className="list-disc list-inside text-xs text-slate-400 space-y-0.5">
+              {analysis.validationPlan.map((step, idx) => (
+                <li key={idx}>{step}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {analysis.rollbackPlan && analysis.rollbackPlan.length > 0 && (
+          <div className="mt-2">
+            <span className="text-[10px] font-mono text-amber-400 uppercase tracking-wider mb-1 block">Rollback Plan:</span>
+            <ul className="list-disc list-inside text-xs text-slate-400 space-y-0.5">
+              {analysis.rollbackPlan.map((step, idx) => (
+                <li key={idx}>{step}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Diff Box */}
         <div className="rounded-xl overflow-hidden border border-slate-800 bg-dark-950">

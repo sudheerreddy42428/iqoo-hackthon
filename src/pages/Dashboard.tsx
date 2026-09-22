@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useTimeout } from '../hooks/useTimeout';
 import { 
   Activity, 
   AlertOctagon, 
@@ -37,6 +38,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
   const [copiedTrace, setCopiedTrace] = useState(false);
   const [expandedTrace, setExpandedTrace] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [webllmProgress, setWebllmProgress] = useState<string>('');
   
   const [isPairingModalOpen, setIsPairingModalOpen] = useState(false);
@@ -82,11 +84,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
     setAnalysis(null);
     try {
       setIsAnalyzing(true);
+      setAnalysisError(null);
       const result = await localAIAnalyzer.analyze(crash);
       setAnalysis(result);
       setActiveWorkspaceTab('timeline'); // Reset tab on completion
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      console.error('Analysis Failed:', e);
+      setAnalysisError(e.message || 'An unknown error occurred during AI analysis.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -104,9 +108,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
     if (selectedCrash) {
       navigator.clipboard.writeText(selectedCrash.stackTrace);
       setCopiedTrace(true);
-      setTimeout(() => setCopiedTrace(false), 2000);
     }
   };
+
+  useTimeout(() => {
+    setCopiedTrace(false);
+  }, copiedTrace ? 2000 : null);
 
   const totalCrashes = crashes.length;
   const totalActionsCaptured = crashes.reduce((acc, c) => acc + c.recentActions.length, 0);
@@ -472,6 +479,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
                           <p className="text-sm text-indigo-400 font-mono max-w-md mx-auto h-12 flex items-center justify-center">
                             {webllmProgress || 'Initializing Phi-3 WebGPU model...'}
                           </p>
+                        </div>
+                      </div>
+                    ) : analysisError ? (
+                      <div className="glass-panel p-12 rounded-[2rem] border border-rose-500/30 text-center space-y-6 flex flex-col items-center justify-center min-h-[400px]">
+                        <div className="w-20 h-20 rounded-full bg-rose-950 border border-rose-500/30 flex items-center justify-center shadow-lg relative">
+                          <AlertOctagon className="w-8 h-8 text-rose-500" />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="text-xl font-bold text-white tracking-tight">Analysis Failed</h3>
+                          <p className="text-sm text-rose-400 max-w-md mx-auto">
+                            {analysisError}
+                          </p>
+                          <button 
+                            onClick={() => selectedCrash && handleSelectCrash(selectedCrash)}
+                            className="mt-4 px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg text-sm transition-colors"
+                          >
+                            Retry Analysis
+                          </button>
                         </div>
                       </div>
                     ) : (

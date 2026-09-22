@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTimeout } from '../hooks/useTimeout';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Check, Copy } from 'lucide-react';
@@ -20,8 +21,11 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language, value }) => {
   const handleCopy = () => {
     navigator.clipboard.writeText(value);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
+
+  useTimeout(() => {
+    setCopied(false);
+  }, copied ? 2000 : null);
 
   return (
     <div className="relative rounded-lg overflow-hidden bg-[#1E1E1E] my-4 border border-gray-700/50 shadow-md">
