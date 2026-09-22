@@ -25,8 +25,8 @@ export const App: React.FC = () => {
   const isLandingPage = location.pathname === '/home' || location.pathname === '/';
 
   const [isDemoRunning, setIsDemoRunning] = useState<boolean>(false);
-  const [demoStepName, setDemoStepName] = useState<string>('');
-  const [demoProgress, setDemoProgress] = useState<number>(0);
+  const [, setDemoStepName] = useState<string>('');
+  const [, setDemoProgress] = useState<number>(0);
   const demoAbortRef = useRef<boolean>(false);
 
   // Modals for quick offline utilities
