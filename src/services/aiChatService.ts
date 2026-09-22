@@ -368,14 +368,14 @@ class AIChatService {
       }
       
       // Default brief answer about the crash
-      return `### ⚡ Crash Explanation\n\n**Error**: \`${errorType}\`\n**Root Cause**: ${rootCause}\n\n**Developer Report**: ${explanation}`;
+      return `### ⚡ Crash Explanation\n\n**Error**: \`${errorType}\`\n**Root Cause**: ${rootCause}\n\n**Developer Report**: ${explanation}\n\n*Note: I am currently offline and only giving brief, ReproX-specific answers.*`;
     }
 
     if (mode === 'general') {
-      return "I am the ReproX Offline Engine. I currently require a Gemini API key or a connection to the ReproX Cloud to answer general technology questions. Please configure your API key in the settings.";
+      return "I am the ReproX Offline Engine. I am currently offline, but I only answer questions related to the ReproX project and crash diagnostics. Please load a crash report so I can explain it clearly and briefly, or connect to the internet for a broader project explanation.";
     }
 
-    return "I am the ReproX Crash Assistant. I can only help with crash investigation. Please load a crash report so I can explain the developer report and suggest fixes.";
+    return "I am the ReproX Crash Assistant. I exclusively help with ReproX and crash investigations. Please load a crash report so I can explain it clearly and briefly.";
   }
 }
 
