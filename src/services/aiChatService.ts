@@ -5,6 +5,7 @@ export type AIModelId = 'gemini-3.6-flash' | 'gemini-3.6-pro' | 'reprox-local';
 export interface ChatRequestOptions {
   messages: PersistentChatMessage[];
   mode: ChatMode;
+  complexity?: ChatComplexity;
   modelId?: AIModelId;
   activeCrash?: CrashReport | null;
   analysis?: AnalysisResult | null;
@@ -100,7 +101,7 @@ class AIChatService {
 
   // Main chat completion method with multi-tiered fallback
   async sendMessage(options: ChatRequestOptions): Promise<ChatResponse> {
-    const { messages, mode, modelId = this.getSelectedModel(), activeCrash, analysis, attachedImage } = options;
+    const { messages, mode, complexity = 'simple', modelId = this.getSelectedModel(), activeCrash, analysis, attachedImage } = options;
     const apiKey = this.getApiKey();
 
     // If user explicitly chose local engine, run it immediately
@@ -117,7 +118,7 @@ class AIChatService {
     // Tier 1: Direct Gemini API call if an API key is available
     if (apiKey) {
       try {
-        const directReply = await this.callDirectGemini(apiKey, modelId, messages, mode, activeCrash, analysis, attachedImage);
+        const directReply = await this.callDirectGemini(apiKey, modelId, messages, mode, complexity, activeCrash, analysis, attachedImage);
         if (directReply) {
           return {
             reply: directReply,
@@ -132,7 +133,7 @@ class AIChatService {
 
     // Tier 2: Proxy via /api/chat (Vite dev middleware or Vercel serverless function)
     try {
-      const proxyResponse = await this.callApiChatProxy(messages, mode, modelId, activeCrash, analysis, attachedImage);
+      const proxyResponse = await this.callApiChatProxy(messages, mode, complexity, modelId, activeCrash, analysis, attachedImage);
       if (proxyResponse) {
         return proxyResponse;
       }
@@ -156,6 +157,7 @@ class AIChatService {
     modelId: AIModelId,
     messages: PersistentChatMessage[],
     mode: ChatMode,
+    complexity: ChatComplexity,
     activeCrash?: CrashReport | null,
     analysis?: AnalysisResult | null,
     attachedImage?: string | null
@@ -167,13 +169,21 @@ class AIChatService {
     const modelsToTry = Array.from(new Set([selected, 'gemini-3.6-flash', 'gemini-3.6-pro']));
 
     // Prepare system instruction & contextual prompt
-    let systemPrompt = "You are ReproX Super AI, an expert mobile systems engineer, Kotlin developer, and crash diagnostics copilot. Provide clear, accurate, practical technical advice with formatted code blocks, step-by-step reasoning, and concise explanations.";
+    let systemPrompt = "";
+    if (mode === 'general') {
+      systemPrompt = "You are ReproX Super AI, an expert software engineer and helpful assistant. You can help with coding, technology, general knowledge, or any arbitrary question.";
+    } else {
+      systemPrompt = "You are ReproX Super AI, an expert mobile systems engineer, Kotlin developer, and crash diagnostics copilot. You are operating in ReproX Crash Copilot mode. Use the provided telemetry, action breadcrumbs, and exception details to pinpoint the root cause, propose robust fixes, and generate automated regression tests.";
+    }
 
-    if (mode === 'reprox' || activeCrash) {
-      systemPrompt += "\n\nYou are operating in ReproX Crash Copilot mode. Use the provided telemetry, action breadcrumbs, and exception details to pinpoint the root cause, propose robust Kotlin fixes, and generate automated regression tests.";
-      if (activeCrash) {
-        systemPrompt += `\n\nACTIVE CRASH TELEMETRY:\n- Error: ${activeCrash.errorType}: ${activeCrash.message}\n- Screen: ${activeCrash.screen}\n- Stack Trace:\n${activeCrash.stackTrace}\n- Pre-Crash Actions (${activeCrash.recentActions.length} recorded):\n${activeCrash.recentActions.map((a, i) => `  ${i + 1}. [${a.screen}] ${a.description} (${a.type})`).join('\n')}`;
-      }
+    if (complexity === 'simple') {
+      systemPrompt += "\n\nCRITICAL: Respond using beginner-friendly language, simple analogies, and clear step-by-step guidance. Avoid overly complex technical jargon unless strictly necessary, and explain it if you must use it.";
+    } else {
+      systemPrompt += "\n\nCRITICAL: Respond using highly technical jargon, deep-dive explanations, architectural context, and advanced code blocks. Assume the user is an expert senior software engineer.";
+    }
+
+    if (mode === 'reprox' && activeCrash) {
+      systemPrompt += `\n\nACTIVE CRASH TELEMETRY:\n- Error: ${activeCrash.errorType}: ${activeCrash.message}\n- Screen: ${activeCrash.screen}\n- Stack Trace:\n${activeCrash.stackTrace}\n- Pre-Crash Actions (${activeCrash.recentActions.length} recorded):\n${activeCrash.recentActions.map((a, i) => `  ${i + 1}. [${a.screen}] ${a.description} (${a.type})`).join('\n')}`;
       if (analysis) {
         systemPrompt += `\n\nDIAGNOSTIC ANALYSIS:\n- Root Cause: ${analysis.likelyRootCause}\n- Confidence: ${analysis.confidenceScore}%\n- Risk Level: ${analysis.riskLevel}\n- Suggested Fix: ${analysis.suggestedFix?.explanation}`;
       }
@@ -273,6 +283,7 @@ class AIChatService {
   private async callApiChatProxy(
     messages: PersistentChatMessage[],
     mode: ChatMode,
+    complexity: ChatComplexity,
     modelId: AIModelId,
     activeCrash?: CrashReport | null,
     analysis?: AnalysisResult | null,
@@ -306,6 +317,7 @@ class AIChatService {
       body: JSON.stringify({
         messages: historyPayload,
         mode,
+        complexity,
         crashContext,
         model: modelId
       }),
@@ -332,7 +344,7 @@ class AIChatService {
   // High-intelligence offline / heuristic fallback engine
   generateSmartLocalReply(
     messages: PersistentChatMessage[],
-    _mode: ChatMode,
+    mode: ChatMode,
     activeCrash?: CrashReport | null,
     analysis?: AnalysisResult | null
   ): string {
@@ -357,6 +369,10 @@ class AIChatService {
       
       // Default brief answer about the crash
       return `### ⚡ Crash Explanation\n\n**Error**: \`${errorType}\`\n**Root Cause**: ${rootCause}\n\n**Developer Report**: ${explanation}`;
+    }
+
+    if (mode === 'general') {
+      return "I am the ReproX Offline Engine. I currently require a Gemini API key or a connection to the ReproX Cloud to answer general technology questions. Please configure your API key in the settings.";
     }
 
     return "I am the ReproX Crash Assistant. I can only help with crash investigation. Please load a crash report so I can explain the developer report and suggest fixes.";

@@ -40,6 +40,7 @@ export interface ChatMessage {
 }
 
 export type ChatMode = 'general' | 'reprox';
+export type ChatComplexity = 'simple' | 'detailed';
 
 export interface ChatConversation {
   id: string;
@@ -47,6 +48,7 @@ export interface ChatConversation {
   createdAt: string;
   updatedAt: string;
   mode: ChatMode;
+  complexity?: ChatComplexity;
 }
 
 export interface PersistentChatMessage {
@@ -57,6 +59,7 @@ export interface PersistentChatMessage {
   timestamp: string;
   type?: 'auto-fix' | 'complex-report' | 'normal' | 'error';
   imageUrl?: string;
+  complexity?: ChatComplexity;
 }
 
 export interface CrashScreenshot {

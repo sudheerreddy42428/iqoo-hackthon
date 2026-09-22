@@ -30,7 +30,7 @@ import { DeveloperReportModal } from './DeveloperReportModal';
 import { FormattedChatMessage } from './FormattedChatMessage';
 import { conversationStore } from '../services/conversationStore';
 import { aiChatService, AIModelId } from '../services/aiChatService';
-import { ChatConversation, PersistentChatMessage, ChatMode } from '../types/reprox';
+import { ChatConversation, PersistentChatMessage, ChatMode, ChatComplexity } from '../types/reprox';
 
 export const AIBotAssistant: React.FC = () => {
   const { activeCrash, analysis, approvalStatus, verificationStatus } = useInvestigation();
@@ -43,6 +43,7 @@ export const AIBotAssistant: React.FC = () => {
   
   // Chat State
   const [chatMode, setChatMode] = useState<ChatMode>('reprox');
+  const [chatComplexity, setChatComplexity] = useState<ChatComplexity>('simple');
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<PersistentChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
@@ -96,6 +97,7 @@ export const AIBotAssistant: React.FC = () => {
     const convo = conversationStore.getConversations().find(c => c.id === id);
     if (convo) {
       setChatMode(convo.mode);
+      if (convo.complexity) setChatComplexity(convo.complexity);
     }
   };
 
@@ -258,6 +260,7 @@ export const AIBotAssistant: React.FC = () => {
     let currentConversationId = activeConversationId;
     if (!currentConversationId) {
       const newConvo = conversationStore.createConversation(userText || 'Screenshot Analysis', chatMode);
+      newConvo.complexity = chatComplexity;
       currentConversationId = newConvo.id;
       setActiveConversationId(newConvo.id);
       loadConversations();
@@ -281,6 +284,7 @@ export const AIBotAssistant: React.FC = () => {
       const response = await aiChatService.sendMessage({
         messages: allMsgs,
         mode: chatMode,
+        complexity: chatComplexity,
         modelId: selectedModel,
         activeCrash,
         analysis,
@@ -374,11 +378,16 @@ export const AIBotAssistant: React.FC = () => {
     });
   };
 
-  const quickPromptChips = [
+  const quickPromptChips = chatMode === 'reprox' ? [
     { label: '⚡ Diagnose Crash', prompt: 'Diagnose the root cause of the current crash and correlate it with the rolling buffer.' },
     { label: '🛠️ Kotlin Fix', prompt: 'Provide a defensive Kotlin code fix for this crash with diff explanation.' },
     { label: '🧪 Espresso Test', prompt: 'Generate an automated Espresso UI regression test reproducing the 15-action buffer.' },
     { label: '📋 Action Buffer', prompt: 'Explain how the 15-action circular rolling buffer captured this crash sequence.' },
+  ] : [
+    { label: '🚀 Explain React', prompt: 'Can you explain how React hooks work under the hood?' },
+    { label: '📱 Mobile UX', prompt: 'What are the best practices for mobile-first PWA design?' },
+    { label: '💻 TypeScript', prompt: 'Explain the difference between interfaces and type aliases in TypeScript.' },
+    { label: '🌐 REST vs GraphQL', prompt: 'Compare REST APIs and GraphQL for a mobile e-commerce app.' },
   ];
 
   const renderHistoryGroups = () => {
@@ -512,18 +521,25 @@ export const AIBotAssistant: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Bot className="w-4 h-4 text-purple-400 animate-pulse" />
                   <span className="text-xs font-bold bg-gradient-to-r from-purple-300 to-cyan-300 bg-clip-text text-transparent">
-                    ReproX AI Copilot
+                    {chatMode === 'reprox' ? 'Crash Incident Assistant' : 'Developer AI Assistant'}
                   </span>
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono border border-purple-500/30">
                     {selectedModel === 'reprox-local' ? 'Offline' : 'Gemini'}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 mt-0.5">
+                <div className="flex items-center gap-3 mt-0.5">
                   <button 
                     onClick={() => setChatMode(chatMode === 'reprox' ? 'general' : 'reprox')}
                     className="text-[10px] text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-1"
                   >
-                    Mode: <span className="text-cyan-400 font-semibold">{chatMode === 'reprox' ? '🛡️ Crash Copilot' : '💬 Developer AI'}</span>
+                    Mode: <span className="text-cyan-400 font-semibold">{chatMode === 'reprox' ? '🛡️ Crash Copilot' : '💬 General AI'}</span>
+                  </button>
+                  <div className="w-px h-3 bg-slate-700"></div>
+                  <button 
+                    onClick={() => setChatComplexity(chatComplexity === 'simple' ? 'detailed' : 'simple')}
+                    className="text-[10px] text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1"
+                  >
+                    Level: <span className="text-emerald-400 font-semibold">{chatComplexity === 'simple' ? '🟢 Simple' : '🧠 Detailed'}</span>
                   </button>
                 </div>
               </div>

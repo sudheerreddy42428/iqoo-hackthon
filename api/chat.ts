@@ -26,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { messages = [], mode = 'general', crashContext, model = 'gemini' } = req.body || {};
+    const { messages = [], mode = 'general', complexity = 'simple', crashContext, model = 'gemini' } = req.body || {};
 
     // Basic Input Validation & Protection
     if (!Array.isArray(messages) || messages.length > 50) {
@@ -35,12 +35,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.XAI_API_KEY || process.env.GROQ_API_KEY || process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
 
-    // Prepare system instruction based on mode
+    // Prepare system instruction based on mode and complexity
     let systemPrompt = "You are ReproX Super AI, a helpful general-purpose AI assistant. Answer questions accurately, clearly, and safely. Support programming, mathematics, technical concepts, general knowledge, learning, writing, and everyday questions. Explain your reasoning when useful, provide examples, and ask for clarification when the user's request is ambiguous. Do not claim to have executed code, accessed files, changed code, deployed an application, or verified a result unless that action actually occurred.";
 
     if (mode === 'reprox' || crashContext) {
       systemPrompt = "You are ReproX Diagnostic AI, a specialized assistant for analyzing application crashes, risky changes, telemetry, reproduction steps, and debugging reports. Give only answers about the crash. Explain the developer report clearly and briefly. Do not be overly verbose. Use the supplied ReproX context when available. Identify likely causes, distinguish evidence from hypotheses, explain the impact, suggest safe fixes, and generate reproducible testing steps. Do not claim that a fix was applied, deployed, or validated unless an authorized tool actually performed and verified the operation. If the evidence is insufficient, clearly state what additional information is needed.";
       systemPrompt += `\n\nREPROX APPLICATION CONTEXT:\n${crashContext || 'ReproX Crash Diagnostic Engine Active'}`;
+    }
+
+    if (complexity === 'detailed') {
+      systemPrompt += "\n\nProvide highly detailed, technical explanations with deep-dive analysis and extensive examples.";
+    } else {
+      systemPrompt += "\n\nProvide simple, beginner-friendly explanations, avoiding overly complex jargon unless necessary.";
     }
 
     const payloadMessages = [
