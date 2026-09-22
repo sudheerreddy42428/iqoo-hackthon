@@ -25,6 +25,19 @@ export function generateEspressoTest(report: CrashReport, steps: ReproductionSte
     return actionCode;
   }).join('\n\n');
 
+    const espressoAssert = report.errorType === 'PaymentGatewayException'
+      ? `        // Verify app gracefully catches PaymentGatewayException
+        // Verify user-friendly retry banner is displayed
+        onView(withText("Payment failed. Please try again or use a different method."))
+            .check(matches(isDisplayed()))
+            
+        // Verify cart state is not corrupted and we remain on Checkout
+        onView(withId(R.id.checkout_root))
+            .check(matches(isDisplayed()))`
+      : `        // Assert that the app remains stable and does not throw ${report.errorType}
+        onView(withId(R.id.checkout_root))
+            .check(matches(isDisplayed()))`;
+
   const code = `package com.reprox.coffee.regression
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule
@@ -56,9 +69,7 @@ class ${sanitizeName(report.errorType)}RegressionTest {
     fun ${testName}() {
 ${espressoActions}
 
-        // Assert that the app remains stable and does not throw ${report.errorType}
-        onView(withId(R.id.checkout_root))
-            .check(matches(isDisplayed()))
+${espressoAssert}
     }
 }`;
 
@@ -89,6 +100,19 @@ export function generateComposeTest(report: CrashReport, steps: ReproductionStep
     return actionCode;
   }).join('\n\n');
 
+  const composeAssert = report.errorType === 'PaymentGatewayException'
+    ? `        // Verify state resilience - app gracefully catches PaymentGatewayException
+        // Verify user-friendly retry banner is displayed
+        composeTestRule.onNodeWithText("Payment failed. Please try again or use a different method.")
+            .assertIsDisplayed()
+            
+        // Verify cart state is not corrupted
+        composeTestRule.onNodeWithTag("checkout_screen")
+            .assertIsDisplayed()`
+    : `        // Verify state resilience - screen does not crash
+        composeTestRule.onNodeWithTag("error_banner")
+            .assertDoesNotExist()`;
+
   const code = `package com.reprox.coffee.compose
 
 import androidx.compose.ui.test.*
@@ -111,9 +135,7 @@ class ${sanitizeName(report.errorType)}ComposeTest {
     fun ${testName}() {
 ${composeActions}
 
-        // Verify state resilience - screen does not crash
-        composeTestRule.onNodeWithTag("error_banner")
-            .assertDoesNotExist()
+${composeAssert}
     }
 }`;
 

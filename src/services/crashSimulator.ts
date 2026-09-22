@@ -54,6 +54,18 @@ export const CRASH_TEMPLATES: Record<string, CrashTemplate> = {
     at okhttp3.internal.connection.RealCall.callStart(RealCall.kt:148)
     at com.reprox.coffee.network.PaymentClient.submitOrder(PaymentClient.kt:89)
     at com.reprox.coffee.viewmodel.PaymentViewModel$process$1.invokeSuspend(PaymentViewModel.kt:73)`,
+  },
+  REMOTE_PAYMENT_GATEWAY_505: {
+    errorType: 'PaymentGatewayException',
+    message: 'Remote payment gateway failed with HTTP 505: Protocol/Version not supported by upstream gateway',
+    screen: 'Checkout',
+    method: 'PaymentGatewayService.executeTransaction()',
+    severity: 'High',
+    triggerDescription: 'Remote payment gateway returned HTTP 505 during transaction processing',
+    stackTrace: `com.reprox.coffee.network.PaymentGatewayException: HTTP 505 Gateway Protocol Mismatch
+    at com.reprox.coffee.service.PaymentGatewayService.executeTransaction(PaymentGatewayService.kt:114)
+    at com.reprox.coffee.ui.CheckoutViewModel.processPayment(CheckoutViewModel.kt:82)
+    at com.reprox.coffee.ui.CheckoutScreen.onPayClicked(CheckoutScreen.kt:156)`,
   }
 };
 

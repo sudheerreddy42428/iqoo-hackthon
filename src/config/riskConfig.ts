@@ -12,7 +12,7 @@ export const SAFETY_OVERRIDE_RULES = [
     reason: "Modifies authentication, authorization, or security-sensitive code.",
   },
   {
-    pattern: /(pay|billing|checkout|creditcard|stripe|financial|transaction)/i,
+    pattern: /(pay|billing|checkout|creditcard|stripe|financial|transaction|505|5xx|gateway)/i,
     reason: "Modifies payment or financial processing logic.",
   },
   {

@@ -165,6 +165,13 @@ export function shouldAutoFix(analysis: AnalysisResult): boolean {
   if (analysis.riskLevel === 'MEDIUM' || analysis.riskLevel === 'HIGH') {
     return false;
   }
+  
+  // Extra safeguard: explicitly block auto-fix for any scenario touching payment or auth
+  const textToScan = (analysis.suggestedFix.explanation + ' ' + analysis.suggestedFix.filePath).toLowerCase();
+  if (/(pay|billing|checkout|creditcard|stripe|financial|transaction|auth|login|token|jwt|session|permission|role|security|password|505|5xx|gateway)/.test(textToScan)) {
+    return false;
+  }
+
   // LOW risk -> Auto-fix allowed only when ALL safety conditions pass
   return analysis.autoDebugEligible === true;
 }

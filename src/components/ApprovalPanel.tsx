@@ -255,7 +255,7 @@ export const ApprovalPanel: React.FC<ApprovalPanelProps> = ({
             ) : (
               <>
                 <ShieldCheck className="w-4 h-4" />
-                <span>APPROVE</span>
+                <span>{analysis.riskLevel === 'HIGH' ? 'APPROVE & REVIEW' : 'APPROVE'}</span>
               </>
             )}
           </button>

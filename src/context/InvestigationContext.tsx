@@ -237,7 +237,7 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
       const riskLevel = state.analysis.riskLevel;
       if (riskLevel === 'MEDIUM' || riskLevel === 'HIGH') {
         if (state.approvalStatus !== 'APPROVED') {
-          return { success: false, error: `Developer permission is mandatory for ${riskLevel} risk patches.` };
+          return { success: false, error: 'Developer permission required: High-risk payment gateway errors cannot be auto-resolved without explicit approval.' };
         }
       } else if (riskLevel === 'LOW') {
         if (!state.analysis.autoDebugEligible && state.approvalStatus !== 'APPROVED') {

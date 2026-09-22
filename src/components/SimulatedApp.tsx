@@ -251,6 +251,18 @@ export const SimulatedApp: React.FC<SimulatedAppProps> = ({
       selectPayment('UPI');
       await new Promise(r => setTimeout(r, 1200));
       onTriggerCrash(selectedScenario, 'Checkout');
+    } else if (selectedScenario === 'REMOTE_PAYMENT_GATEWAY_505') {
+      navigateTo('Products');
+      await new Promise(r => setTimeout(r, 800));
+      addToCart(COFFEE_PRODUCTS[0]);
+      await new Promise(r => setTimeout(r, 800));
+      navigateTo('Cart');
+      await new Promise(r => setTimeout(r, 800));
+      navigateTo('Checkout');
+      await new Promise(r => setTimeout(r, 800));
+      selectPayment('CREDIT_CARD');
+      await new Promise(r => setTimeout(r, 1200));
+      onTriggerCrash(selectedScenario, 'Checkout');
     } else if (selectedScenario === 'HAPPY_PATH') {
       navigateTo('Products');
       await new Promise(r => setTimeout(r, 800));
