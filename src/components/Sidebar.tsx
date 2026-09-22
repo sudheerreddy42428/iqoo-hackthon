@@ -43,7 +43,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems = [
     { id: 'home', label: 'Overview', icon: Terminal },
     { id: 'dashboard', label: 'Crash Reports', icon: ShieldAlert },
-    { id: 'test-center', label: 'Regression Tests', icon: Play },
     { id: 'playground', label: 'Playground', icon: Sparkles },
     { id: 'audit', label: 'Airplane Mode Audit', icon: Layers },
     { id: 'architecture', label: 'Architecture', icon: Cpu },

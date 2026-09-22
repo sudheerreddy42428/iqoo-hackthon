@@ -19,7 +19,6 @@ import { CrashReport, AnalysisResult } from '../types/reprox';
 import { crashSimulator } from '../services/crashSimulator';
 import { localAIAnalyzer } from '../services/analyzer';
 import { AnalysisPanel } from '../components/AnalysisPanel';
-import { RegressionTestPanel } from '../components/RegressionTestPanel';
 import { EducationalBadge } from '../components/EducationalBadge';
 import { DeveloperReportModal } from '../components/DeveloperReportModal';
 import { DevicePairingModal } from '../components/DevicePairingModal';
@@ -34,7 +33,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
   const [selectedCrash, setSelectedCrash] = useState<CrashReport | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [showDeveloperReport, setShowDeveloperReport] = useState(false);
-  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<'timeline' | 'details' | 'analysis' | 'test'>('timeline');
+  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<'timeline' | 'details' | 'analysis'>('timeline');
   const [copiedTrace, setCopiedTrace] = useState(false);
   const [expandedTrace, setExpandedTrace] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -363,12 +362,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
                   label="Analysis" 
                   disabled={!analysis && !isAnalyzing}
                 />
-                <WorkspaceTab 
-                  active={activeWorkspaceTab === 'test'} 
-                  onClick={() => setActiveWorkspaceTab('test')} 
-                  label="Regression Test" 
-                  disabled={!analysis}
-                />
               </div>
 
               {/* Tab Content Areas */}
@@ -533,17 +526,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
                     )}
                   </div>
                 )}
-
-                {/* REGRESSION TEST TAB */}
-                {activeWorkspaceTab === 'test' && analysis && (
-                  <div className="animate-fadeIn">
-                    <RegressionTestPanel
-                      report={selectedCrash}
-                      steps={analysis.reproductionSteps}
-                    />
-                  </div>
-                )}
-
               </div>
             </div>
           ) : (
@@ -553,7 +535,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
               </div>
               <h3 className="text-lg font-bold text-white tracking-tight">No crash selected</h3>
               <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
-                Select a crash report from the sidebar to inspect its user action timeline, diagnostic root cause, and synthesized test.
+                Select a crash report from the sidebar to inspect its user action timeline and diagnostic root cause.
               </p>
               {crashes.length === 0 && (
                 <button 

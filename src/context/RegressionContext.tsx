@@ -7,6 +7,7 @@ import { shouldAutoFix } from '../utils/riskScorer';
 interface RegressionContextType {
   testCases: TestCase[];
   runTestCase: (id: string) => Promise<void>;
+  finishTestCase: (id: string, scenario: string, passed: boolean, screenContext?: string) => Promise<void>;
   approveAndFix: (id: string) => Promise<void>;
   rejectFix: (id: string) => void;
   resetTestCase: (id: string) => void;
@@ -30,11 +31,15 @@ export const RegressionProvider: React.FC<{ children: ReactNode }> = ({ children
     }
 
     updateTestCase(id, { workflowState: 'TEST_RUNNING' });
+    // Note: The UI (TestCenter) will now mount SimulatedApp with autoPlay=true.
+    // When SimulatedApp finishes, it will call finishTestCase via onTriggerCrash.
+  };
 
-    // Simulate running the test
-    await new Promise(resolve => setTimeout(resolve, 1500));
+  const finishTestCase = async (id: string, scenario: string, passed: boolean, screenContext?: string) => {
+    const tc = testCases.find(t => t.id === id);
+    if (!tc) return;
 
-    if (tc.scenario === 'HAPPY_PATH') {
+    if (passed) {
       updateTestCase(id, { workflowState: 'TEST_PASSED' });
       return;
     }
@@ -45,10 +50,8 @@ export const RegressionProvider: React.FC<{ children: ReactNode }> = ({ children
     updateTestCase(id, { workflowState: 'ANALYZING_RISK' });
 
     try {
-      const report = crashSimulator.simulateCrash(tc.scenario, 'Automated Test');
+      const report = crashSimulator.simulateCrash(scenario, screenContext || 'Automated Test');
       const analysis = await localAIAnalyzer.analyze(report);
-
-      const isEligible = shouldAutoFix(analysis);
 
       const generatedTestCode = `/**
  * AUTOMATED REGRESSION TEST
@@ -69,18 +72,13 @@ ${analysis.reproductionSteps?.map(step => `  // Step ${step.stepNumber}: ${step.
 });`;
 
       updateTestCase(id, {
-        workflowState: isEligible ? 'AUTO_FIX_ELIGIBLE' : 'APPROVAL_REQUIRED',
+        workflowState: 'APPROVAL_REQUIRED',
         riskScore: analysis.riskScore,
         riskLevel: analysis.riskLevel,
         confidence: analysis.confidence,
         analysis,
         generatedRegressionTest: generatedTestCode
       });
-
-      if (isEligible) {
-        // Proceed with auto fix immediately
-        await proceedWithFix(id);
-      }
     } catch (error) {
       console.error('Failed to analyze test case', error);
       updateTestCase(id, { workflowState: 'TEST_FAILED' });
@@ -111,7 +109,7 @@ ${analysis.reproductionSteps?.map(step => `  // Step ${step.stepNumber}: ${step.
   };
 
   return (
-    <RegressionContext.Provider value={{ testCases, runTestCase, approveAndFix, rejectFix, resetTestCase }}>
+    <RegressionContext.Provider value={{ testCases, runTestCase, finishTestCase, approveAndFix, rejectFix, resetTestCase }}>
       {children}
     </RegressionContext.Provider>
   );
