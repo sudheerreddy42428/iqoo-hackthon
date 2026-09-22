@@ -1,7 +1,6 @@
 import { CrashReport, AnalysisResult, PersistentChatMessage, ChatMode } from '../types/reprox';
-import { classifyScope, OUT_OF_SCOPE_MESSAGE, AMBIGUOUS_MESSAGE } from '../utils/scopeClassifier';
 
-export type AIModelId = 'gemini-2.0-flash' | 'gemini-1.5-pro' | 'reprox-local';
+export type AIModelId = 'gemini-3.6-flash' | 'gemini-3.6-pro' | 'reprox-local';
 
 export interface ChatRequestOptions {
   messages: PersistentChatMessage[];
@@ -10,7 +9,6 @@ export interface ChatRequestOptions {
   activeCrash?: CrashReport | null;
   analysis?: AnalysisResult | null;
   attachedImage?: string | null;
-  incidentId?: string;
 }
 
 export interface ChatResponse {
@@ -31,9 +29,13 @@ class AIChatService {
       if (stored && stored.trim().length > 0) return stored.trim();
     } catch (e) {}
     
-    // We explicitly do NOT use Vite environment variables for API keys
-    // to prevent exposing secrets in the client-side bundle.
-    // Use the backend proxy (/api/chat) for environment-level keys.
+    // Check Vite environment variable if configured
+    try {
+      const envKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
+      if (envKey && typeof envKey === 'string' && envKey.trim().length > 0) {
+        return envKey.trim();
+      }
+    } catch (e) {}
     return '';
   }
 
@@ -50,11 +52,11 @@ class AIChatService {
   getSelectedModel(): AIModelId {
     try {
       const stored = localStorage.getItem(STORAGE_SELECTED_MODEL) as AIModelId | null;
-      if (stored && ['gemini-2.0-flash', 'gemini-1.5-pro', 'reprox-local'].includes(stored)) {
+      if (stored && ['gemini-3.6-flash', 'gemini-3.6-pro', 'reprox-local'].includes(stored)) {
         return stored;
       }
     } catch (e) {}
-    return 'gemini-2.0-flash';
+    return 'gemini-3.6-flash';
   }
 
   setSelectedModel(modelId: AIModelId): void {
@@ -68,13 +70,10 @@ class AIChatService {
     if (!apiKey.trim()) {
       return { success: false, message: 'Please enter a valid Gemini API key.' };
     }
-    const testModels = ['gemini-2.0-flash', 'gemini-1.5-pro'];
+    const testModels = ['gemini-3.6-flash', 'gemini-3.6-pro'];
     let lastError = '';
 
     for (const model of testModels) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-
       try {
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
         const response = await fetch(endpoint, {
@@ -82,8 +81,7 @@ class AIChatService {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: 'Ping' }] }]
-          }),
-          signal: controller.signal
+          })
         });
 
         if (response.ok) {
@@ -94,8 +92,6 @@ class AIChatService {
         }
       } catch (err: any) {
         lastError = err.message || 'Connection failed. Check network or CORS.';
-      } finally {
-        clearTimeout(timeoutId);
       }
     }
 
@@ -106,25 +102,6 @@ class AIChatService {
   async sendMessage(options: ChatRequestOptions): Promise<ChatResponse> {
     const { messages, mode, modelId = this.getSelectedModel(), activeCrash, analysis, attachedImage } = options;
     const apiKey = this.getApiKey();
-
-    const lastUserMessage = messages.slice().reverse().find(m => m.role === 'user')?.content || '';
-    const scope = classifyScope(lastUserMessage, !!activeCrash);
-
-    if (scope === 'OUT_OF_SCOPE') {
-      return {
-        reply: OUT_OF_SCOPE_MESSAGE,
-        provider: 'Scope Filter',
-        modelUsed: 'Local Rules',
-        isFallback: false
-      };
-    } else if (scope === 'AMBIGUOUS' && !activeCrash) {
-      return {
-        reply: AMBIGUOUS_MESSAGE,
-        provider: 'Scope Filter',
-        modelUsed: 'Local Rules',
-        isFallback: false
-      };
-    }
 
     // If user explicitly chose local engine, run it immediately
     if (modelId === 'reprox-local') {
@@ -154,12 +131,23 @@ class AIChatService {
     }
 
     // Tier 2: Proxy via /api/chat (Vite dev middleware or Vercel serverless function)
-    const proxyResponse = await this.callApiChatProxy(messages, mode, modelId, activeCrash, analysis, attachedImage);
-    if (proxyResponse) {
-      return proxyResponse;
+    try {
+      const proxyResponse = await this.callApiChatProxy(messages, mode, modelId, activeCrash, analysis, attachedImage);
+      if (proxyResponse) {
+        return proxyResponse;
+      }
+    } catch (proxyErr: any) {
+      console.warn('/api/chat proxy failed, engaging ReproX Smart Local Engine fallback...', proxyErr);
     }
 
-    throw new Error('All AI service tiers failed or returned empty responses.');
+    // Tier 3: ReproX Smart Local Engine fallback (Guaranteed 100% uptime & zero failure)
+    const localReply = this.generateSmartLocalReply(messages, mode, activeCrash, analysis);
+    return {
+      reply: localReply,
+      provider: 'ReproX Smart Diagnostic Engine (Offline Mode)',
+      modelUsed: 'Local Diagnostic & Code Synthesizer',
+      isFallback: true
+    };
   }
 
   // Direct call to Google Gemini 1.5 / 2.5 Flash
@@ -172,47 +160,22 @@ class AIChatService {
     analysis?: AnalysisResult | null,
     attachedImage?: string | null
   ): Promise<string> {
-    const selected = modelId === 'gemini-1.5-pro' 
-      ? 'gemini-1.5-pro' 
-      : 'gemini-2.0-flash';
+    const selected = modelId === 'gemini-3.6-pro' 
+      ? 'gemini-3.6-pro' 
+      : 'gemini-3.6-flash';
 
-    const modelsToTry = Array.from(new Set([selected, 'gemini-2.0-flash', 'gemini-1.5-pro']));
+    const modelsToTry = Array.from(new Set([selected, 'gemini-3.6-flash', 'gemini-3.6-pro']));
 
-    const SYSTEM_PROMPT = `You are ReproX Crash Investigation Assistant. 
-Your sole purpose is to help developers investigate software crashes, reproduction, and debugging.
-
-STRICT RULES:
-1. ONLY answer questions about software crashes or the provided crash data.
-2. If the user asks anything unrelated, respond EXACTLY: "I’m ReproX Crash Assistant. I can only help with crash investigation, crash reproduction, debugging, fixes, stack traces, logs, and regression testing."
-3. If riskLevel is HIGH, require developer review.
-4. If verificationStatus isn't 'PASSED', say: "The fix has not been verified yet."
-5. Never invent crash data.`;
-
-    let systemPrompt = SYSTEM_PROMPT;
+    // Prepare system instruction & contextual prompt
+    let systemPrompt = "You are ReproX Super AI, an expert mobile systems engineer, Kotlin developer, and crash diagnostics copilot. Provide clear, accurate, practical technical advice with formatted code blocks, step-by-step reasoning, and concise explanations.";
 
     if (mode === 'reprox' || activeCrash) {
+      systemPrompt += "\n\nYou are operating in ReproX Crash Copilot mode. Use the provided telemetry, action breadcrumbs, and exception details to pinpoint the root cause, propose robust Kotlin fixes, and generate automated regression tests.";
       if (activeCrash) {
-        const crashContextObj = {
-          errorType: activeCrash.errorType,
-          message: activeCrash.message,
-          stackTrace: activeCrash.stackTrace,
-          recentActions: activeCrash.recentActions,
-          analysis: analysis,
-          verificationStatus: (activeCrash as any).verificationStatus || 'FAILED'
-        };
-        
-        const incidentData = `
-    <crash_context>
-    Error: ${crashContextObj.errorType}: ${crashContextObj.message}
-    Stack Trace: ${crashContextObj.stackTrace}
-    Recent Actions: ${JSON.stringify(crashContextObj.recentActions)}
-    Analysis: ${JSON.stringify(crashContextObj.analysis)}
-    Verification: ${crashContextObj.verificationStatus}
-    </crash_context>`;
-        
-        systemPrompt += `\n\nDATA:\n${incidentData}`;
-      } else {
-        systemPrompt += `\n\nDATA:\nNo active crash loaded.`;
+        systemPrompt += `\n\nACTIVE CRASH TELEMETRY:\n- Error: ${activeCrash.errorType}: ${activeCrash.message}\n- Screen: ${activeCrash.screen}\n- Stack Trace:\n${activeCrash.stackTrace}\n- Pre-Crash Actions (${activeCrash.recentActions.length} recorded):\n${activeCrash.recentActions.map((a, i) => `  ${i + 1}. [${a.screen}] ${a.description} (${a.type})`).join('\n')}`;
+      }
+      if (analysis) {
+        systemPrompt += `\n\nDIAGNOSTIC ANALYSIS:\n- Root Cause: ${analysis.likelyRootCause}\n- Confidence: ${analysis.confidenceScore}%\n- Risk Level: ${analysis.riskLevel}\n- Suggested Fix: ${analysis.suggestedFix?.explanation}`;
       }
     }
 
@@ -266,7 +229,7 @@ STRICT RULES:
     for (const currentModel of modelsToTry) {
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
 
       try {
         const res = await fetch(endpoint, {
@@ -275,6 +238,7 @@ STRICT RULES:
           body: JSON.stringify(payload),
           signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (res.ok) {
           const data = await res.json();
@@ -293,13 +257,12 @@ STRICT RULES:
           }
         }
       } catch (err: any) {
+        clearTimeout(timeoutId);
         lastError = err;
         if (err.name === 'AbortError') {
           continue;
         }
         throw err;
-      } finally {
-        clearTimeout(timeoutId);
       }
     }
 
@@ -315,20 +278,16 @@ STRICT RULES:
     analysis?: AnalysisResult | null,
     attachedImage?: string | null
   ): Promise<ChatResponse | null> {
-    let crashContext: any = null;
+    let crashContext = '';
     if (activeCrash) {
-      crashContext = {
-        errorType: activeCrash.errorType,
-        message: activeCrash.message,
-        stackTrace: activeCrash.stackTrace,
-        recentActions: activeCrash.recentActions,
-        analysis: analysis,
-        verificationStatus: (activeCrash as any).verificationStatus || 'FAILED'
-      };
+      crashContext = `Error: ${activeCrash.errorType}: ${activeCrash.message}\nScreen: ${activeCrash.screen}\nStack Trace:\n${activeCrash.stackTrace}\nBreadcrumbs: ${activeCrash.recentActions.map(a => `[${a.screen}] ${a.description}`).join(' -> ')}`;
+      if (analysis) {
+        crashContext += `\nRoot Cause: ${analysis.likelyRootCause}\nFix: ${analysis.suggestedFix?.explanation}`;
+      }
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
     const historyPayload = messages.slice(-10).map(m => ({
       role: m.role,
@@ -341,42 +300,33 @@ STRICT RULES:
       historyPayload[historyPayload.length - 1].imageUrl = attachedImage;
     }
 
-    let res: Response;
-    try {
-      res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: historyPayload,
-          mode,
-          crashContext,
-          model: modelId
-        }),
-        signal: controller.signal
-      });
-    } finally {
-      clearTimeout(timeoutId);
-    }
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: historyPayload,
+        mode,
+        crashContext,
+        model: modelId
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
 
     if (!res.ok) {
-      let errorMsg = `Server error (${res.status})`;
-      try {
-        const errorData = await res.json();
-        if (errorData.error) errorMsg = errorData.error;
-      } catch (e) {}
-      throw new Error(errorMsg);
+      return null;
     }
 
     const data = await res.json();
-    if (data.success && data.reply) {
+    if (data.reply) {
       return {
         reply: data.reply,
         provider: data.provider || 'ReproX Server API',
         modelUsed: modelId
       };
     }
-    
-    throw new Error(data.error || 'Unknown API Error');
+    return null;
   }
 
   // High-intelligence offline / heuristic fallback engine

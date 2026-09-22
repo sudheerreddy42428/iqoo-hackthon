@@ -1,10 +1,21 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS Headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Basic Security & CORS Validation
+  const allowedOrigins = process.env.ALLOWED_ORIGINS 
+    ? process.env.ALLOWED_ORIGINS.split(',') 
+    : ['http://localhost:5173', 'http://localhost:3000', 'https://reprox-dev.vercel.app']; // Fallback for dev/prod
+
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (!origin && process.env.NODE_ENV === 'development') {
+    // Allow non-browser agents in development
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -17,12 +28,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { messages = [], mode = 'general', crashContext, model = 'gemini' } = req.body || {};
 
-    const apiKey = process.env.XAI_API_KEY || process.env.GROQ_API_KEY || process.env.AI_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
+    // Basic Input Validation & Protection
+    if (!Array.isArray(messages) || messages.length > 50) {
+      return res.status(400).json({ error: 'Invalid or oversized message history' });
+    }
 
-    // Prepare system instruction based on mode and crash context
-    let systemPrompt = `You are Gemini Chat, a specialized diagnostic assistant focused exclusively on analyzing application crashes, telemetry, and debugging. Do NOT answer general programming questions about language syntax or irrelevant topics. Your main focus is providing crash-related answers based on the provided context. Always provide clear, well-formatted markdown responses.`;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.XAI_API_KEY || process.env.GROQ_API_KEY || process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
+
+    // Prepare system instruction based on mode
+    let systemPrompt = "You are ReproX Super AI, a helpful general-purpose AI assistant. Answer questions accurately, clearly, and safely. Support programming, mathematics, technical concepts, general knowledge, learning, writing, and everyday questions. Explain your reasoning when useful, provide examples, and ask for clarification when the user's request is ambiguous. Do not claim to have executed code, accessed files, changed code, deployed an application, or verified a result unless that action actually occurred.";
 
     if (mode === 'reprox' || crashContext) {
+      systemPrompt = "You are ReproX Diagnostic AI, a specialized assistant for analyzing application crashes, risky changes, telemetry, reproduction steps, and debugging reports. Use the supplied ReproX context when available. Identify likely causes, distinguish evidence from hypotheses, explain the impact, suggest safe fixes, and generate reproducible testing steps. Do not claim that a fix was applied, deployed, or validated unless an authorized tool actually performed and verified the operation. If the evidence is insufficient, clearly state what additional information is needed.";
       systemPrompt += `\n\nREPROX APPLICATION CONTEXT:\n${crashContext || 'ReproX Crash Diagnostic Engine Active'}`;
     }
 
@@ -40,7 +57,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Google Gemini API (Supports both legacy AIza and new AQ. auth key formats)
       if (apiKey.startsWith('AIza') || apiKey.startsWith('AQ.')) {
         // Google Gemini API
-        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -69,7 +86,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const data = await geminiRes.json();
           const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (text) {
-            return res.status(200).json({ reply: text, provider: 'Gemini 1.5 (Secure Server)' });
+            return res.status(200).json({ reply: text, provider: 'Gemini 3.6 (Secure Server)' });
           }
         } else {
           return res.status(401).json({ error: 'The provided Gemini API key is invalid.' });
@@ -179,10 +196,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Fallback response if offline/unreachable
+    // Graceful fallback response if offline/unreachable
     return res.status(200).json({ 
-      reply: "I am ReproX Super AI Assistant. I can help analyze crash reports, telemetry data, and provide diagnostic solutions for application errors.",
-      provider: 'Local Engine'
+      reply: null,
+      fallback: true,
+      message: 'Server AI service unavailable or unconfigured. Delegating to client local AI engine.'
     });
   } catch (error: any) {
     console.error('Server chat endpoint error:', error);
