@@ -1,10 +1,11 @@
 import React from 'react';
-import { Play, CheckCircle, XCircle, Loader2, ShieldAlert, Check, X } from 'lucide-react';
+import { Play, CheckCircle, XCircle, Loader2, ShieldAlert, Check, X, ChevronDown, ChevronUp, FileCode, Search, Shield, AlertTriangle } from 'lucide-react';
 import { useRegression } from '../context/RegressionContext';
 import { TestCaseWorkflowState } from '../data/testCases';
 
 export const TestCenter: React.FC = () => {
   const { testCases, runTestCase, approveAndFix, rejectFix, resetTestCase } = useRegression();
+  const [expandedTc, setExpandedTc] = React.useState<string | null>(null);
 
   const getStatusIcon = (status: TestCaseWorkflowState) => {
     switch (status) {
@@ -110,6 +111,91 @@ export const TestCenter: React.FC = () => {
             {tc.analysis && tc.riskScore !== undefined && (
               <div className="mb-4">
                 <p className="text-xs text-slate-500 font-mono">Risk Score: <span className="text-slate-300 font-bold">{tc.riskScore}/100</span></p>
+              </div>
+            )}
+
+            {/* Expandable Details Area */}
+            {tc.analysis && (
+              <div className="mb-4 pt-4 border-t border-slate-800/60">
+                <button 
+                  onClick={() => setExpandedTc(expandedTc === tc.id ? null : tc.id)}
+                  className="w-full flex items-center justify-between text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+                >
+                  <span>View Analysis & Reports</span>
+                  {expandedTc === tc.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+                
+                {expandedTc === tc.id && (
+                  <div className="space-y-4 text-xs mt-3 animate-fadeIn">
+                    
+                    {/* Execution Result */}
+                    <div className="space-y-1.5 p-3 rounded-md bg-dark-950 border border-slate-800">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
+                          <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
+                          Execution Result
+                        </div>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${getRiskColor(tc.riskLevel)}`}>{tc.riskLevel} RISK</span>
+                      </div>
+                      <p className="text-rose-300 font-mono text-[10px] bg-rose-950/40 p-2 rounded border border-rose-900/30">
+                        Failed at {tc.analysis.affectedComponent} - {tc.analysis.likelyRootCause}
+                      </p>
+                    </div>
+
+                    {/* AI Analysis Result */}
+                    <div className="space-y-1.5 p-3 rounded-md bg-dark-950 border border-slate-800">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
+                          <Search className="w-3.5 h-3.5 text-cyan-400" />
+                          Crash Analysis Result
+                        </div>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${getRiskColor(tc.riskLevel)}`}>{tc.riskLevel} RISK</span>
+                      </div>
+                      <p className="text-slate-400">
+                        {tc.analysis.whyItHappened}
+                      </p>
+                      <p className="text-slate-400 mt-2">
+                        {tc.analysis.whatShouldHaveHappened}
+                      </p>
+                    </div>
+
+                    {/* Developer Report (Only if MEDIUM/HIGH) */}
+                    {(tc.riskLevel === 'MEDIUM' || tc.riskLevel === 'HIGH') && (
+                      <div className="space-y-1.5 p-3 rounded-md bg-dark-950 border border-amber-900/40 shadow-[0_0_10px_rgba(245,158,11,0.05)]">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
+                            <Shield className="w-3.5 h-3.5 text-amber-400" />
+                            Developer Report
+                          </div>
+                           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${getRiskColor(tc.riskLevel)}`}>{tc.riskLevel} RISK</span>
+                        </div>
+                        <p className="text-slate-400">
+                          <strong>Reason:</strong> {tc.analysis.reason}
+                        </p>
+                        <p className="text-slate-400 mt-1">
+                          <strong>Confidence:</strong> {tc.confidence}% - {tc.analysis.confidenceReason}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Generated Regression Test */}
+                    {tc.generatedRegressionTest && (
+                       <div className="space-y-1.5 p-3 rounded-md bg-dark-950 border border-slate-800">
+                         <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
+                            <FileCode className="w-3.5 h-3.5 text-emerald-400" />
+                            Generated Regression Test
+                          </div>
+                           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${getRiskColor(tc.riskLevel)}`}>{tc.riskLevel} RISK</span>
+                        </div>
+                         <pre className="text-[10px] text-slate-400 font-mono bg-dark-900 p-2 rounded overflow-x-auto border border-slate-800 whitespace-pre-wrap break-all">
+                           {tc.generatedRegressionTest}
+                         </pre>
+                       </div>
+                    )}
+
+                  </div>
+                )}
               </div>
             )}
             

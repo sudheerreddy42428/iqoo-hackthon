@@ -50,12 +50,31 @@ export const RegressionProvider: React.FC<{ children: ReactNode }> = ({ children
 
       const isEligible = shouldAutoFix(analysis);
 
+      const generatedTestCode = `/**
+ * AUTOMATED REGRESSION TEST
+ * Inherited Risk Level: ${analysis.riskLevel}
+ * Confidence: ${analysis.confidence}%
+ */
+import { test, expect } from '@playwright/test';
+
+test('Regression Test: ${tc.name.replace(/'/g, "\\'")}', async ({ page }) => {
+  // Setup App State
+  await page.goto('/simulated-app');
+  
+  // Inherited from AI Reproduction Steps
+${analysis.reproductionSteps?.map(step => `  // Step ${step.stepNumber}: ${step.action}\n  await page.click('[aria-label="${step.action}"]');`).join('\n')}
+
+  // Verify fix
+  await expect(page.locator('.crash-overlay')).not.toBeVisible();
+});`;
+
       updateTestCase(id, {
         workflowState: isEligible ? 'AUTO_FIX_ELIGIBLE' : 'APPROVAL_REQUIRED',
         riskScore: analysis.riskScore,
         riskLevel: analysis.riskLevel,
         confidence: analysis.confidence,
-        analysis
+        analysis,
+        generatedRegressionTest: generatedTestCode
       });
 
       if (isEligible) {

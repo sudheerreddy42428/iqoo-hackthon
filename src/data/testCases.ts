@@ -26,6 +26,7 @@ export interface TestCase {
   riskLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
   confidence?: number;
   analysis?: AnalysisResult;
+  generatedRegressionTest?: string;
 }
 
 export const BASELINE_TEST_CASES: TestCase[] = [

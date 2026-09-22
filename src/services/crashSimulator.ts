@@ -97,6 +97,42 @@ export const CRASH_TEMPLATES: Record<string, CrashTemplate> = {
     at com.reprox.coffee.auth.AuthInterceptor.intercept(AuthInterceptor.kt:45)
     at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:109)
     at com.reprox.coffee.network.PaymentClient.validateSession(PaymentClient.kt:120)`,
+  },
+  NULL_POINTER_CHECKOUT: {
+    errorType: 'NullPointerException',
+    message: 'Attempt to invoke virtual method on a null object reference',
+    screen: 'Checkout',
+    method: 'PaymentService.processPayment()',
+    severity: 'High',
+    triggerDescription: 'Pay clicked without selecting payment method',
+    stackTrace: `java.lang.NullPointerException: Attempt to invoke virtual method 'void com.reprox.coffee.service.PaymentMethod.process()' on a null object reference
+    at com.reprox.coffee.service.PaymentService.processPayment(PaymentService.kt:82)
+    at com.reprox.coffee.ui.CheckoutScreen.onPayClicked(CheckoutScreen.kt:156)`,
+  },
+  INDEX_OUT_OF_BOUNDS_CART: {
+    errorType: 'IndexOutOfBoundsException',
+    message: 'Index 4 out of bounds for length 3',
+    screen: 'Cart',
+    method: 'CartAdapter.onBindViewHolder()',
+    severity: 'Low',
+    triggerDescription: 'Rapidly deleting items from cart causing index desync',
+    stackTrace: `java.lang.IndexOutOfBoundsException: Index 4 out of bounds for length 3
+    at java.util.ArrayList.get(ArrayList.java:439)
+    at com.reprox.coffee.ui.CartAdapter.onBindViewHolder(CartAdapter.kt:45)
+    at androidx.recyclerview.widget.RecyclerView$Adapter.bindViewHolder(RecyclerView.java:7107)`,
+  },
+  NETWORK_TIMEOUT_API: {
+    errorType: 'SocketTimeoutException',
+    message: 'Read timed out',
+    screen: 'Checkout',
+    method: 'PaymentClient.submitOrder()',
+    severity: 'High',
+    triggerDescription: 'Payment API request exceeded 8000ms timeout',
+    stackTrace: `java.net.SocketTimeoutException: Read timed out
+    at java.net.SocketInputStream.socketRead0(Native Method)
+    at java.net.SocketInputStream.socketRead(SocketInputStream.java:116)
+    at java.net.SocketInputStream.read(SocketInputStream.java:171)
+    at com.reprox.coffee.network.PaymentClient.submitOrder(PaymentClient.kt:88)`,
   }
 };
 
