@@ -1,4 +1,4 @@
-import { CrashReport, AnalysisResult, PersistentChatMessage, ChatMode } from '../types/reprox';
+import { CrashReport, AnalysisResult, PersistentChatMessage, ChatMode, ChatComplexity } from '../types/reprox';
 
 export type AIModelId = 'gemini-3.6-flash' | 'gemini-3.6-pro' | 'reprox-local';
 
