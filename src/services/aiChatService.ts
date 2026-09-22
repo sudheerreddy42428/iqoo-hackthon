@@ -71,7 +71,7 @@ class AIChatService {
     if (!apiKey.trim()) {
       return { success: false, message: 'Please enter a valid Gemini API key.' };
     }
-    const testModels = ['gemini-3.6-flash', 'gemini-3.6-pro'];
+    const testModels = ['gemini-2.5-flash', 'gemini-1.5-flash'];
     let lastError = '';
 
     for (const model of testModels) {
@@ -163,10 +163,10 @@ class AIChatService {
     attachedImage?: string | null
   ): Promise<string> {
     const selected = modelId === 'gemini-3.6-pro' 
-      ? 'gemini-3.6-pro' 
-      : 'gemini-3.6-flash';
+      ? 'gemini-1.5-pro' 
+      : 'gemini-2.5-flash';
 
-    const modelsToTry = Array.from(new Set([selected, 'gemini-3.6-flash', 'gemini-3.6-pro']));
+    const modelsToTry = Array.from(new Set([selected, 'gemini-2.5-flash', 'gemini-1.5-flash']));
 
     // Prepare system instruction & contextual prompt
     let systemPrompt = "";
