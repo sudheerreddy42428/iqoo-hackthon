@@ -141,7 +141,7 @@ export const App: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div className="h-screen w-full max-w-full bg-dark-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200 overflow-x-hidden">
+      <div className="h-screen supports-[height:100dvh]:h-[100dvh] w-full max-w-full bg-dark-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200 overflow-x-hidden">
       {/* 1. PWA Install CTA Banner for Mobile Phone Home Screen */}
       <InstallPromptBanner />
 
@@ -162,21 +162,21 @@ export const App: React.FC = () => {
           />
         )}
 
-        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto overflow-x-hidden">
-          {/* Floating Demo Mode Controller Banner */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {/* Fixed Demo Mode Controller Banner */}
           {isDemoRunning && (
-            <div className="sticky top-16 md:top-0 z-20 bg-gradient-to-r from-purple-950 via-dark-900 to-indigo-950 border-b border-purple-500/30 px-4 py-2.5 shadow-xl animate-slideUp">
-              <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" />
-                  <span className="font-mono font-bold text-purple-300 uppercase tracking-wider">
+            <div className="shrink-0 z-30 bg-gradient-to-r from-purple-950 via-dark-900 to-indigo-950 border-b border-purple-500/30 px-3 sm:px-4 py-2 sm:py-2.5 shadow-xl animate-slideUp">
+              <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-3 text-xs">
+                <div className="flex items-center gap-2 min-w-0 flex-1 sm:flex-initial">
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping shrink-0" />
+                  <span className="font-mono font-bold text-purple-300 uppercase tracking-wider shrink-0 text-[11px] sm:text-xs">
                     Full Demo Mode:
                   </span>
-                  <span className="text-white font-medium">{demoStepName}</span>
+                  <span className="text-white font-medium truncate text-[11px] sm:text-xs">{demoStepName}</span>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="w-32 sm:w-48 bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto sm:ml-0">
+                  <div className="w-24 sm:w-48 bg-slate-800 h-2 rounded-full overflow-hidden">
                     <div
                       className="bg-gradient-to-r from-purple-500 to-cyan-400 h-full rounded-full transition-all duration-300"
                       style={{ width: `${demoProgress}%` }}
@@ -194,8 +194,9 @@ export const App: React.FC = () => {
             </div>
           )}
 
-          {/* Main Content Area */}
-          <main className={`flex-1 w-full ${isLandingPage ? 'p-0' : 'px-4 sm:px-6 lg:px-8 py-6 md:py-8'}`}>
+          {/* Main Content Area - Scrollable */}
+          <div id="main-content-scroll" className="flex-1 overflow-y-auto overflow-x-hidden">
+            <main className={`w-full ${isLandingPage ? 'p-0' : 'px-4 sm:px-6 lg:px-8 py-6 md:py-8'}`}>
             <Routes>
               <Route path="/" element={<Navigate to="/home" replace />} />
               <Route path="/home" element={
@@ -237,6 +238,7 @@ export const App: React.FC = () => {
               <Route path="/architecture" element={<Architecture />} />
             </Routes>
           </main>
+          </div>
         </div>
       </div>
 

@@ -283,25 +283,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
                     </div>
 
                     {/* Message Box */}
-                    <div className={`relative z-10 p-3 rounded-xl border transition-colors ${
-                       isSelected ? 'bg-indigo-950/40 border-indigo-500/20' : 'bg-slate-950/60 border-slate-800/60 group-hover:bg-slate-900/80'
+                    <div className={`relative z-10 w-full p-3 rounded-xl border transition-colors ${
+                       isSelected 
+                         ? 'bg-indigo-950/60 border-indigo-500/30 shadow-inner' 
+                         : 'bg-dark-950/90 border-slate-800/90 group-hover:border-slate-700/80 group-hover:bg-dark-950'
                     }`}>
-                      <p className="text-[11px] sm:text-xs text-slate-300 font-mono line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-slate-200 font-mono leading-relaxed break-words [overflow-wrap:anywhere] break-all select-text">
                         {c.message}
                       </p>
                     </div>
 
                     {/* Footer Row */}
-                    <div className="relative z-10 flex items-center justify-between text-[10px] font-mono pt-1">
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center justify-center w-6 h-6 rounded bg-cyan-500/10 border border-cyan-500/20">
+                    <div className="relative z-10 flex items-center justify-between text-[10px] font-mono pt-1 text-slate-400">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex items-center justify-center w-6 h-6 rounded bg-cyan-500/10 border border-cyan-500/20 shrink-0">
                           <Smartphone className="w-3.5 h-3.5 text-cyan-400" />
                         </div>
-                        <span className="text-slate-400 truncate">
-                          Screen: {c.screen}
+                        <span className="text-slate-300 truncate">
+                          Screen: <strong className="text-slate-200 font-semibold">{c.screen}</strong>
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800">
+                      <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 shrink-0">
                         <History className="w-3 h-3 text-emerald-400" />
                         <span className="text-emerald-400 font-medium">
                           {c.recentActions.length} <span className="opacity-70">acts</span>
@@ -333,12 +335,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
                     </span>
                   )}
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold font-mono text-white mb-2 break-words">
+                <h2 className="text-xl sm:text-2xl font-bold font-mono text-white mb-3 break-words [overflow-wrap:anywhere]">
                   {selectedCrash.errorType}
                 </h2>
-                <p className="text-sm font-mono text-rose-300/80">
-                  {selectedCrash.message}
-                </p>
+                <div className="p-3.5 rounded-xl bg-rose-950/30 border border-rose-900/50 shadow-inner">
+                  <p className="text-xs sm:text-sm font-mono text-rose-200 leading-relaxed break-words [overflow-wrap:anywhere] select-text">
+                    {selectedCrash.message}
+                  </p>
+                </div>
               </div>
 
               {/* Workspace Tabs */}
