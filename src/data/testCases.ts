@@ -27,6 +27,7 @@ export interface TestCase {
   confidence?: number;
   analysis?: AnalysisResult;
   generatedRegressionTest?: string;
+  baselineRiskLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
 }
 
 export const BASELINE_TEST_CASES: TestCase[] = [
@@ -35,56 +36,64 @@ export const BASELINE_TEST_CASES: TestCase[] = [
     name: 'Order Coffee Successfully',
     description: 'Happy path: User adds items to cart, selects payment, and completes checkout.',
     scenario: 'HAPPY_PATH',
-    workflowState: 'IDLE'
+    workflowState: 'IDLE',
+    baselineRiskLevel: 'LOW'
   },
   {
     id: 'TC-002',
     name: 'Add Duplicate Items to Cart',
     description: 'Ensure quantity increases instead of creating duplicate cart entries.',
     scenario: 'HAPPY_PATH',
-    workflowState: 'IDLE'
+    workflowState: 'IDLE',
+    baselineRiskLevel: 'LOW'
   },
   {
     id: 'TC-004',
     name: 'Cart Index Out of Bounds',
     description: 'Simulates rapid add/remove causing an index error in the cart adapter.',
     scenario: 'INDEX_OUT_OF_BOUNDS_CART',
-    workflowState: 'IDLE'
+    workflowState: 'IDLE',
+    baselineRiskLevel: 'LOW'
   },
   {
     id: 'TC-005',
     name: 'Pay Without Payment Method',
     description: 'User attempts to checkout without selecting a payment method. Expected to crash if not validated.',
     scenario: 'NULL_POINTER_CHECKOUT',
-    workflowState: 'IDLE'
+    workflowState: 'IDLE',
+    baselineRiskLevel: 'HIGH'
   },
   {
     id: 'TC-006',
     name: 'Network Timeout on Payment',
     description: 'Simulates a dropped connection during the payment API call.',
     scenario: 'NETWORK_TIMEOUT_API',
-    workflowState: 'IDLE'
+    workflowState: 'IDLE',
+    baselineRiskLevel: 'HIGH'
   },
   {
     id: 'TC-007',
     name: 'Apply Invalid Promo Code',
     description: 'Ensure system rejects invalid codes gracefully.',
     scenario: 'HAPPY_PATH',
-    workflowState: 'IDLE'
+    workflowState: 'IDLE',
+    baselineRiskLevel: 'LOW'
   },
   {
     id: 'TC-010',
     name: 'Order Large Quantity',
     description: 'Attempt to order 999 coffees to test maximum limits.',
     scenario: 'HAPPY_PATH',
-    workflowState: 'IDLE'
+    workflowState: 'IDLE',
+    baselineRiskLevel: 'LOW'
   },
   {
     id: 'TC-011',
     name: 'Remote Payment Gateway Error 505',
     description: 'Simulates the remote payment provider returning an HTTP 505 Gateway error.',
-    scenario: 'HAPPY_PATH',
-    workflowState: 'IDLE'
+    scenario: 'REMOTE_PAYMENT_GATEWAY_505',
+    workflowState: 'IDLE',
+    baselineRiskLevel: 'HIGH'
   }
 ];
 

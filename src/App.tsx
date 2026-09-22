@@ -165,7 +165,7 @@ export const App: React.FC = () => {
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Fixed Demo Mode Controller Banner */}
           {isDemoRunning && (
-            <div className="z-50 shrink-0 bg-gradient-to-r from-purple-950 via-dark-900 to-indigo-950 border-b border-purple-500/30 px-3 sm:px-4 py-2 sm:py-2.5 shadow-xl animate-slideDown w-full">
+            <div className="sticky top-0 z-[100] shrink-0 bg-gradient-to-r from-purple-950 via-dark-900 to-indigo-950 border-b border-purple-500/30 px-3 sm:px-4 py-2 sm:py-2.5 shadow-xl animate-slideDown w-full">
               <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-3 text-xs">
                 <div className="flex items-center gap-2 min-w-0 flex-1 sm:flex-initial">
                   <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping shrink-0" />
