@@ -245,45 +245,68 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
               </button>
             </div>
           ) : (
-            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-3 custom-scrollbar">
               {crashes.map((c) => {
                 const isSelected = selectedCrash?.id === c.id;
                 return (
                   <button
                     key={c.id}
                     onClick={() => handleSelectCrash(c)}
-                    className={`w-full text-left p-4 rounded-2xl border transition-all ${
+                    className={`group relative w-full text-left p-5 rounded-2xl border transition-all duration-300 ease-out flex flex-col gap-3 overflow-hidden ${
                       isSelected
-                        ? 'bg-indigo-950/20 border-indigo-500/40 shadow-lg shadow-indigo-950/20 ring-1 ring-indigo-500/20'
-                        : 'bg-dark-900/60 border-slate-800/80 hover:border-slate-700 hover:bg-dark-900'
+                        ? 'bg-indigo-900/20 border-indigo-500/50 shadow-[0_0_20px_rgba(99,102,241,0.15)] ring-1 ring-indigo-500/30 -translate-y-0.5'
+                        : 'bg-slate-900/40 border-slate-800/80 hover:bg-slate-800/60 hover:border-slate-700 hover:shadow-xl hover:-translate-y-0.5'
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-bold text-rose-400 truncate max-w-[150px]">
-                          {c.errorType}
+                    {/* Background glow for selected state */}
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent pointer-events-none" />
+                    )}
+                    
+                    {/* Header Row */}
+                    <div className="flex items-start justify-between w-full relative z-10 gap-3">
+                      <div className="flex flex-col gap-1.5 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                           <span className="text-[13px] font-mono font-bold text-rose-400 truncate">
+                             {c.errorType}
+                           </span>
+                           {c.deviceContext?.isSimulated && (
+                             <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30 font-bold uppercase tracking-widest shadow-sm">
+                               SIMULATED
+                             </span>
+                           )}
+                        </div>
+                        <span className="text-[10px] font-mono text-slate-500 tracking-wider">
+                          {new Date(c.epochTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                         </span>
-                        {c.deviceContext?.isSimulated && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-bold uppercase tracking-wider">
-                            SIMULATED
-                          </span>
-                        )}
                       </div>
-                      <span className="text-[10px] font-mono text-slate-500">{new Date(c.epochTime).toLocaleTimeString()}</span>
                     </div>
 
-                    <p className="text-xs text-slate-300 font-mono line-clamp-1 mb-3 bg-dark-950/50 p-1.5 rounded border border-slate-800">
-                      {c.message}
-                    </p>
+                    {/* Message Box */}
+                    <div className={`relative z-10 p-3 rounded-xl border transition-colors ${
+                       isSelected ? 'bg-indigo-950/40 border-indigo-500/20' : 'bg-slate-950/60 border-slate-800/60 group-hover:bg-slate-900/80'
+                    }`}>
+                      <p className="text-[11px] sm:text-xs text-slate-300 font-mono line-clamp-2 leading-relaxed">
+                        {c.message}
+                      </p>
+                    </div>
 
-                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
-                        Screen: {c.screen}
+                    {/* Footer Row */}
+                    <div className="relative z-10 flex items-center justify-between text-[10px] font-mono pt-1">
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-center w-6 h-6 rounded bg-cyan-500/10 border border-cyan-500/20">
+                          <Smartphone className="w-3.5 h-3.5 text-cyan-400" />
+                        </div>
+                        <span className="text-slate-400 truncate">
+                          Screen: {c.screen}
+                        </span>
                       </div>
-                      <span className="text-cyan-400 font-medium">
-                        {c.recentActions.length} actions captured
-                      </span>
+                      <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800">
+                        <History className="w-3 h-3 text-emerald-400" />
+                        <span className="text-emerald-400 font-medium">
+                          {c.recentActions.length} <span className="opacity-70">acts</span>
+                        </span>
+                      </div>
                     </div>
                   </button>
                 );
