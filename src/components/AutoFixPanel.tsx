@@ -157,7 +157,7 @@ export const AutoFixPanel: React.FC<AutoFixPanelProps> = ({
               <span className="truncate max-w-[200px] sm:max-w-none">{analysis.changeLocation.file}</span>
               <span>Line: {analysis.changeLocation.line}</span>
             </div>
-            <pre className="p-3.5 text-xs font-mono text-slate-300 overflow-x-auto leading-relaxed">
+            <pre className="p-3.5 text-xs font-mono text-slate-300 whitespace-pre-wrap break-words overflow-x-hidden leading-relaxed">
               <code>{analysis.changeLocation.snippet}</code>
             </pre>
           </div>

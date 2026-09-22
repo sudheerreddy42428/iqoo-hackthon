@@ -480,7 +480,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTab }) => {
                           </button>
                         </div>
                       </div>
-                      <pre className={`p-4 rounded-xl bg-[#0d1117] border border-slate-800 text-[11px] sm:text-xs font-mono text-rose-300/90 overflow-x-auto leading-relaxed shadow-inner ${expandedTrace ? 'max-h-none' : 'max-h-[300px]'}`}>
+                      <pre className={`p-4 rounded-xl bg-[#0d1117] border border-slate-800 text-[11px] sm:text-xs font-mono text-rose-300/90 whitespace-pre-wrap break-words overflow-x-hidden leading-relaxed shadow-inner ${expandedTrace ? 'max-h-none' : 'max-h-[300px]'}`}>
                         {selectedCrash.stackTrace}
                       </pre>
                     </div>

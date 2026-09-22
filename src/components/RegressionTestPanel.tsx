@@ -134,7 +134,7 @@ export const RegressionTestPanel: React.FC<RegressionTestPanelProps> = ({
           <FileCode2 className="w-3.5 h-3.5" />
           <span>NullPointerExceptionRegressionTest.kt</span>
         </div>
-        <pre className="text-xs font-mono text-emerald-200/90 overflow-x-auto leading-relaxed max-h-[380px] p-2 bg-[#0d1117] rounded-lg border border-slate-800 shadow-inner">
+        <pre className="text-xs font-mono text-emerald-200/90 whitespace-pre-wrap break-words overflow-x-hidden leading-relaxed max-h-[380px] p-2 bg-[#0d1117] rounded-lg border border-slate-800 shadow-inner">
           <code>{currentTest.code}</code>
         </pre>
       </div>

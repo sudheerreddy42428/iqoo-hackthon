@@ -99,7 +99,7 @@ export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ onApprovalReques
                   {analysis.whyItHappened}
                 </p>
                 <div className="bg-[#0a0a0c] p-4 rounded-lg border border-slate-800 overflow-x-auto">
-                  <pre className="text-xs font-mono text-rose-300">
+                  <pre className="text-xs font-mono text-rose-300 whitespace-pre-wrap break-words">
                     <code>{analysis.changeLocation.snippet}</code>
                   </pre>
                 </div>

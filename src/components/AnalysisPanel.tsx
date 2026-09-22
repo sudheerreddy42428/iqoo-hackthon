@@ -47,7 +47,7 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     'bg-rose-500/10 text-rose-400';
 
   return (
-    <div className="space-y-6 animate-fadeIn max-w-full">
+    <div className="space-y-6 animate-fadeIn max-w-full whitespace-pre-wrap break-words">
       {/* 8. ANALYSIS TAB */}
       <div className="glass-panel rounded-xl overflow-hidden border border-slate-700/60 shadow-2xl">
         <div className="px-4 sm:px-5 py-3.5 bg-dark-900 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
@@ -253,7 +253,7 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                 </button>
               </div>
             </div>
-            <pre className="p-3 sm:p-4 text-xs font-mono text-emerald-300/90 overflow-x-auto leading-relaxed max-w-full">
+            <pre className="p-3 sm:p-4 text-xs font-mono text-emerald-300/90 whitespace-pre-wrap break-words overflow-x-hidden leading-relaxed max-w-full whitespace-pre-wrap break-words">
               <code>{analysis.suggestedFix.codeSnippet}</code>
             </pre>
           </div>

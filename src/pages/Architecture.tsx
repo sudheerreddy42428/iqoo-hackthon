@@ -48,7 +48,7 @@ export const Architecture: React.FC = () => {
         {/* Analyzer flow diagram */}
         <div className="p-6 rounded-2xl bg-[#030712] border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)] relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <pre className="font-mono text-[11px] sm:text-xs text-cyan-400/90 leading-tight whitespace-pre overflow-x-auto text-center relative z-10 flex flex-col items-center">
+          <pre className="font-mono text-[11px] sm:text-xs text-cyan-400/90 leading-tight whitespace-pre whitespace-pre-wrap break-words overflow-x-hidden text-center relative z-10 flex flex-col items-center">
 {`┌──────────────────────────────────────┐
 │             Crash Report             │
 │  (Stack Trace + Actions + Device)    │
@@ -83,7 +83,7 @@ export const Architecture: React.FC = () => {
           <div className="text-xs font-mono font-semibold text-slate-300">
             TypeScript Interface Contract:
           </div>
-          <pre className="p-4 rounded-xl bg-dark-950 border border-slate-800 font-mono text-xs text-emerald-300/90 overflow-x-auto leading-relaxed">
+          <pre className="p-4 rounded-xl bg-dark-950 border border-slate-800 font-mono text-xs text-emerald-300/90 whitespace-pre-wrap break-words overflow-x-hidden leading-relaxed">
 {`export interface CrashAnalyzer {
   name: string;
   description: string;
@@ -106,7 +106,7 @@ export class LLMAnalyzer implements CrashAnalyzer { ... }`}
           The standardized telemetry schema transmitted when an uncaught exception is intercepted:
         </p>
 
-        <pre className="p-4 rounded-xl bg-dark-950 border border-slate-800 font-mono text-xs text-cyan-300/90 overflow-x-auto leading-relaxed max-h-80">
+        <pre className="p-4 rounded-xl bg-dark-950 border border-slate-800 font-mono text-xs text-cyan-300/90 whitespace-pre-wrap break-words overflow-x-hidden leading-relaxed max-h-80">
 {`{
   "id": "crash_1741849200_a81f",
   "timestamp": "10:42:55.102",

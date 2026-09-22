@@ -25,10 +25,10 @@ export const Home: React.FC<HomeProps> = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-dark-950 text-slate-100 font-sans selection:bg-cyan-500/30 selection:text-cyan-200 w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-dark-950 text-slate-100 font-sans selection:bg-cyan-500/30 selection:text-cyan-200 w-full max-w-full whitespace-pre-wrap break-words overflow-x-hidden">
       <HomeNavbar />
       
-      <main className="flex flex-col gap-20 sm:gap-32 pb-32 overflow-x-hidden w-full max-w-full">
+      <main className="flex flex-col gap-20 sm:gap-32 pb-32 overflow-x-hidden w-full max-w-full whitespace-pre-wrap break-words">
         <HeroSection onLaunch={() => navigate('/playground')} />
         <ProblemSection />
         <HowItWorks />
@@ -44,10 +44,10 @@ export const Home: React.FC<HomeProps> = () => {
 };
 
 const HeroSection = ({ onLaunch }: { onLaunch: () => void }) => (
-  <section className="relative pt-24 sm:pt-32 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-12 animate-slide-up-fade w-full max-w-full">
+  <section className="relative pt-24 sm:pt-32 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-12 animate-slide-up-fade w-full max-w-full whitespace-pre-wrap break-words">
     {/* Text Content */}
-    <div className="flex-1 space-y-6 sm:space-y-8 text-center lg:text-left relative z-10 w-full max-w-full">
-      <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-slate-900/80 border border-slate-700/60 shadow-inner max-w-full">
+    <div className="flex-1 space-y-6 sm:space-y-8 text-center lg:text-left relative z-10 w-full max-w-full whitespace-pre-wrap break-words">
+      <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-slate-900/80 border border-slate-700/60 shadow-inner max-w-full whitespace-pre-wrap break-words">
         <span className="text-[10px] sm:text-xs text-cyan-400 font-mono font-bold tracking-wider sm:tracking-widest uppercase text-center truncate sm:whitespace-normal">
           Crash Context & Reproduction Engine
         </span>
@@ -89,14 +89,14 @@ const HeroSection = ({ onLaunch }: { onLaunch: () => void }) => (
     </div>
 
     {/* Visual Mockup */}
-    <div className="flex-1 w-full max-w-full flex justify-center lg:justify-end">
+    <div className="flex-1 w-full max-w-full whitespace-pre-wrap break-words flex justify-center lg:justify-end">
       <HeroMockup />
     </div>
   </section>
 );
 
 const ProblemSection = () => (
-  <section id="problem" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-12 relative w-full max-w-full">
+  <section id="problem" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-12 relative w-full max-w-full whitespace-pre-wrap break-words">
     <div className="text-center space-y-3 sm:space-y-4">
       <h2 className="text-xs sm:text-sm font-mono text-cyan-400 font-bold tracking-widest uppercase">The Core Problem</h2>
       <h3 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-white tracking-tight max-w-3xl mx-auto leading-tight break-words">
@@ -112,7 +112,7 @@ const ProblemSection = () => (
           <AlertOctagon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
           <span>What developers normally receive</span>
         </div>
-        <pre className="p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-dark-950/80 border border-rose-900/40 font-mono text-xs sm:text-sm text-rose-300 leading-relaxed overflow-x-auto shadow-inner max-w-full">
+        <pre className="p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-dark-950/80 border border-rose-900/40 font-mono text-xs sm:text-sm text-rose-300 leading-relaxed whitespace-pre-wrap break-words overflow-x-hidden shadow-inner max-w-full whitespace-pre-wrap break-words">
           {`NullPointerException\nCheckoutActivity.kt:142\nat com.app.CheckoutScreen.onPayClicked(CheckoutScreen.kt:142)`}
         </pre>
       </div>
@@ -153,7 +153,7 @@ const HowItWorks = () => {
   ];
 
   return (
-    <section id="how-it-works" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 sm:space-y-16 w-full max-w-full">
+    <section id="how-it-works" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 sm:space-y-16 w-full max-w-full whitespace-pre-wrap break-words">
       <div className="text-center space-y-3 sm:space-y-4">
         <h2 className="text-xs sm:text-sm font-mono text-purple-400 font-bold tracking-widest uppercase">How It Works</h2>
         <h3 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-white tracking-tight break-words">
@@ -215,7 +215,7 @@ const WorkflowComparison = () => {
   ];
 
   return (
-    <section id="why-reprox" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-12 w-full max-w-full">
+    <section id="why-reprox" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-12 w-full max-w-full whitespace-pre-wrap break-words">
       <div className="text-center space-y-3 sm:space-y-4">
         <h2 className="text-xs sm:text-sm font-mono text-indigo-400 font-bold tracking-widest uppercase">Workflow Comparison</h2>
         <h3 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-white tracking-tight max-w-3xl mx-auto break-words">
@@ -262,7 +262,7 @@ const WorkflowComparison = () => {
 };
 
 const FeatureGrid = () => (
-  <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-12 w-full max-w-full">
+  <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-12 w-full max-w-full whitespace-pre-wrap break-words">
     <div className="text-center space-y-3 sm:space-y-4">
       <h2 className="text-xs sm:text-sm font-mono text-cyan-400 font-bold tracking-widest uppercase">Engineered for Android Developers</h2>
       <h3 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-white tracking-tight break-words">
@@ -305,7 +305,7 @@ const FeatureGrid = () => (
 );
 
 const PrivacySection = () => (
-  <section id="privacy" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full max-w-full">
+  <section id="privacy" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full max-w-full whitespace-pre-wrap break-words">
     <div className="glass-panel p-6 sm:p-10 lg:p-16 rounded-2xl sm:rounded-[2.5rem] border border-emerald-500/20 bg-emerald-950/10 flex flex-col lg:flex-row items-center gap-8 sm:gap-16 relative overflow-hidden">
       <div className="absolute -right-32 -bottom-32 w-[500px] h-[500px] bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none" />
       
@@ -334,8 +334,8 @@ const PrivacySection = () => (
         </ul>
       </div>
 
-      <div className="flex-1 w-full max-w-full sm:max-w-lg relative z-10">
-        <div className="p-5 sm:p-8 rounded-2xl sm:rounded-3xl bg-dark-950/80 border border-slate-800/80 shadow-2xl space-y-6 sm:space-y-8 font-mono text-xs sm:text-sm relative max-w-full">
+      <div className="flex-1 w-full max-w-full whitespace-pre-wrap break-words sm:max-w-lg relative z-10">
+        <div className="p-5 sm:p-8 rounded-2xl sm:rounded-3xl bg-dark-950/80 border border-slate-800/80 shadow-2xl space-y-6 sm:space-y-8 font-mono text-xs sm:text-sm relative max-w-full whitespace-pre-wrap break-words">
           <div className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 w-10 h-10 sm:w-14 sm:h-14 bg-dark-900 border border-slate-700/50 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-xl rotate-12">
             <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
           </div>
@@ -370,7 +370,7 @@ const PrivacySection = () => (
 );
 
 const PlaygroundCTA = ({ onLaunch }: { onLaunch: () => void }) => (
-  <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 w-full max-w-full">
+  <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 w-full max-w-full whitespace-pre-wrap break-words">
     <div className="relative text-center p-8 sm:p-12 md:p-20 rounded-2xl sm:rounded-[3rem] bg-gradient-to-br from-cyan-950/80 via-purple-950/80 to-indigo-950/80 border border-slate-700/50 shadow-2xl overflow-hidden group">
       {/* Background Orbs */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
@@ -400,7 +400,7 @@ const PlaygroundCTA = ({ onLaunch }: { onLaunch: () => void }) => (
 );
 
 const Footer = () => (
-  <footer className="border-t border-slate-800 bg-dark-950 py-8 sm:py-12 px-4 sm:px-6 lg:px-8 w-full max-w-full">
+  <footer className="border-t border-slate-800 bg-dark-950 py-8 sm:py-12 px-4 sm:px-6 lg:px-8 w-full max-w-full whitespace-pre-wrap break-words">
     <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
       <div className="flex items-center gap-3">
         <Terminal className="w-5 h-5 text-cyan-400" />

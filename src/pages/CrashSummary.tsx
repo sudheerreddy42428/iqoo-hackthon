@@ -119,7 +119,7 @@ export const CrashSummary: React.FC<CrashSummaryProps> = ({ onAnalyze, onExit })
               {activeCrash.message}
             </p>
             
-            <div className="bg-[#0a0a0c] p-3 sm:p-4 rounded-lg border border-slate-800 overflow-x-auto max-w-full">
+            <div className="bg-[#0a0a0c] p-3 sm:p-4 rounded-lg border border-slate-800 overflow-x-auto max-w-full whitespace-pre-wrap break-words">
               <pre className="text-[10px] sm:text-[11px] font-mono text-slate-400 leading-relaxed">
                 <code>{activeCrash.stackTrace}</code>
               </pre>

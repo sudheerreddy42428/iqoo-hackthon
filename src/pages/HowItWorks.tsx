@@ -237,7 +237,7 @@ Automated Kotlin Espresso Regression Test`,
                 <div className="text-[11px] font-mono text-slate-400 uppercase font-semibold">
                   Sample Code Implementation
                 </div>
-                <pre className="font-mono text-xs text-emerald-300/90 overflow-x-auto leading-relaxed">
+                <pre className="font-mono text-xs text-emerald-300/90 whitespace-pre-wrap break-words overflow-x-hidden leading-relaxed">
                   <code>{current.codeSnippet}</code>
                 </pre>
               </div>

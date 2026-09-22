@@ -3,12 +3,12 @@ import { Terminal, PlayCircle, Smartphone, AlertOctagon, CheckCircle2 } from 'lu
 
 export const HeroMockup: React.FC = () => {
   return (
-    <div className="relative w-full max-w-full sm:max-w-lg mx-auto md:max-w-none md:w-[500px] lg:w-[600px]">
+    <div className="relative w-full max-w-full whitespace-pre-wrap break-words sm:max-w-lg mx-auto md:max-w-none md:w-[500px] lg:w-[600px]">
       {/* Background glow for mockup */}
       <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 via-purple-500/20 to-indigo-500/20 blur-3xl rounded-full -z-10" />
 
       {/* Main Mockup Window */}
-      <div className="relative glass-panel rounded-2xl border border-slate-700/60 shadow-2xl shadow-cyan-900/20 overflow-hidden flex flex-col bg-dark-950/80 backdrop-blur-xl max-w-full">
+      <div className="relative glass-panel rounded-2xl border border-slate-700/60 shadow-2xl shadow-cyan-900/20 overflow-hidden flex flex-col bg-dark-950/80 backdrop-blur-xl max-w-full whitespace-pre-wrap break-words">
         
         {/* Mockup Header */}
         <div className="h-10 border-b border-slate-800/80 bg-slate-900/60 flex items-center px-3 sm:px-4 justify-between shrink-0 gap-2">
@@ -74,7 +74,7 @@ export const HeroMockup: React.FC = () => {
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span className="uppercase tracking-widest text-[9px]">Synthesized Espresso Test</span>
             </div>
-            <pre className="text-slate-300 overflow-x-auto">
+            <pre className="text-slate-300 whitespace-pre-wrap break-words overflow-x-hidden">
 <span className="text-purple-400">@Test</span>
 <span className="text-purple-400">fun</span> <span className="text-blue-400">reproduceCheckoutCrash</span>() {'{'}
   <span className="text-slate-500">// Action 1: Navigated to CheckoutScreen</span>

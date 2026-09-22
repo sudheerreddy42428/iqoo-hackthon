@@ -69,7 +69,7 @@ export const Documentation: React.FC = () => {
           Add the ReproX SDK artifact to your app-level <code className="text-slate-200">build.gradle.kts</code>:
         </p>
 
-        <pre className="p-3.5 rounded-xl bg-dark-950 border border-slate-800 font-mono text-xs text-emerald-300/90 overflow-x-auto">
+        <pre className="p-3.5 rounded-xl bg-dark-950 border border-slate-800 font-mono text-xs text-emerald-300/90 whitespace-pre-wrap break-words overflow-x-hidden">
 {`// app/build.gradle.kts
 dependencies {
     implementation("io.reprox:reprox-android:1.0.0-alpha")
@@ -99,7 +99,7 @@ dependencies {
           Initialize ReproX inside your <code className="text-slate-200">Application.onCreate()</code>. This automatically hooks into <code className="text-slate-200">Thread.setDefaultUncaughtExceptionHandler</code>:
         </p>
 
-        <pre className="p-3.5 rounded-xl bg-dark-950 border border-slate-800 font-mono text-xs text-emerald-300/90 overflow-x-auto">
+        <pre className="p-3.5 rounded-xl bg-dark-950 border border-slate-800 font-mono text-xs text-emerald-300/90 whitespace-pre-wrap break-words overflow-x-hidden">
 {`class CoffeeApp : Application() {
     override fun onCreate() {
         super.onCreate()
@@ -137,7 +137,7 @@ dependencies {
           Record meaningful business actions, custom user events, or screen entries:
         </p>
 
-        <pre className="p-3.5 rounded-xl bg-dark-950 border border-slate-800 font-mono text-xs text-emerald-300/90 overflow-x-auto">
+        <pre className="p-3.5 rounded-xl bg-dark-950 border border-slate-800 font-mono text-xs text-emerald-300/90 whitespace-pre-wrap break-words overflow-x-hidden">
 {`// Track simple action description
 ReproX.track("Opened Checkout")
 
@@ -184,7 +184,7 @@ Developer opens ReproX Dashboard & copies regression test`}
         <p className="text-xs text-slate-400 leading-relaxed">
           ReproX is designed with privacy-first principles. Passwords, credit card numbers, and auth tokens are automatically masked before being appended to the context buffer. Custom regex masks can be configured during initialization.
         </p>
-        <pre className="p-3 rounded-lg bg-dark-950 border border-slate-800 font-mono text-xs text-slate-300 overflow-x-auto">
+        <pre className="p-3 rounded-lg bg-dark-950 border border-slate-800 font-mono text-xs text-slate-300 whitespace-pre-wrap break-words overflow-x-hidden">
 {`ReproX.configurePrivacy {
     maskKeywords("password", "cvv", "token", "ssn")
 }`}

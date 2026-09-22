@@ -100,7 +100,7 @@ export const Playground: React.FC = () => {
   }, copiedTrace ? 2000 : null);
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fadeIn pb-24 max-w-full">
+    <div className="space-y-6 sm:space-y-8 animate-fadeIn pb-24 max-w-full whitespace-pre-wrap break-words">
       {/* Playground Header Bar */}
       <div className="glass-panel p-4 sm:p-5 rounded-t-2xl border-x border-t border-slate-800 flex flex-wrap items-center justify-between gap-4">
         <div className="space-y-1 min-w-0">
@@ -164,7 +164,7 @@ export const Playground: React.FC = () => {
       </div>
 
       {/* Workspace Tabs */}
-      <div className="flex items-center border-x border-b border-slate-800 bg-dark-900/40 px-3 sm:px-6 overflow-x-auto custom-scrollbar max-w-full">
+      <div className="flex items-center border-x border-b border-slate-800 bg-dark-900/40 px-3 sm:px-6 overflow-x-auto custom-scrollbar max-w-full whitespace-pre-wrap break-words">
         <WorkspaceTab 
           active={activeTab === 'simulation'} 
           onClick={() => setActiveTab('simulation')} 
@@ -202,13 +202,13 @@ export const Playground: React.FC = () => {
         />
       </div>
 
-      <div className="p-3 sm:p-6 lg:p-8 min-h-[500px] bg-dark-950/50 border-x border-b border-slate-800 rounded-b-2xl max-w-full">
+      <div className="p-3 sm:p-6 lg:p-8 min-h-[500px] bg-dark-950/50 border-x border-b border-slate-800 rounded-b-2xl max-w-full whitespace-pre-wrap break-words">
         
         {/* SIMULATION TAB */}
         {activeTab === 'simulation' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left Column: Interactive Simulated Coffee Shop App */}
-            <div className="lg:col-span-5 h-[580px] lg:h-auto relative z-10 w-full max-w-full">
+            <div className="lg:col-span-5 h-[580px] lg:h-auto relative z-10 w-full max-w-full whitespace-pre-wrap break-words">
               <SimulatedApp
                 onTriggerCrash={handleTriggerCrash}
                 activeScreen={currentScreen}
@@ -217,7 +217,7 @@ export const Playground: React.FC = () => {
               />
             </div>
             {/* Right Column: Timeline */}
-            <div className="lg:col-span-7 space-y-6 w-full max-w-full">
+            <div className="lg:col-span-7 space-y-6 w-full max-w-full whitespace-pre-wrap break-words">
               <ActionTimeline />
             </div>
           </div>
@@ -328,7 +328,7 @@ export const Playground: React.FC = () => {
                   </button>
                 </div>
               </div>
-              <pre className={`p-4 rounded-xl bg-[#0d1117] border border-slate-800 text-[11px] sm:text-xs font-mono text-rose-300/90 overflow-x-auto leading-relaxed shadow-inner max-w-full ${expandedTrace ? 'max-h-none' : 'max-h-[300px]'}`}>
+              <pre className={`p-4 rounded-xl bg-[#0d1117] border border-slate-800 text-[11px] sm:text-xs font-mono text-rose-300/90 whitespace-pre-wrap break-words overflow-x-hidden leading-relaxed shadow-inner max-w-full whitespace-pre-wrap break-words ${expandedTrace ? 'max-h-none' : 'max-h-[300px]'}`}>
                 {activeCrash.stackTrace}
               </pre>
             </div>

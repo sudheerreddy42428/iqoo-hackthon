@@ -91,7 +91,7 @@ export const ApprovalView: React.FC<ApprovalViewProps> = ({ onApprovalComplete, 
           {analysis.changeLocation?.snippet && (
             <div className="bg-dark-950 p-3 rounded border border-slate-800/80 overflow-x-auto">
               <span className="text-[10px] font-mono text-slate-500 block mb-1">Current Code at Target:</span>
-              <pre className="text-xs font-mono text-rose-300/90">
+              <pre className="text-xs font-mono text-rose-300/90 whitespace-pre-wrap break-words">
                 <code>{analysis.changeLocation.snippet}</code>
               </pre>
             </div>
@@ -109,7 +109,7 @@ export const ApprovalView: React.FC<ApprovalViewProps> = ({ onApprovalComplete, 
             </span>
           </div>
 
-          <div className="bg-dark-900 p-3 sm:p-4 rounded-lg border border-slate-800 overflow-x-auto max-w-full">
+          <div className="bg-dark-900 p-3 sm:p-4 rounded-lg border border-slate-800 overflow-x-auto max-w-full whitespace-pre-wrap break-words">
             <pre className="text-xs font-mono leading-relaxed">
               {(analysis.suggestedFix.diffSnippet || analysis.suggestedFix.codeSnippet)?.split('\n').map((line, i) => (
                 <div 

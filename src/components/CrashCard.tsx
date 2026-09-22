@@ -138,7 +138,7 @@ export const CrashCard: React.FC<CrashCardProps> = ({
           </button>
         </div>
 
-        <pre className="p-3.5 rounded-lg bg-dark-900 border border-slate-800/90 text-xs font-mono text-rose-300/90 overflow-x-auto leading-relaxed">
+        <pre className="p-3.5 rounded-lg bg-dark-900 border border-slate-800/90 text-xs font-mono text-rose-300/90 whitespace-pre-wrap break-words overflow-x-hidden leading-relaxed">
           {showFullStackTrace
             ? report.stackTrace
             : report.stackTrace.split('\n').slice(0, 4).join('\n') + '\n    ...'}
