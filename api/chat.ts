@@ -1,52 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-async function fallbackToPollinations(messages: any[], res: VercelResponse) {
-  try {
-    const pollinationsRes = await fetch('https://text.pollinations.ai/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'openai',
-        messages: messages.map((m) => {
-          return { role: m.role, content: m.content };
-        })
-      })
-    });
-
-    if (pollinationsRes.ok) {
-      const data = await pollinationsRes.json();
-      const text = data.choices?.[0]?.message?.content;
-      if (text) {
-        return res.status(200).json({ success: true, reply: text, provider: 'Free AI (Pollinations)' });
-      }
-    }
-  } catch (err) {
-    console.error('Pollinations fallback failed', err);
-  }
-  return res.status(500).json({ 
-    success: false,
-    error: 'AI service unavailable: All configured APIs and free fallbacks failed. Please check your API key.'
-  });
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Basic Security & CORS Validation
-  const allowedOrigins = process.env.ALLOWED_ORIGINS 
-    ? process.env.ALLOWED_ORIGINS.split(',') 
-    : ['http://localhost:5173', 'http://localhost:3000', 'https://reprox-dev.vercel.app']; // Fallback for dev/prod
-
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else if (!origin && process.env.NODE_ENV === 'development') {
-    // Allow non-browser agents in development
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-
+  // CORS Headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -59,58 +17,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { messages = [], mode = 'general', crashContext, model = 'gemini' } = req.body || {};
 
-    // Basic Input Validation & Protection
-    if (!Array.isArray(messages) || messages.length > 50) {
-      return res.status(400).json({ error: 'Invalid or oversized message history' });
-    }
+    const apiKey = process.env.XAI_API_KEY || process.env.GROQ_API_KEY || process.env.AI_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
 
-    const lastUserMessage = messages.slice().reverse().find((m: any) => m.role === 'user')?.content || '';
-    const lowerMsg = String(lastUserMessage).toLowerCase();
-
-    const outOfScopeKeywords = [
-      'weather', 'poem', 'joke', 'president', 'movie', 'news', 'recipe',
-      'eat', 'vacation', 'travel', 'sports', 'game', 'play', 'song', 'music',
-      'teach me javascript', 'teach me react', 'teach me python',
-      'build a website', 'write an email', 'write an essay', 'tell me a story',
-      'explain object-oriented programming'
-    ];
-
-    for (const keyword of outOfScopeKeywords) {
-      if (lowerMsg.includes(keyword)) {
-        return res.status(200).json({
-          success: true,
-          reply: "I can only help with crash incidents, crash analysis, regression-test failures, debugging, and the developer tools related to investigating or fixing them. Please provide the crash, error, stack trace, regression failure, or relevant developer-tool issue.",
-          provider: 'Scope Filter'
-        });
-      }
-    }
-
-    const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.XAI_API_KEY || process.env.GROQ_API_KEY || process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
-
-    // Prepare system instruction based on mode
-    const SYSTEM_PROMPT = `You are ReproX Crash Investigation Assistant. 
-Your sole purpose is to help developers investigate software crashes, reproduction, and debugging.
-
-STRICT RULES:
-1. ONLY answer questions about software crashes or the provided crash data.
-2. If the user asks anything unrelated, respond EXACTLY: "I’m ReproX Crash Assistant. I can only help with crash investigation, crash reproduction, debugging, fixes, stack traces, logs, and regression testing."
-3. If riskLevel is HIGH, require developer review.
-4. If verificationStatus isn't 'PASSED', say: "The fix has not been verified yet."
-5. Never invent crash data.`;
-
-    let systemPrompt = SYSTEM_PROMPT;
+    // Prepare system instruction based on mode and crash context
+    let systemPrompt = `You are Gemini Chat, a specialized diagnostic assistant focused exclusively on analyzing application crashes, telemetry, and debugging. Do NOT answer general programming questions about language syntax or irrelevant topics. Your main focus is providing crash-related answers based on the provided context. Always provide clear, well-formatted markdown responses.`;
 
     if (mode === 'reprox' || crashContext) {
-      const incidentData = crashContext && typeof crashContext === 'object' ? `
-    <crash_context>
-    Error: ${crashContext.errorType}: ${crashContext.message}
-    Stack Trace: ${crashContext.stackTrace}
-    Recent Actions: ${JSON.stringify(crashContext.recentActions)}
-    Analysis: ${JSON.stringify(crashContext.analysis)}
-    Verification: ${crashContext.verificationStatus}
-    </crash_context>` : (crashContext || "No active crash loaded.");
-      
-      systemPrompt += `\n\nDATA:\n${incidentData}`;
+      systemPrompt += `\n\nREPROX APPLICATION CONTEXT:\n${crashContext || 'ReproX Crash Diagnostic Engine Active'}`;
     }
 
     const payloadMessages = [
@@ -127,8 +40,7 @@ STRICT RULES:
       // Google Gemini API (Supports both legacy AIza and new AQ. auth key formats)
       if (apiKey.startsWith('AIza') || apiKey.startsWith('AQ.')) {
         // Google Gemini API
-        const apiModel = model === 'gemini-1.5-pro' ? 'gemini-1.5-pro' : 'gemini-2.0-flash';
-        let geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${apiModel}:generateContent?key=${apiKey}`, {
+        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -153,36 +65,14 @@ STRICT RULES:
           })
         });
 
-        // Simple retry logic if overloaded (503)
-        if (geminiRes.status === 503) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${apiModel}:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: payloadMessages.map(m => {
-                const parts: any[] = [{ text: m.content }];
-                if (m.imageUrl && m.imageUrl.startsWith('data:image/')) {
-                  const match = m.imageUrl.match(/^data:(image\/[a-zA-Z]+);base64,(.*)$/);
-                  if (match) { parts.push({ inlineData: { mimeType: match[1], data: match[2] } }); }
-                }
-                return { role: m.role === 'assistant' ? 'model' : 'user', parts };
-              })
-            })
-          });
-        }
-
         if (geminiRes.ok) {
           const data = await geminiRes.json();
           const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (text) {
-            return res.status(200).json({ success: true, reply: text, provider: 'Gemini 2.0 (Secure Server)' });
-          } else {
-            return res.status(500).json({ success: false, error: 'Gemini API returned an unexpected response format.' });
+            return res.status(200).json({ reply: text, provider: 'Gemini 1.5 (Secure Server)' });
           }
         } else {
-          console.error('Gemini API request failed with status:', geminiRes.status);
-          return await fallbackToPollinations(payloadMessages, res);
+          return res.status(401).json({ error: 'The provided Gemini API key is invalid.' });
         }
       } else if (apiKey.startsWith('xai-')) {
         // Grok (xAI) API
@@ -213,13 +103,10 @@ STRICT RULES:
           const data = await grokRes.json();
           const text = data.choices?.[0]?.message?.content;
           if (text) {
-            return res.status(200).json({ success: true, reply: text, provider: 'Grok (xAI)' });
-          } else {
-            return res.status(500).json({ success: false, error: 'Grok API returned an unexpected response format.' });
+            return res.status(200).json({ reply: text, provider: 'Grok (xAI)' });
           }
         } else {
-          console.error('Grok API request failed with status:', grokRes.status);
-          return await fallbackToPollinations(payloadMessages, res);
+          return res.status(401).json({ error: 'The provided Grok (xAI) API key is invalid.' });
         }
       } else {
         // OpenAI API
@@ -249,21 +136,56 @@ STRICT RULES:
           const data = await openaiRes.json();
           const text = data.choices?.[0]?.message?.content;
           if (text) {
-            return res.status(200).json({ success: true, reply: text, provider: 'OpenAI GPT-4o (Secure Server)' });
-          } else {
-            return res.status(500).json({ success: false, error: 'OpenAI API returned an unexpected response format.' });
+            return res.status(200).json({ reply: text, provider: 'OpenAI GPT-4o (Secure Server)' });
           }
         } else {
-          console.error('OpenAI API request failed with status:', openaiRes.status);
-          return await fallbackToPollinations(payloadMessages, res);
+          return res.status(401).json({ error: 'The provided API key is invalid or for an unknown service. Please check your .env file.' });
         }
       }
     }
 
-    // Fallback to Free Pollinations API if API Key is missing
-    return await fallbackToPollinations(payloadMessages, res);
+    // Secure Server-side fallback via Pollinations LLM gateway
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    let targetModel = 'gemini';
+    if (model === 'chatgpt' || model === 'openai') targetModel = 'openai';
+    if (model === 'mistral' || model === 'claude') targetModel = 'mistral';
+
+    let gatewayRes;
+    try {
+      gatewayRes = await fetch('https://text.pollinations.ai/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: payloadMessages.map(m => ({
+            role: m.role,
+            content: m.imageUrl ? `${m.content}\n[User attached an image which cannot be viewed by this free AI tier]` : m.content
+          })),
+          model: targetModel,
+          seed: 42
+        }),
+        signal: controller.signal
+      });
+    } catch (err) {
+      console.log('Pollinations fallback failed:', err);
+    }
+    clearTimeout(timeoutId);
+
+    if (gatewayRes && gatewayRes.ok) {
+      const text = await gatewayRes.text();
+      if (text && text.trim().length > 0) {
+        return res.status(200).json({ reply: text.trim(), provider: `Super AI (${targetModel})` });
+      }
+    }
+
+    // Fallback response if offline/unreachable
+    return res.status(200).json({ 
+      reply: "I am ReproX Super AI Assistant. I can help analyze crash reports, telemetry data, and provide diagnostic solutions for application errors.",
+      provider: 'Local Engine'
+    });
   } catch (error: any) {
     console.error('Server chat endpoint error:', error);
-    return res.status(500).json({ success: false, error: error.message || 'Internal AI Server Error' });
+    return res.status(500).json({ error: error.message || 'Internal AI Server Error' });
   }
 }

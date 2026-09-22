@@ -13,22 +13,6 @@ function generateSmartTitle(prompt: string): string {
   return title.length < prompt.length ? `${title}...` : title;
 }
 
-function safeSetItem(key: string, value: string) {
-  try {
-    localStorage.setItem(key, value);
-  } catch (e) {
-    console.warn(`Failed to save to localStorage for key: ${key}. Quota may be exceeded.`, e);
-  }
-}
-
-function safeRemoveItem(key: string) {
-  try {
-    localStorage.removeItem(key);
-  } catch (e) {
-    console.warn(`Failed to remove from localStorage for key: ${key}`, e);
-  }
-}
-
 export const conversationStore = {
   getConversations(): ChatConversation[] {
     try {
@@ -65,10 +49,10 @@ export const conversationStore = {
     
     const convos = this.getConversations();
     convos.push(newConvo);
-    safeSetItem(CONVERSATIONS_KEY, JSON.stringify(convos));
+    localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(convos));
     
     // Initialize empty message array
-    safeSetItem(`${MESSAGES_KEY_PREFIX}${newConvo.id}`, JSON.stringify([]));
+    localStorage.setItem(`${MESSAGES_KEY_PREFIX}${newConvo.id}`, JSON.stringify([]));
     
     return newConvo;
   },
@@ -82,14 +66,14 @@ export const conversationStore = {
 
     const messages = this.getMessages(msg.conversationId);
     messages.push(fullMsg);
-    safeSetItem(`${MESSAGES_KEY_PREFIX}${msg.conversationId}`, JSON.stringify(messages));
+    localStorage.setItem(`${MESSAGES_KEY_PREFIX}${msg.conversationId}`, JSON.stringify(messages));
 
     // Update conversation updatedAt
     const convos = this.getConversations();
     const convoIndex = convos.findIndex(c => c.id === msg.conversationId);
     if (convoIndex !== -1) {
       convos[convoIndex].updatedAt = new Date().toISOString();
-      safeSetItem(CONVERSATIONS_KEY, JSON.stringify(convos));
+      localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(convos));
     }
 
     return fullMsg;
@@ -97,8 +81,8 @@ export const conversationStore = {
 
   deleteConversation(id: string): void {
     const convos = this.getConversations().filter(c => c.id !== id);
-    safeSetItem(CONVERSATIONS_KEY, JSON.stringify(convos));
-    safeRemoveItem(`${MESSAGES_KEY_PREFIX}${id}`);
+    localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(convos));
+    localStorage.removeItem(`${MESSAGES_KEY_PREFIX}${id}`);
   },
 
   renameConversation(id: string, newTitle: string): void {
@@ -107,7 +91,7 @@ export const conversationStore = {
     if (convo) {
       convo.title = newTitle;
       convo.updatedAt = new Date().toISOString();
-      safeSetItem(CONVERSATIONS_KEY, JSON.stringify(convos));
+      localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(convos));
     }
   },
 
