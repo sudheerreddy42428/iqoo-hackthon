@@ -23,19 +23,7 @@ export const TestCenter: React.FC<TestCenterProps> = ({ onRunTest }) => {
     }
   };
 
-  const getRiskColor = (risk: TestCase['riskLevel']) => {
-    switch (risk) {
-      case 'LOW':
-        return 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20';
-      case 'MEDIUM':
-        return 'text-amber-400 bg-amber-400/10 border-amber-400/20';
-      case 'HIGH':
-        return 'text-rose-400 bg-rose-400/10 border-rose-400/20';
 
-      default:
-        return 'text-slate-400 bg-slate-400/10 border-slate-400/20';
-    }
-  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-fadeIn pb-20">
@@ -58,13 +46,6 @@ export const TestCenter: React.FC<TestCenterProps> = ({ onRunTest }) => {
               <div className="flex items-center gap-2">
                 <span className="font-mono text-xs font-bold text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded border border-cyan-400/20">
                   {tc.id}
-                </span>
-                <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded border ${getRiskColor(
-                    tc.riskLevel
-                  )}`}
-                >
-                  {tc.riskLevel} RISK
                 </span>
               </div>
               <div className="flex items-center gap-1.5 text-xs font-medium text-slate-300">

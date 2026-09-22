@@ -25,8 +25,8 @@ export const App: React.FC = () => {
   const isLandingPage = location.pathname === '/home' || location.pathname === '/';
 
   const [isDemoRunning, setIsDemoRunning] = useState<boolean>(false);
-  const [, setDemoStepName] = useState<string>('');
-  const [, setDemoProgress] = useState<number>(0);
+  const [demoStepName, setDemoStepName] = useState<string>('');
+  const [demoProgress, setDemoProgress] = useState<number>(0);
   const demoAbortRef = useRef<boolean>(false);
 
   // Modals for quick offline utilities
@@ -163,6 +163,36 @@ export const App: React.FC = () => {
         )}
 
         <div className="flex-1 flex flex-col min-w-0 overflow-y-auto overflow-x-hidden">
+          {/* Floating Demo Mode Controller Banner */}
+          {isDemoRunning && (
+            <div className="sticky top-16 md:top-0 z-20 bg-gradient-to-r from-purple-950 via-dark-900 to-indigo-950 border-b border-purple-500/30 px-4 py-2.5 shadow-xl animate-slideUp">
+              <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" />
+                  <span className="font-mono font-bold text-purple-300 uppercase tracking-wider">
+                    Full Demo Mode:
+                  </span>
+                  <span className="text-white font-medium">{demoStepName}</span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="w-32 sm:w-48 bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-purple-500 to-cyan-400 h-full rounded-full transition-all duration-300"
+                      style={{ width: `${demoProgress}%` }}
+                    />
+                  </div>
+                  <button
+                    onClick={stopDemo}
+                    className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                    title="Stop Demo"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Main Content Area */}
           <main className={`flex-1 w-full ${isLandingPage ? 'p-0' : 'px-4 sm:px-6 lg:px-8 py-6 md:py-8'}`}>

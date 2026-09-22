@@ -8,7 +8,7 @@ import {
   RootCauseChainNode,
   SolutionOption
 } from '../types/reprox';
-import { calculateDeterministicRisk, StructuredAIEvidence } from '../utils/riskScorer';
+import { calculateRegressionRisk, StructuredAIEvidence } from '../utils/riskScorer';
 
 /**
  * Pluggable AI Provider Architecture
@@ -335,7 +335,7 @@ PaymentService.processPayment(paymentMethod)`,
       };
     }
 
-    const riskAssessment = calculateDeterministicRisk(structuredEvidence, report, suggestedFix);
+    const riskAssessment = calculateRegressionRisk(structuredEvidence, report, suggestedFix);
 
     return {
       reportId: report.id,
@@ -502,7 +502,7 @@ Crash Details:
       let riskAssessment = undefined;
       if (parsed.structuredEvidence) {
         parsed.structuredEvidence.aiConfidence = parsed.confidenceScore || base.confidenceScore;
-        riskAssessment = calculateDeterministicRisk(parsed.structuredEvidence, report, base.suggestedFix);
+        riskAssessment = calculateRegressionRisk(parsed.structuredEvidence, report, base.suggestedFix);
       }
 
       return {

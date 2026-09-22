@@ -233,6 +233,19 @@ export const InvestigationProvider: React.FC<{ children: ReactNode }> = ({ child
       return { success: false, error: 'Patch already applied' };
     }
 
+    if (state.analysis) {
+      const riskLevel = state.analysis.riskLevel;
+      if (riskLevel === 'MEDIUM' || riskLevel === 'HIGH') {
+        if (state.approvalStatus !== 'APPROVED') {
+          return { success: false, error: `Developer permission is mandatory for ${riskLevel} risk patches.` };
+        }
+      } else if (riskLevel === 'LOW') {
+        if (!state.analysis.autoDebugEligible && state.approvalStatus !== 'APPROVED') {
+          return { success: false, error: 'Auto-fix safety conditions failed. Developer permission required.' };
+        }
+      }
+    }
+
     isExecutingRef.current = true;
     dispatch({ type: 'SET_APPROVAL_STATUS', status: 'APPROVED' });
     dispatch({ type: 'SET_PATCH_STATUS', status: 'APPLYING' });

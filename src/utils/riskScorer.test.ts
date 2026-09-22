@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { calculateDeterministicRisk, StructuredAIEvidence } from './riskScorer';
+import { calculateRegressionRisk, StructuredAIEvidence } from './riskScorer';
 import { CrashReport, SuggestedFix } from '../types/reprox';
 
-describe('calculateDeterministicRisk', () => {
+describe('calculateRegressionRisk', () => {
   const dummyReport: CrashReport = {
     id: 'report-1',
     investigationId: 'inv-1',
@@ -50,7 +50,7 @@ describe('calculateDeterministicRisk', () => {
 
   it('Case 1: Should score LOW risk for minor, highly confident UI fixes', () => {
     const evidence = getLowRiskEvidence(); // Total: 28 <= 29
-    const result = calculateDeterministicRisk(evidence, dummyReport, dummyFix);
+    const result = calculateRegressionRisk(evidence, dummyReport, dummyFix);
     
     expect(result.riskLevel).toBe('LOW');
     expect(result.evidenceQuality).toBe('STRONG');
@@ -61,7 +61,7 @@ describe('calculateDeterministicRisk', () => {
   it('Case 2: Should score MEDIUM risk for moderate impact', () => {
     const evidence = getLowRiskEvidence();
     evidence.impactSeverityScore = 15; // Total 41
-    const result = calculateDeterministicRisk(evidence, dummyReport, dummyFix);
+    const result = calculateRegressionRisk(evidence, dummyReport, dummyFix);
     
     expect(result.riskLevel).toBe('MEDIUM');
     expect(result.isAutoFixEligible).toBe(false);
@@ -75,7 +75,7 @@ describe('calculateDeterministicRisk', () => {
     evidence.changeScopeScore = 10;
     evidence.reversibilityScore = 10;
     // Total 98
-    const result = calculateDeterministicRisk(evidence, dummyReport, dummyFix);
+    const result = calculateRegressionRisk(evidence, dummyReport, dummyFix);
     
     expect(result.riskLevel).toBe('HIGH');
     expect(result.isAutoFixEligible).toBe(false);
@@ -85,7 +85,7 @@ describe('calculateDeterministicRisk', () => {
     const evidence = getLowRiskEvidence();
     evidence.rootCauseStrengthScore = 5; // Weak evidence
     
-    const result = calculateDeterministicRisk(evidence, dummyReport, dummyFix);
+    const result = calculateRegressionRisk(evidence, dummyReport, dummyFix);
     
     // Numeric score is low (15), but override should force HIGH
     expect(result.evidenceQuality).toBe('WEAK');
@@ -99,7 +99,7 @@ describe('calculateDeterministicRisk', () => {
     const evidence = getLowRiskEvidence();
     const fixWithAuth = { ...dummyFix, codeSnippet: 'import { auth } from "firebase";' };
     
-    const result = calculateDeterministicRisk(evidence, dummyReport, fixWithAuth);
+    const result = calculateRegressionRisk(evidence, dummyReport, fixWithAuth);
     
     expect(result.riskLevel).toBe('HIGH');
     expect(result.overrides.length).toBeGreaterThan(0);
@@ -108,8 +108,8 @@ describe('calculateDeterministicRisk', () => {
 
   it('Case 6: Idempotency - same input yields same output', () => {
     const evidence = getLowRiskEvidence();
-    const res1 = calculateDeterministicRisk(evidence, dummyReport, dummyFix);
-    const res2 = calculateDeterministicRisk(evidence, dummyReport, dummyFix);
+    const res1 = calculateRegressionRisk(evidence, dummyReport, dummyFix);
+    const res2 = calculateRegressionRisk(evidence, dummyReport, dummyFix);
     
     expect(res1).toEqual(res2);
   });

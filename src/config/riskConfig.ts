@@ -1,7 +1,7 @@
 export const RISK_THRESHOLDS = {
-  LOW_MAX: 29,
-  MEDIUM_MAX: 69,
-  HIGH_MIN: 70,
+  LOW_MAX: 30,
+  MEDIUM_MAX: 70,
+  HIGH_MIN: 71,
 };
 
 export const CONFIDENCE_THRESHOLD_AUTO_FIX = 80;

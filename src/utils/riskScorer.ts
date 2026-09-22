@@ -1,5 +1,5 @@
 import { RISK_THRESHOLDS, CONFIDENCE_THRESHOLD_AUTO_FIX, SAFETY_OVERRIDE_RULES } from '../config/riskConfig';
-import { RiskAssessment, RiskFactor, SafetyOverride, EvidenceQuality, CrashReport, SuggestedFix } from '../types/reprox';
+import { RiskAssessment, RiskFactor, SafetyOverride, EvidenceQuality, CrashReport, SuggestedFix, AnalysisResult } from '../types/reprox';
 
 export interface StructuredAIEvidence {
   impactSeverityScore: number;
@@ -29,7 +29,7 @@ export interface StructuredAIEvidence {
   aiConfidence: number; // 0-100
 }
 
-export function calculateDeterministicRisk(
+export function calculateRegressionRisk(
   structuredEvidence: StructuredAIEvidence,
   report: CrashReport,
   suggestedFix?: SuggestedFix
@@ -159,4 +159,12 @@ export function calculateDeterministicRisk(
     evidenceQuality,
     isAutoFixEligible
   };
+}
+
+export function shouldAutoFix(analysis: AnalysisResult): boolean {
+  if (analysis.riskLevel === 'MEDIUM' || analysis.riskLevel === 'HIGH') {
+    return false;
+  }
+  // LOW risk -> Auto-fix allowed only when ALL safety conditions pass
+  return analysis.autoDebugEligible === true;
 }
