@@ -8,10 +8,19 @@ export type ActionType =
 
 export type TestStatus = 'IDLE' | 'RUNNING' | 'PASSED' | 'FAILED' | 'CRASHED' | 'STOPPED';
 export type AIAnalysisStatus = 'IDLE' | 'ANALYZING' | 'READY' | 'FAILED';
-export type ApprovalStatus = 'NOT_REQUIRED' | 'PENDING' | 'APPROVED' | 'REJECTED';
 export type CodeAccessStatus = 'NOT_REQUESTED' | 'REQUESTED' | 'GRANTED' | 'DENIED';
-export type PatchStatus = 'NONE' | 'PROPOSED' | 'APPROVED' | 'APPLYING' | 'APPLIED' | 'ROLLED_BACK' | 'FAILED';
-export type VerificationStatus = 'NOT_STARTED' | 'RUNNING' | 'PASSED' | 'FAILED';
+
+export type WorkflowState = 
+  | 'DETECTED' 
+  | 'ANALYZING' 
+  | 'RISK_ASSESSED' 
+  | 'APPROVAL_REQUIRED' 
+  | 'AUTO_FIX_ELIGIBLE' 
+  | 'FIXING' 
+  | 'VERIFYING' 
+  | 'FIX_VERIFIED' 
+  | 'FIX_FAILED' 
+  | 'REJECTED';
 
 export type UploadStatus =
   | 'idle'
@@ -165,30 +174,29 @@ export interface AnalysisResult {
   severity: 'HIGH' | 'MEDIUM' | 'LOW';
   timestamp: string;
   correlationExplanation?: string;
-  // PRD New Fields
-  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'UNKNOWN';
-  autoDebugEligible: boolean;
-  approvalRequired: boolean;
-  possibleSolutions?: SolutionOption[];
-  recommendedApproach?: string;
+  
+  // New Required Fields for Deterministic Risk Engine
+  riskScore: number;
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  confidence: number;
+  affectedFiles: number;
+  affectedComponents: number;
+  reason: string;
+  autoFixEligible: boolean;
+  requiresDeveloperApproval: boolean;
+  
+  // Legacy or auxiliary fields
   changeLocation?: ChangeLocation;
-
-  // New Evidence-Based Risk Fields
-  riskScore?: number; // 0-100
-  riskFactors?: RiskFactor[];
-  safetyOverrides?: SafetyOverride[];
-  evidenceQuality?: EvidenceQuality;
-
-  // Strict AI Output Required Fields
-  structuredRootCause?: {
-    description: string;
-    file?: string;
-    line?: number;
-    function?: string;
-  };
   validationPlan?: string[];
   rollbackPlan?: string[];
-  status?: 'ANALYZED' | 'AUTO_FIX_ELIGIBLE' | 'WAITING_FOR_APPROVAL' | 'FIXING' | 'FIXED' | 'FAILED' | 'NEEDS_MANUAL_REVIEW';
+  possibleSolutions?: SolutionOption[];
+  recommendedApproach?: string;
+  approvalRequired?: boolean;
+  autoDebugEligible?: boolean;
+  evidenceQuality?: EvidenceQuality;
+  safetyOverrides?: SafetyOverride[];
+  riskFactors?: RiskFactor[];
+  structuredRootCause?: any;
 }
 
 export type EvidenceQuality = 'STRONG' | 'MEDIUM' | 'WEAK' | 'INSUFFICIENT';
@@ -210,12 +218,19 @@ export interface SafetyOverride {
 }
 
 export interface RiskAssessment {
-  finalScore: number;
+  riskScore: number;
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
-  factors: RiskFactor[];
-  overrides: SafetyOverride[];
-  evidenceQuality: EvidenceQuality;
-  isAutoFixEligible: boolean;
+  confidence: number;
+  affectedFiles: number;
+  affectedComponents: number;
+  reason: string;
+  autoFixEligible: boolean;
+  requiresDeveloperApproval: boolean;
+  
+  // Auxiliary debug data
+  factors?: RiskFactor[];
+  overrides?: SafetyOverride[];
+  evidenceQuality?: EvidenceQuality;
 }
 
 export type RegressionTestStatus = 'GENERATED' | 'NOT_EXECUTED' | 'EXECUTED' | 'PASSED' | 'FAILED';

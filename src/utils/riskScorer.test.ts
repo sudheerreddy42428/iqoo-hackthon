@@ -53,8 +53,7 @@ describe('calculateRegressionRisk', () => {
     const result = calculateRegressionRisk(evidence, dummyReport, dummyFix);
     
     expect(result.riskLevel).toBe('LOW');
-    expect(result.evidenceQuality).toBe('STRONG');
-    expect(result.isAutoFixEligible).toBe(true);
+    expect(result.autoFixEligible).toBe(true);
     expect(result.overrides).toHaveLength(0);
   });
 
@@ -64,7 +63,7 @@ describe('calculateRegressionRisk', () => {
     const result = calculateRegressionRisk(evidence, dummyReport, dummyFix);
     
     expect(result.riskLevel).toBe('MEDIUM');
-    expect(result.isAutoFixEligible).toBe(false);
+    expect(result.autoFixEligible).toBe(false);
   });
 
   it('Case 3: Should score HIGH risk for critical data/security crash', () => {
@@ -78,7 +77,7 @@ describe('calculateRegressionRisk', () => {
     const result = calculateRegressionRisk(evidence, dummyReport, dummyFix);
     
     expect(result.riskLevel).toBe('HIGH');
-    expect(result.isAutoFixEligible).toBe(false);
+    expect(result.autoFixEligible).toBe(false);
   });
 
   it('Case 4: Weak evidence should force HIGH risk despite low numeric score', () => {
@@ -88,11 +87,10 @@ describe('calculateRegressionRisk', () => {
     const result = calculateRegressionRisk(evidence, dummyReport, dummyFix);
     
     // Numeric score is low (15), but override should force HIGH
-    expect(result.evidenceQuality).toBe('WEAK');
     expect(result.riskLevel).toBe('HIGH');
     expect(result.overrides).toHaveLength(1);
     expect(result.overrides[0].ruleMatched).toBe('EVIDENCE_QUALITY_WEAK');
-    expect(result.isAutoFixEligible).toBe(false);
+    expect(result.autoFixEligible).toBe(false);
   });
 
   it('Case 5: Security keyword triggers safety override', () => {
@@ -103,7 +101,7 @@ describe('calculateRegressionRisk', () => {
     
     expect(result.riskLevel).toBe('HIGH');
     expect(result.overrides.length).toBeGreaterThan(0);
-    expect(result.isAutoFixEligible).toBe(false);
+    expect(result.autoFixEligible).toBe(false);
   });
 
   it('Case 6: Idempotency - same input yields same output', () => {

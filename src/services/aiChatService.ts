@@ -339,157 +339,27 @@ class AIChatService {
     const lastMsg = messages[messages.length - 1]?.content?.toLowerCase() || '';
 
     // If asking about the active crash
-    if (activeCrash && (mode === 'reprox' || lastMsg.includes('crash') || lastMsg.includes('diagnos') || lastMsg.includes('error') || lastMsg.includes('why') || lastMsg.includes('cause'))) {
+    if (activeCrash) {
       const errorType = activeCrash.errorType;
-      const screen = activeCrash.screen;
-      const actionsCount = activeCrash.recentActions.length;
-      const lastAction = activeCrash.recentActions[actionsCount - 1]?.description || 'User interaction';
+      const rootCause = analysis?.likelyRootCause || "Unknown cause";
+      const explanation = analysis?.suggestedFix?.explanation || "A fix is required to prevent this error.";
       
-      let specificDetail = '';
-      if (errorType.includes('NullPointer') || activeCrash.message.includes('null')) {
-        specificDetail = `### 🔍 Root Cause Correlation\nThe \`NullPointerException\` occurred because the application attempted to dereference an object reference before it was initialized in **${screen}**.\n\nLooking at the **15-action rolling buffer**, the trigger occurred right after: \`${lastAction}\`.\nNo pre-flight state validation guarded the target object before the action handler fired.`;
-      } else if (errorType.includes('IndexOutOfBounds') || errorType.includes('ArrayIndex')) {
-        specificDetail = `### 🔍 Root Cause Correlation\nAn \`IndexOutOfBoundsException\` occurred on **${screen}**. The app attempted to read an array or list index that exceeded current element bounds, likely due to an un-synchronized list update following: \`${lastAction}\`.`;
-      } else if (errorType.includes('SocketTimeout') || errorType.includes('Network') || activeCrash.message.includes('timeout')) {
-        specificDetail = `### 🔍 Root Cause Correlation\nA network fault (\`${errorType}\`) was triggered on **${screen}**. An HTTP network request timed out or was initiated on an unready thread while processing \`${lastAction}\`.`;
-      } else {
-        specificDetail = `### 🔍 Root Cause Correlation\nA critical **${errorType}** interrupted execution on **${screen}**. The stack trace shows the crash immediately succeeded user action: \`${lastAction}\`.`;
+      if (lastMsg.includes('fix') || lastMsg.includes('code') || lastMsg.includes('patch') || lastMsg.includes('solution')) {
+         if (analysis?.suggestedFix) {
+           return `### 🛠️ Suggested Fix\n\n**File**: \`${analysis.suggestedFix.filePath}\`\n\n${analysis.suggestedFix.explanation}\n\n\`\`\`kotlin\n${analysis.suggestedFix.codeSnippet}\n\`\`\``;
+         }
+         return `A defensive check is recommended to prevent ${errorType}. Ensure state variables are not null before use.`;
       }
 
-      const fixCode = analysis?.suggestedFix?.codeSnippet || `// Safe Kotlin Null Guard Implementation\nfun onActionTriggered(state: UiState?) {\n    val activeSession = state?.session ?: return\n    if (activeSession.isReady) {\n        executeOperation(activeSession)\n    } else {\n        logger.w("Session unready, gracefully rejecting action")\n    }\n}`;
-
-      return `## ⚡ ReproX Diagnostic Report
-
-${specificDetail}
-
----
-
-### 📊 Telemetry Snapshot
-- **Exception**: \`${activeCrash.errorType}\`
-- **Location**: \`${activeCrash.screen}\`
-- **Actions in Buffer**: \`${actionsCount} chronological events\`
-- **Preceding Action**: \`${lastAction}\`
-- **Device Specs**: \`${activeCrash.deviceContext.deviceModel} (Android ${activeCrash.deviceContext.osVersion})\`
-- **Memory**: \`${activeCrash.deviceContext.memoryUsageMb} MB / ${activeCrash.deviceContext.totalMemoryMb} MB\`
-
----
-
-### 🛠️ Recommended Kotlin Fix
-\`\`\`kotlin
-${fixCode}
-\`\`\`
-
----
-
-### 🧪 Verification Next Step
-1. Review the proposed diff in the **Approval Panel**.
-2. Run the automated **Regression Test** in the Test Runner tab.
-3. Validate that the rolling buffer captures no unhandled state transitions.`;
-    }
-
-    // If user asks for Kotlin fix or patch
-    if (lastMsg.includes('fix') || lastMsg.includes('code') || lastMsg.includes('patch') || lastMsg.includes('solution')) {
-      if (analysis?.suggestedFix) {
-        return `### 🛠️ Suggested Code Fix for ${activeCrash?.errorType || 'Crash'}
-
-**Target File**: \`${analysis.suggestedFix.filePath}\`  
-**Explanation**: ${analysis.suggestedFix.explanation}
-
-\`\`\`kotlin
-${analysis.suggestedFix.codeSnippet}
-\`\`\`
-
-> **Best Practice Note**: Ensure you verify this change using unit tests before pushing to staging. You can also view the full diff in the **Approval Panel**.`;
+      if (lastMsg.includes('test') || lastMsg.includes('regression')) {
+         return `### 🧪 Verification\n\nPlease run the Regression Test in the Test Runner tab. It uses the 15-action rolling buffer to reproduce the exact conditions of this ${errorType}.`;
       }
-
-      return `### 🛠️ Recommended Kotlin Defensive Fix
-
-To guard against unexpected state crashes in Android applications, apply defensive state checking:
-
-\`\`\`kotlin
-// Use Kotlin safe call and Elvis operator
-fun handleUserEvent(event: UserEvent, currentState: ScreenState?) {
-    val validatedData = currentState?.data ?: run {
-        Log.w("ReproX", "State was null when handling \${event.name}")
-        return
-    }
-    
-    // Process safely with non-null guaranteed data
-    processValidatedState(validatedData)
-}
-\`\`\`
-
-Would you like me to tailor this fix to a specific screen or stack trace?`;
+      
+      // Default brief answer about the crash
+      return `### ⚡ Crash Explanation\n\n**Error**: \`${errorType}\`\n**Root Cause**: ${rootCause}\n\n**Developer Report**: ${explanation}`;
     }
 
-    // If user asks for Espresso test or test synthesis
-    if (lastMsg.includes('test') || lastMsg.includes('espresso') || lastMsg.includes('regression')) {
-      return `### 🧪 Automated Espresso Regression Test
-
-ReproX synthesizes this test directly from the 15-action rolling buffer:
-
-\`\`\`kotlin
-@RunWith(AndroidJUnit4::class)
-@LargeTest
-class CrashRegressionTest {
-
-    @get:Rule
-    val activityRule = ActivityScenarioRule(MainActivity::class.java)
-
-    @Test
-    fun reproducePreCrashSequence() {
-        // Step 1: Navigate to target screen
-        onView(withId(R.id.nav_menu)).perform(click())
-        
-        // Step 2: Trigger sequence leading to failure
-        onView(withId(R.id.btn_select_item)).perform(click())
-        
-        // Step 3: Assert application remains stable without crashing
-        onView(withId(R.id.order_status_label))
-            .check(matches(isDisplayed()))
-    }
-}
-\`\`\`
-
-You can also run this test directly in the **Test Runner** tab!`;
-    }
-
-    // If asking about 15-action buffer or how ReproX works
-    if (lastMsg.includes('buffer') || lastMsg.includes('rolling') || lastMsg.includes('how it works') || lastMsg.includes('architecture') || lastMsg.includes('reprox')) {
-      return `### 🔄 How the ReproX Rolling Buffer Works
-
-ReproX continuously logs user interactions into an **in-memory, circular FIFO buffer** capped at **15 slots**:
-
-\`\`\`
-[Action 1] ➔ [Action 2] ➔ ... ➔ [Action 15] ➔ [CRASH TRIGGERED]
-                                                      │
-                                                      ▼
-                                              [Buffer Frozen ❄️]
-\`\`\`
-
-1. **Lightweight In-Memory Ring**: Only consumes ~2.4 KB of memory during normal app runtime.
-2. **Zero Disk I/O Overhead**: Events remain in RAM until an uncaught exception is thrown.
-3. **Instant Snapshot Freeze**: When \`UncaughtExceptionHandler\` trips, ReproX freezes the exact 15-action trail and transmits it with device telemetry.
-4. **Deterministic Reproduction**: Developers can reproduce elusive crashes in seconds without asking users for manual reproduction steps.`;
-    }
-
-    // General software engineering / Android fallback
-    return `### 👋 ReproX AI Assistant
-
-I am your **ReproX Diagnostic AI Copilot**. Here is what I can assist you with:
-
-- ⚡ **Crash Analysis**: Break down any stack trace and correlate it with preceding user actions.
-- 🛠️ **Kotlin Code Fixes**: Synthesize defensive code patches, null-safety checks, and coroutine error handlers.
-- 🧪 **Test Synthesis**: Generate copy-pasteable **Espresso** and **Jetpack Compose UI** regression tests.
-- 📊 **Telemetry Insights**: Correlate memory leaks, ANRs, battery drain, and thermal throttling.
-
-**Quick Prompts to Try**:
-- *"Explain the current crash root cause"*
-- *"Show me a Kotlin fix for NullPointerException"*
-- *"How does the 15-action rolling buffer work?"*
-- *"Generate an Espresso UI regression test"*
-
-*(Tip: You can connect your custom Google Gemini API Key in **Settings ⚙️** at the top right for live multimodal vision and cloud reasoning!)*`;
+    return "I am the ReproX Crash Assistant. I can only help with crash investigation. Please load a crash report so I can explain the developer report and suggest fixes.";
   }
 }
 

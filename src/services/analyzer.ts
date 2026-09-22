@@ -357,12 +357,13 @@ PaymentService.processPayment(paymentMethod)`,
       timestamp: new Date().toLocaleTimeString(),
       correlationExplanation: 'ReproX derived this conclusion by correlating STACK TRACE + USER ACTIONS + APPLICATION STATE.',
       riskLevel: riskAssessment.riskLevel,
-      riskScore: riskAssessment.finalScore,
-      riskFactors: riskAssessment.factors,
-      safetyOverrides: riskAssessment.overrides,
-      evidenceQuality: riskAssessment.evidenceQuality,
-      autoDebugEligible: riskAssessment.isAutoFixEligible,
-      approvalRequired: !riskAssessment.isAutoFixEligible,
+      riskScore: riskAssessment.riskScore,
+      autoFixEligible: riskAssessment.autoFixEligible,
+      requiresDeveloperApproval: riskAssessment.requiresDeveloperApproval,
+      confidence: riskAssessment.confidence,
+      affectedFiles: riskAssessment.affectedFiles,
+      affectedComponents: riskAssessment.affectedComponents,
+      reason: riskAssessment.reason,
       possibleSolutions,
       recommendedApproach,
       changeLocation,
@@ -380,8 +381,7 @@ PaymentService.processPayment(paymentMethod)`,
       rollbackPlan: [
         'Revert the applied patch automatically via git',
         'Restore previous stable UI state'
-      ],
-      status: 'ANALYZED'
+      ]
     };
   }
 
@@ -515,12 +515,13 @@ Crash Details:
         confidenceReason: parsed.confidenceReason || base.confidenceReason,
         ...(riskAssessment ? {
           riskLevel: riskAssessment.riskLevel,
-          riskScore: riskAssessment.finalScore,
-          riskFactors: riskAssessment.factors,
-          safetyOverrides: riskAssessment.overrides,
-          evidenceQuality: riskAssessment.evidenceQuality,
-          autoDebugEligible: riskAssessment.isAutoFixEligible,
-          approvalRequired: !riskAssessment.isAutoFixEligible
+          riskScore: riskAssessment.riskScore,
+          autoFixEligible: riskAssessment.autoFixEligible,
+          requiresDeveloperApproval: riskAssessment.requiresDeveloperApproval,
+          confidence: riskAssessment.confidence,
+          affectedFiles: riskAssessment.affectedFiles,
+          affectedComponents: riskAssessment.affectedComponents,
+          reason: riskAssessment.reason
         } : {})
       };
     } catch (e) {

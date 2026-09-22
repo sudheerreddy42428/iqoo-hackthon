@@ -59,12 +59,7 @@ export const TestJourneyRouter: React.FC = () => {
   return (
     <div className="w-full h-full">
       {currentStep === 'test-center' && (
-        <TestCenter 
-          onRunTest={(testId) => {
-            setActiveTestId(testId);
-            setCurrentStep('test-runner');
-          }}
-        />
+        <TestCenter />
       )}
 
       {currentStep === 'test-runner' && activeTestId && (

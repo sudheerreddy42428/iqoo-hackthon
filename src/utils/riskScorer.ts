@@ -152,12 +152,17 @@ export function calculateRegressionRisk(
     overrides.length === 0;
 
   return {
-    finalScore,
+    riskScore: finalScore,
     riskLevel,
     factors,
     overrides,
     evidenceQuality,
-    isAutoFixEligible
+    autoFixEligible: isAutoFixEligible,
+    confidence: structuredEvidence.aiConfidence,
+    affectedFiles: structuredEvidence.changeScopeScore, // mapping for demonstration
+    affectedComponents: 1, // mapping for demonstration
+    reason: structuredEvidence.impactSeverityReason,
+    requiresDeveloperApproval: riskLevel !== 'LOW' || !isAutoFixEligible
   };
 }
 
@@ -166,12 +171,21 @@ export function shouldAutoFix(analysis: AnalysisResult): boolean {
     return false;
   }
   
-  // Extra safeguard: explicitly block auto-fix for any scenario touching payment or auth
-  const textToScan = (analysis.suggestedFix.explanation + ' ' + analysis.suggestedFix.filePath).toLowerCase();
-  if (/(pay|billing|checkout|creditcard|stripe|financial|transaction|auth|login|token|jwt|session|permission|role|security|password|505|5xx|gateway)/.test(textToScan)) {
+  // Extra safeguard: explicitly block auto-fix for any scenario touching payment or auth or critical infrastructure
+  const textToScan = [
+    analysis.suggestedFix.explanation,
+    analysis.suggestedFix.filePath,
+    analysis.affectedComponent || '',
+    analysis.whyItHappened || ''
+  ].join(' ').toLowerCase();
+
+  const protectedAreasRegex = /(pay|billing|checkout|creditcard|stripe|financial|transaction|auth|login|token|jwt|session|permission|role|security|password|505|5xx|gateway|database|schema|delete|secret|env|infrastructure)/;
+  
+  if (protectedAreasRegex.test(textToScan)) {
     return false;
   }
 
   // LOW risk -> Auto-fix allowed only when ALL safety conditions pass
-  return analysis.autoDebugEligible === true;
+  return analysis.autoFixEligible === true;
 }
+
