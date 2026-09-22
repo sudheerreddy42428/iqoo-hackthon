@@ -54,7 +54,7 @@ export const AIBotAssistant: React.FC = () => {
   
   // Settings State
   const [apiKeyInput, setApiKeyInput] = useState('');
-  const [selectedModel, setSelectedModel] = useState<AIModelId>('gemini-3.6-flash');
+  const [selectedModel, setSelectedModel] = useState<AIModelId>('reprox-local');
   const [testStatus, setTestStatus] = useState<{ testing: boolean; message: string; success?: boolean } | null>(null);
 
   // History State
@@ -671,7 +671,7 @@ export const AIBotAssistant: React.FC = () => {
                           <Lightbulb className="w-3.5 h-3.5" />
                           <span className="text-[11px] font-bold uppercase tracking-wider">Root Cause Hypothesis</span>
                         </div>
-                        <p className="text-xs text-slate-300 line-clamp-2">
+                        <p className="text-xs text-slate-300">
                           {analysis.suggestedFix?.explanation}
                         </p>
                       </div>
